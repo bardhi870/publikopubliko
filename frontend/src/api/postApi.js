@@ -5,69 +5,79 @@ const BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
 const API_URL = `${BASE_URL}/api/posts`;
 const UPLOAD_URL = `${BASE_URL}/api/upload`;
 
-/**
- * GET ALL POSTS (me expired nëse duhet)
- */
-export const getPosts = async () => {
-  const res = await axios.get(`${API_URL}?includeExpired=true`);
-  return res.data;
+const fixMediaUrl = (url) => {
+  if (!url) return url;
+  return String(url).replace("http://localhost:5000", BASE_URL);
 };
 
-/**
- * GET POSTS BY CATEGORY (FIX kryesor këtu)
- */
+const parseGalleryImages = (value) => {
+  if (Array.isArray(value)) return value;
+
+  if (typeof value === "string") {
+    try {
+      const parsed = JSON.parse(value);
+      return Array.isArray(parsed) ? parsed : [];
+    } catch {
+      return value ? [value] : [];
+    }
+  }
+
+  return [];
+};
+
+const normalizePostMedia = (post) => {
+  if (!post) return post;
+
+  const galleryImages = parseGalleryImages(post.gallery_images);
+
+  return {
+    ...post,
+    image_url: fixMediaUrl(post.image_url),
+    video_url: fixMediaUrl(post.video_url),
+    gallery_images: galleryImages.map(fixMediaUrl)
+  };
+};
+
+export const getPosts = async () => {
+  const res = await axios.get(`${API_URL}?includeExpired=true`);
+  return Array.isArray(res.data) ? res.data.map(normalizePostMedia) : [];
+};
+
 export const getPostsByCategory = async (category) => {
   if (!category) return [];
 
-  // normalize -> konkurse pune -> konkurse-pune
   const formattedCategory = String(category)
     .trim()
     .toLowerCase()
     .replace(/\s+/g, "-");
 
-  // encode -> siguri për URL
   const safeCategory = encodeURIComponent(formattedCategory);
 
   const res = await axios.get(`${API_URL}?category=${safeCategory}`);
 
-  return res.data;
+  return Array.isArray(res.data) ? res.data.map(normalizePostMedia) : [];
 };
 
-/**
- * GET SINGLE POST
- */
 export const getPostById = async (id) => {
   const res = await axios.get(`${API_URL}/${id}`);
-  return res.data;
+  return normalizePostMedia(res.data);
 };
 
-/**
- * CREATE POST
- */
 export const createPost = async (payload) => {
   const res = await axios.post(API_URL, payload);
-  return res.data;
+  return normalizePostMedia(res.data);
 };
 
-/**
- * UPDATE POST
- */
 export const updatePost = async (id, payload) => {
   const res = await axios.put(`${API_URL}/${id}`, payload);
-  return res.data;
+  return normalizePostMedia(res.data);
 };
 
-/**
- * DELETE POST
- */
 export const deletePost = async (id) => {
   const res = await axios.delete(`${API_URL}/${id}`);
   return res.data;
 };
 
-/**
- * Upload 1 image
- */
 export const uploadImage = async (file) => {
   const formData = new FormData();
   formData.append("image", file);
@@ -81,9 +91,6 @@ export const uploadImage = async (file) => {
   return res.data;
 };
 
-/**
- * Upload 1 video
- */
 export const uploadVideo = async (file) => {
   const formData = new FormData();
   formData.append("video", file);
@@ -97,9 +104,6 @@ export const uploadVideo = async (file) => {
   return res.data;
 };
 
-/**
- * Upload media (images + video)
- */
 export const uploadMedia = async ({ images = [], video = null }) => {
   const formData = new FormData();
 
