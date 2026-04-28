@@ -1,7 +1,9 @@
 import axios from "axios";
 
-const API_URL = "http://localhost:5000/api/posts";
-const UPLOAD_URL = "http://localhost:5000/api/upload";
+const BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
+
+const API_URL = `${BASE_URL}/api/posts`;
+const UPLOAD_URL = `${BASE_URL}/api/upload`;
 
 /**
  * GET ALL POSTS (me expired nëse duhet)
