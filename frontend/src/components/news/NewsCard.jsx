@@ -6,7 +6,11 @@ const categoryLabels = {
   rajoni: "Rajoni",
   bota: "Bota",
 };
-
+const stripHtml = (html = "") => {
+  const div = document.createElement("div");
+  div.innerHTML = html;
+  return div.textContent || div.innerText || "";
+};
 const formatDate = (date) => {
   if (!date) return "";
 
@@ -99,7 +103,7 @@ export default function NewsCard({
 
   const label = categoryLabels[category] || "Lajm";
   const colors = getCategoryColor(category);
-  const summary = excerpt || description || "";
+  const summary = stripHtml(excerpt || description || "");
 
   const link = slug
     ? `/lajme/artikulli/${slug}`

@@ -8,6 +8,7 @@ export default function AdminPostsList({
   selectedCategoryFilter,
   setSelectedCategoryFilter,
   categoryLabels,
+  onToggleFeatured,
   onEdit,
   onDelete
 }) {
@@ -30,16 +31,17 @@ export default function AdminPostsList({
   const isNewsCategory = (category) =>
     ["vendi", "rajoni", "bota"].includes(category);
 
+  const shorten = (text, max = 78) => {
+    if (!text) return "";
+    return text.length > max ? `${text.slice(0, max)}...` : text;
+  };
+
   return (
     <div>
       <div style={filtersWrap}>
         <button
           onClick={() => setSelectedCategoryFilter("all")}
-          style={
-            selectedCategoryFilter === "all"
-              ? activeFilter
-              : filterBtn
-          }
+          style={selectedCategoryFilter === "all" ? activeFilter : filterBtn}
         >
           Të gjitha ({posts.length})
         </button>
@@ -49,9 +51,7 @@ export default function AdminPostsList({
             key={cat.value}
             onClick={() => setSelectedCategoryFilter(cat.value)}
             style={
-              selectedCategoryFilter === cat.value
-                ? activeFilter
-                : filterBtn
+              selectedCategoryFilter === cat.value ? activeFilter : filterBtn
             }
           >
             {cat.label} ({cat.count})
@@ -60,125 +60,79 @@ export default function AdminPostsList({
       </div>
 
       {filteredPosts.length === 0 ? (
-        <div style={emptyState}>
-          Nuk ka postime për këtë kategori.
-        </div>
+        <div style={emptyState}>Nuk ka postime për këtë kategori.</div>
       ) : (
         <div className="posts-grid-pro" style={grid}>
           {filteredPosts.map((post) => {
             const features = getFeatures(post.offer_features);
-            const showEditorialBadges = isNewsCategory(post.category);
+            const showEditorialBadges = true;
 
             return (
               <div key={post.id} style={card}>
                 <div style={imageWrap}>
                   {post.image_url ? (
-                    <img
-                      src={post.image_url}
-                      alt={post.title}
-                      style={image}
-                    />
+                    <img src={post.image_url} alt={post.title} style={image} />
                   ) : (
                     <div style={noImage}>Pa foto</div>
                   )}
 
                   <div style={imageOverlay}>
-                    <div
-                      style={{
-                        display: "flex",
-                        gap: "8px",
-                        alignItems: "center",
-                        flexWrap: "wrap"
-                      }}
-                    >
-                      <span style={badge}>
-                        {categoryLabels?.[post.category] || post.category}
-                      </span>
-
-                      {showEditorialBadges && post.featured ? (
-                        <span style={featuredBadge}>
-                          ⭐ Featured
-                        </span>
-                      ) : null}
-
-                      {showEditorialBadges && post.breaking ? (
-                        <span style={breakingBadge}>
-                          🔴 Breaking
-                        </span>
-                      ) : null}
-                    </div>
+                    <span style={badge}>
+                      {categoryLabels?.[post.category] || post.category}
+                    </span>
 
                     <span style={post.is_active ? activeStatus : inactiveStatus}>
                       {post.is_active ? "Aktiv" : "Jo aktiv"}
                     </span>
                   </div>
+
+                  {(post.featured || post.breaking) ? (
+                    <div style={editorialBadgesRow}>
+                      {post.featured ? (
+                        <span style={featuredBadge}>⭐ Featured</span>
+                      ) : null}
+
+                      {post.breaking ? (
+                        <span style={breakingBadge}>🔴 Breaking</span>
+                      ) : null}
+                    </div>
+                  ) : null}
                 </div>
 
                 <div style={body}>
                   <div style={topMeta}>
-                    <div
-                      style={{
-                        display: "flex",
-                        alignItems: "center",
-                        gap: "10px",
-                        flexWrap: "wrap"
-                      }}
-                    >
-                      <span>{formatDate(post.created_at)}</span>
+                    <span>{formatDate(post.created_at)}</span>
 
-                      {post.offer_badge ? (
-                        <span style={offerBadge}>{post.offer_badge}</span>
-                      ) : null}
-                    </div>
-
-                    {showEditorialBadges && (post.featured || post.breaking) ? (
-                      <div
-                        style={{
-                          display: "flex",
-                          gap: "8px",
-                          flexWrap: "wrap"
-                        }}
-                      >
-                        {post.featured ? (
-                          <span style={metaFeaturedBadge}>Featured</span>
-                        ) : null}
-
-                        {post.breaking ? (
-                          <span style={metaBreakingBadge}>Breaking</span>
-                        ) : null}
-                      </div>
+                    {post.offer_badge ? (
+                      <span style={offerBadge}>{post.offer_badge}</span>
                     ) : null}
                   </div>
 
-                  <h3 style={title}>{post.title}</h3>
+                  <h3 style={title}>{shorten(post.title, 42)}</h3>
 
                   {post.description ? (
-                    <p style={desc}>
-                      {post.description.length > 120
-                        ? `${post.description.slice(0, 120)}...`
-                        : post.description}
-                    </p>
+                    <p style={desc}>{shorten(post.description, 88)}</p>
                   ) : null}
 
                   {(post.price || post.city || post.rooms) ? (
                     <div className="post-info-grid" style={infoGrid}>
                       {post.price ? (
                         <div style={infoBox}>
-                          <div style={label}>ÇMIMI</div>
+                          <div style={label}>Çmimi</div>
                           <div style={value}>{post.price} €</div>
                         </div>
                       ) : null}
 
                       {post.city ? (
                         <div style={infoBox}>
-                          <div style={label}>QYTETI</div>
+                          <div style={label}>Qyteti</div>
                           <div style={value}>{post.city}</div>
                         </div>
                       ) : null}
 
                       {post.rooms ? (
                         <div style={infoBox}>
-                          <div style={label}>DHOMA</div>
+                          <div style={label}>Dhoma</div>
                           <div style={value}>{post.rooms}</div>
                         </div>
                       ) : null}
@@ -187,12 +141,12 @@ export default function AdminPostsList({
 
                   {features.length > 0 ? (
                     <div style={featuresWrap}>
-                      {features.slice(0, 3).map((feature, index) => (
+                      {features.slice(0, 2).map((feature, index) => (
                         <div key={index} style={featureItem}>
                           <span style={featureIcon}>
                             {feature.included ? "✔" : "✖"}
                           </span>
-                          <span>{feature.text}</span>
+                          <span>{shorten(feature.text, 24)}</span>
                         </div>
                       ))}
                     </div>
@@ -200,7 +154,7 @@ export default function AdminPostsList({
 
                   {(post.phone || post.whatsapp) ? (
                     <div style={contactBox}>
-                      <div style={contactTitle}>KONTAKTI</div>
+                      <div style={contactTitle}>Kontakti</div>
 
                       {post.phone ? (
                         <div style={contactRow}>📞 {post.phone}</div>
@@ -212,21 +166,28 @@ export default function AdminPostsList({
                     </div>
                   ) : null}
 
-                  <div style={actions}>
-                    <button
-                      onClick={() => onEdit(post)}
-                      style={editBtn}
-                    >
-                      Edito
-                    </button>
+                 <div style={actions}>
+  <button
+    onClick={() => onToggleFeatured(post)}
+    style={{
+      ...editBtn,
+      background: post.featured
+        ? "linear-gradient(135deg,#f59e0b,#facc15)"
+        : "#e2e8f0",
+      color: post.featured ? "#fff" : "#334155"
+    }}
+  >
+    {post.featured ? "⭐ Featured" : "☆ Feature"}
+  </button>
 
-                    <button
-                      onClick={() => onDelete(post.id)}
-                      style={deleteBtn}
-                    >
-                      Fshij
-                    </button>
-                  </div>
+  <button onClick={() => onEdit(post)} style={editBtn}>
+    Edito
+  </button>
+
+  <button onClick={() => onDelete(post.id)} style={deleteBtn}>
+    Fshij
+  </button>
+</div>
                 </div>
               </div>
             );
@@ -235,17 +196,37 @@ export default function AdminPostsList({
       )}
 
       <style>{`
-        @media (max-width: 1380px) {
+        @media (min-width: 1700px) {
+          .posts-grid-pro {
+            grid-template-columns: repeat(5, minmax(0, 1fr)) !important;
+          }
+        }
+
+        @media (max-width: 1699px) and (min-width: 1280px) {
+          .posts-grid-pro {
+            grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+          }
+        }
+
+        @media (max-width: 1279px) and (min-width: 900px) {
+          .posts-grid-pro {
+            grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+          }
+        }
+
+        @media (max-width: 899px) and (min-width: 620px) {
+          .posts-grid-pro {
+            grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+          }
+        }
+
+        @media (max-width: 619px) {
           .posts-grid-pro {
             grid-template-columns: 1fr !important;
           }
         }
 
-        @media (max-width: 820px) {
-          .posts-grid-pro {
-            grid-template-columns: 1fr !important;
-          }
-
+        @media (max-width: 720px) {
           .post-info-grid {
             grid-template-columns: 1fr !important;
           }
@@ -265,11 +246,12 @@ const filtersWrap = {
 const filterBtn = {
   border: "1px solid #dbeafe",
   background: "#fff",
-  padding: "10px 14px",
+  padding: "9px 13px",
   borderRadius: "999px",
   fontWeight: "800",
   cursor: "pointer",
-  color: "#0f172a"
+  color: "#0f172a",
+  fontSize: "13px"
 };
 
 const activeFilter = {
@@ -291,21 +273,22 @@ const emptyState = {
 
 const grid = {
   display: "grid",
-  gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
-  gap: "20px"
+  gridTemplateColumns: "repeat(4, minmax(0, 1fr))",
+  gap: "16px"
 };
 
 const card = {
   background: "#fff",
   border: "1px solid #e2e8f0",
-  borderRadius: "24px",
+  borderRadius: "22px",
   overflow: "hidden",
-  boxShadow: "0 16px 35px rgba(15,23,42,0.06)"
+  boxShadow: "0 12px 30px rgba(15,23,42,0.06)",
+  transition: "transform .18s ease, box-shadow .18s ease"
 };
 
 const imageWrap = {
   position: "relative",
-  height: "240px",
+  height: "160px",
   background: "#f8fafc"
 };
 
@@ -323,146 +306,144 @@ const noImage = {
   alignItems: "center",
   justifyContent: "center",
   color: "#94a3b8",
-  fontWeight: "700"
+  fontWeight: "700",
+  fontSize: "14px"
 };
 
 const imageOverlay = {
   position: "absolute",
-  top: "14px",
-  left: "14px",
-  right: "14px",
+  top: "10px",
+  left: "10px",
+  right: "10px",
   display: "flex",
   justifyContent: "space-between",
   alignItems: "flex-start",
-  gap: "10px",
+  gap: "8px",
+  flexWrap: "wrap"
+};
+
+const editorialBadgesRow = {
+  position: "absolute",
+  left: "10px",
+  bottom: "10px",
+  display: "flex",
+  gap: "8px",
   flexWrap: "wrap"
 };
 
 const badge = {
   background: "rgba(255,255,255,0.96)",
-  padding: "8px 14px",
+  padding: "7px 12px",
   borderRadius: "999px",
   fontWeight: "800",
   color: "#2563eb",
-  boxShadow: "0 10px 20px rgba(15,23,42,0.08)"
+  boxShadow: "0 8px 18px rgba(15,23,42,0.08)",
+  fontSize: "12px"
 };
 
 const featuredBadge = {
   background: "rgba(254,249,195,0.96)",
-  padding: "8px 12px",
+  padding: "7px 10px",
   borderRadius: "999px",
   fontWeight: "800",
   color: "#a16207",
-  boxShadow: "0 10px 20px rgba(15,23,42,0.08)"
+  boxShadow: "0 8px 18px rgba(15,23,42,0.08)",
+  fontSize: "12px"
 };
 
 const breakingBadge = {
   background: "rgba(254,226,226,0.96)",
-  padding: "8px 12px",
+  padding: "7px 10px",
   borderRadius: "999px",
   fontWeight: "800",
   color: "#dc2626",
-  boxShadow: "0 10px 20px rgba(15,23,42,0.08)"
+  boxShadow: "0 8px 18px rgba(15,23,42,0.08)",
+  fontSize: "12px"
 };
 
 const activeStatus = {
   background: "#dcfce7",
-  padding: "8px 14px",
+  padding: "7px 12px",
   borderRadius: "999px",
   fontWeight: "800",
-  color: "#15803d"
+  color: "#15803d",
+  fontSize: "12px"
 };
 
 const inactiveStatus = {
   background: "#fee2e2",
-  padding: "8px 14px",
+  padding: "7px 12px",
   borderRadius: "999px",
   fontWeight: "800",
-  color: "#b91c1c"
+  color: "#b91c1c",
+  fontSize: "12px"
 };
 
 const body = {
-  padding: "20px"
+  padding: "14px"
 };
 
 const topMeta = {
   display: "flex",
   justifyContent: "space-between",
   alignItems: "center",
-  gap: "10px",
+  gap: "8px",
   flexWrap: "wrap",
-  fontSize: "13px",
+  fontSize: "12px",
   color: "#64748b",
-  marginBottom: "10px"
+  marginBottom: "8px"
 };
 
 const offerBadge = {
   background: "#fff7ed",
   color: "#c2410c",
-  padding: "6px 10px",
+  padding: "5px 9px",
   borderRadius: "999px",
-  fontSize: "12px",
-  fontWeight: "800"
-};
-
-const metaFeaturedBadge = {
-  background: "#fef9c3",
-  color: "#a16207",
-  padding: "6px 10px",
-  borderRadius: "999px",
-  fontSize: "12px",
-  fontWeight: "800"
-};
-
-const metaBreakingBadge = {
-  background: "#fee2e2",
-  color: "#dc2626",
-  padding: "6px 10px",
-  borderRadius: "999px",
-  fontSize: "12px",
+  fontSize: "11px",
   fontWeight: "800"
 };
 
 const title = {
-  fontSize: "24px",
+  fontSize: "18px",
   fontWeight: "900",
-  margin: "0 0 10px",
+  margin: "0 0 8px",
   color: "#0f172a",
   lineHeight: "1.25"
 };
 
 const desc = {
-  fontSize: "14px",
-  lineHeight: "1.65",
+  fontSize: "13px",
+  lineHeight: "1.55",
   color: "#64748b",
-  margin: "0 0 16px"
+  margin: "0 0 12px"
 };
 
 const infoGrid = {
   display: "grid",
   gridTemplateColumns: "repeat(3, minmax(0, 1fr))",
-  gap: "12px",
-  marginBottom: "16px"
+  gap: "8px",
+  marginBottom: "12px"
 };
 
 const infoBox = {
   background: "#f8fafc",
-  padding: "14px",
-  borderRadius: "14px",
+  padding: "10px",
+  borderRadius: "12px",
   border: "1px solid #e2e8f0",
-  minHeight: "82px"
+  minHeight: "64px"
 };
 
 const label = {
-  fontSize: "11px",
+  fontSize: "10px",
   fontWeight: "800",
   color: "#64748b",
-  marginBottom: "6px",
-  letterSpacing: "0.04em"
+  marginBottom: "4px",
+  letterSpacing: "0.04em",
+  textTransform: "uppercase"
 };
 
 const value = {
-  fontSize: "18px",
+  fontSize: "14px",
   fontWeight: "900",
   color: "#0f172a",
   lineHeight: "1.3",
@@ -472,70 +453,73 @@ const value = {
 const featuresWrap = {
   background: "#f8fafc",
   border: "1px solid #e2e8f0",
-  borderRadius: "14px",
-  padding: "14px",
-  marginBottom: "16px"
+  borderRadius: "12px",
+  padding: "10px",
+  marginBottom: "12px"
 };
 
 const featureItem = {
   display: "flex",
-  gap: "8px",
+  gap: "7px",
   alignItems: "flex-start",
   color: "#334155",
-  fontSize: "13px",
-  marginBottom: "8px"
+  fontSize: "12px",
+  marginBottom: "6px"
 };
 
 const featureIcon = {
   fontWeight: "900",
-  minWidth: "16px"
+  minWidth: "14px"
 };
 
 const contactBox = {
   background: "#f8fafc",
-  padding: "14px",
-  borderRadius: "14px",
+  padding: "10px",
+  borderRadius: "12px",
   border: "1px solid #e2e8f0",
-  marginBottom: "18px"
+  marginBottom: "12px"
 };
 
 const contactTitle = {
   fontWeight: "900",
-  marginBottom: "8px",
+  marginBottom: "6px",
   color: "#0f172a",
-  fontSize: "13px",
-  letterSpacing: "0.04em"
+  fontSize: "12px",
+  letterSpacing: "0.04em",
+  textTransform: "uppercase"
 };
 
 const contactRow = {
-  marginBottom: "6px",
+  marginBottom: "5px",
   color: "#475569",
-  fontSize: "14px"
+  fontSize: "13px"
 };
 
 const actions = {
   display: "grid",
   gridTemplateColumns: "1fr 1fr",
-  gap: "12px"
+  gap: "10px"
 };
 
 const editBtn = {
   border: "none",
-  padding: "14px",
-  borderRadius: "14px",
+  padding: "10px",
+  borderRadius: "12px",
   background: "linear-gradient(135deg,#2563eb,#3b82f6)",
   color: "#fff",
   fontWeight: "900",
   cursor: "pointer",
-  boxShadow: "0 10px 20px rgba(37,99,235,0.18)"
+  boxShadow: "0 8px 18px rgba(37,99,235,0.18)",
+  fontSize: "13px"
 };
 
 const deleteBtn = {
   border: "1px solid #fecaca",
-  padding: "14px",
-  borderRadius: "14px",
+  padding: "10px",
+  borderRadius: "12px",
   background: "#fff5f5",
   color: "#dc2626",
   fontWeight: "900",
-  cursor: "pointer"
+  cursor: "pointer",
+  fontSize: "13px"
 };

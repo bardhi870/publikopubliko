@@ -1,29 +1,19 @@
 const multer = require("multer");
 const path = require("path");
-const fs = require("fs");
+const AWS = require("aws-sdk");
+const multerS3 = require("multer-s3");
 
-const uploadDir = path.join(__dirname, "../../uploads");
-
-if (!fs.existsSync(uploadDir)) {
-  fs.mkdirSync(uploadDir, { recursive: true });
-}
-
-const storage = multer.diskStorage({
-  destination: function (req, file, cb) {
-    cb(null, uploadDir);
-  },
-
-  filename: function (req, file, cb) {
-    const uniqueName =
-      Date.now() +
-      "-" +
-      Math.round(Math.random() * 1e9) +
-      path.extname(file.originalname);
-
-    cb(null, uniqueName);
-  }
+// WASABI CONFIG
+const s3 = new AWS.S3({
+  accessKeyId: process.env.WASABI_ACCESS_KEY,
+  secretAccessKey: process.env.WASABI_SECRET_KEY,
+  endpoint: process.env.WASABI_ENDPOINT,
+  region: process.env.WASABI_REGION,
+  s3ForcePathStyle: true,
+  signatureVersion: "v4"
 });
 
+// FILTER (foto + video)
 const fileFilter = (req, file, cb) => {
   const allowedImageTypes = [
     "image/jpeg",
@@ -53,12 +43,40 @@ const fileFilter = (req, file, cb) => {
   }
 };
 
+// UPLOAD NË WASABI
 const upload = multer({
-  storage,
+  storage: multerS3({
+    s3,
+    bucket: process.env.WASABI_BUCKET,
+    acl: "public-read",
+    contentType: multerS3.AUTO_CONTENT_TYPE,
+
+    key: function (req, file, cb) {
+      const ext = path.extname(file.originalname);
+
+      const safeName = path
+        .basename(file.originalname, ext)
+        .replace(/\s+/g, "-")
+        .replace(/[^a-zA-Z0-9-_]/g, "")
+        .toLowerCase();
+
+      const folder = file.mimetype.startsWith("video/")
+        ? "videos"
+        : "images";
+
+      const fileName = `${folder}/${Date.now()}-${Math.round(
+        Math.random() * 1e9
+      )}-${safeName}${ext}`;
+
+      cb(null, fileName);
+    }
+  }),
+
   fileFilter,
+
   limits: {
     files: 11, // 10 foto + 1 video
-    fileSize: 200 * 1024 * 1024 // 200MB max per file
+    fileSize: 200 * 1024 * 1024
   }
 });
 

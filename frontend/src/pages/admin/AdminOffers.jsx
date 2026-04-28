@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { Link } from "react-router-dom";
+import AdminTopNav from "../../components/admin/AdminTopNav";
 
 const API = import.meta.env.VITE_API_URL || "http://localhost:5000";
 
@@ -305,170 +305,60 @@ export default function AdminOffers() {
   };
 
   return (
-    <div
-      style={{
-        minHeight: "100vh",
-        background: "#f8fafc",
-        padding: "28px 16px 50px"
-      }}
-    >
-      <div style={{ maxWidth: "1320px", margin: "0 auto" }}>
-        <div
-          style={{
-            background: "linear-gradient(135deg, #0f172a, #1d4ed8)",
-            padding: "22px",
-            borderRadius: "24px",
-            marginBottom: "24px",
-            boxShadow: "0 20px 50px rgba(15,23,42,0.18)"
-          }}
-        >
-          <div
-            style={{
-              display: "inline-flex",
-              padding: "8px 14px",
-              borderRadius: "999px",
-              background: "rgba(255,255,255,0.12)",
-              color: "#fff",
-              fontWeight: "700",
-              fontSize: "12px",
-              marginBottom: "12px"
-            }}
-          >
-            Admin • Oferta
+    <div style={styles.page}>
+      <div style={styles.container}>
+        <section style={styles.heroCard}>
+          <div style={styles.heroGlow} />
+
+          <div style={styles.heroTop} className="admin-offers-hero-top">
+            <div style={styles.heroLeft}>
+              <div style={styles.heroBadge}>Admin • Oferta</div>
+
+              <h1 style={styles.heroTitle}>Menaxho ofertat</h1>
+
+              <p style={styles.heroSubtitle}>
+                Krijo paketa profesionale me badge, kontakte direkte, ngjyra të
+                personalizuara dhe pika të detajuara që shfaqen bukur në public.
+              </p>
+
+              <div style={styles.heroNavWrap}>
+                <AdminTopNav />
+              </div>
+            </div>
+
+            <div style={styles.heroStatsWrap} className="admin-offers-hero-stats">
+              <StatCard label="Totali i ofertave" value={totalOffers} dark />
+              <StatCard label="Ofertat aktive" value={activeOffers} dark />
+              <StatCard label="Featured" value={highlightedOffers} dark />
+            </div>
           </div>
-
-          <h2
-            style={{
-              margin: "0 0 8px",
-              fontSize: "32px",
-              color: "#fff",
-              fontWeight: "800"
-            }}
-          >
-            Menaxho ofertat
-          </h2>
-
-          <p
-            style={{
-              margin: 0,
-              color: "rgba(255,255,255,0.82)",
-              fontSize: "15px",
-              lineHeight: 1.7
-            }}
-          >
-            Krijo paketa profesionale me badge, kontakte direkte, ngjyra të
-            personalizuara dhe pika të detajuara që shfaqen bukur në public.
-          </p>
-
-          <div
-            style={{
-              display: "flex",
-              gap: "12px",
-              flexWrap: "wrap",
-              marginTop: "18px"
-            }}
-          >
-            <Link to="/admin" style={navBtnStyle}>
-              Dashboard
-            </Link>
-
-            <Link to="/admin/offers" style={activeNavBtnStyle}>
-              Ofertat
-            </Link>
-
-            <Link to="/admin/stats" style={navBtnStyle}>
-              Statistikat
-            </Link>
-
-            <Link to="/admin/clients" style={navBtnStyle}>
-              Klientët
-            </Link>
-
-            <Link to="/admin/public-clients" style={navBtnStyle}>
-              Klientët tanë
-            </Link>
-
-            <Link to="/admin/payments" style={navBtnStyle}>
-              Pagesat
-            </Link>
-
-            <Link to="/admin/ad-requests" style={navBtnStyle}>
-              Reklamo me ne
-            </Link>
-          </div>
-        </div>
+        </section>
 
         {error ? (
-          <div
-            style={{
-              marginBottom: "20px",
-              background: "#fee2e2",
-              color: "#991b1b",
-              border: "1px solid #fecaca",
-              borderRadius: "16px",
-              padding: "14px 16px",
-              fontWeight: "600"
-            }}
-          >
+          <div style={styles.errorBox}>
             {error}
           </div>
         ) : null}
 
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
-            gap: "16px",
-            marginBottom: "24px"
-          }}
-        >
-          <StatCard label="Totali i ofertave" value={totalOffers} />
-          <StatCard label="Ofertat aktive" value={activeOffers} />
-          <StatCard label="Featured" value={highlightedOffers} />
-        </div>
-
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: "minmax(340px, 560px) 1fr",
-            gap: "22px",
-            alignItems: "start"
-          }}
-        >
-          <div
-            style={{
-              background: "#ffffff",
-              borderRadius: "24px",
-              padding: "24px",
-              boxShadow: "0 14px 40px rgba(15,23,42,0.07)",
-              border: "1px solid #e2e8f0"
-            }}
-          >
-            <div style={{ marginBottom: "18px" }}>
-              <h3
-                style={{
-                  margin: "0 0 6px",
-                  fontSize: "24px",
-                  fontWeight: "800",
-                  color: "#0f172a"
-                }}
-              >
+        <section style={styles.formSectionCard}>
+          <div style={styles.sectionTopRow}>
+            <div>
+              <h3 style={styles.sectionMainTitle}>
                 {editingId ? "Përditëso ofertën" : "Shto ofertë të re"}
               </h3>
 
-              <p
-                style={{
-                  margin: 0,
-                  color: "#64748b",
-                  fontSize: "14px",
-                  lineHeight: 1.6
-                }}
-              >
-                Plotëso të dhënat, kontaktet dhe zgjedh ngjyrat që oferta të
-                dalë gati për publikim.
+              <p style={styles.sectionMainSubtitle}>
+                Plotëso të dhënat, kontaktet, ngjyrat dhe pikat e ofertës në një
+                formë të pastër dhe shumë të organizuar.
               </p>
             </div>
 
+            <div style={styles.sectionMiniBadge}>
+              {editingId ? "Edit mode" : "New offer"}
+            </div>
+          </div>
+
+          <div style={styles.formInnerWrap}>
             <form onSubmit={handleSubmit} style={{ display: "grid", gap: "18px" }}>
               <SectionTitle title="Informacioni bazë" />
 
@@ -619,7 +509,6 @@ export default function AdminOffers() {
                 </div>
               </div>
 
-             
               <SectionTitle title="Kontaktet" />
 
               <div style={twoColGridStyle}>
@@ -721,14 +610,7 @@ export default function AdminOffers() {
                 + Shto pikë
               </button>
 
-              <div
-                style={{
-                  display: "flex",
-                  gap: "10px",
-                  flexWrap: "wrap",
-                  marginTop: "4px"
-                }}
-              >
+              <div style={styles.formActions}>
                 <button
                   type="submit"
                   style={primaryBtnStyle}
@@ -751,255 +633,269 @@ export default function AdminOffers() {
               </div>
             </form>
           </div>
+        </section>
 
-          <div
-            style={{
-              background: "#ffffff",
-              borderRadius: "24px",
-              padding: "24px",
-              boxShadow: "0 14px 40px rgba(15,23,42,0.07)",
-              border: "1px solid #e2e8f0"
-            }}
-          >
-            <div style={{ marginBottom: "18px" }}>
-              <h3
-                style={{
-                  margin: "0 0 6px",
-                  fontSize: "24px",
-                  fontWeight: "800",
-                  color: "#0f172a"
-                }}
-              >
-                Lista e ofertave
-              </h3>
+        <section style={styles.listSectionCard}>
+          <div style={styles.sectionTopRow}>
+            <div>
+              <h3 style={styles.sectionMainTitle}>Lista e ofertave</h3>
 
-              <p
-                style={{
-                  margin: 0,
-                  color: "#64748b",
-                  fontSize: "14px",
-                  lineHeight: 1.6
-                }}
-              >
+              <p style={styles.sectionMainSubtitle}>
                 Ofertat ekzistuese me status, badge, kontakte, ngjyra dhe pika të ruajtura.
               </p>
             </div>
 
-            {loading ? (
-              <div style={emptyStateStyle}>Duke i ngarkuar ofertat...</div>
-            ) : normalizedOffers.length === 0 ? (
-              <div style={emptyStateStyle}>Nuk ka oferta të regjistruara.</div>
-            ) : (
-              <div style={{ display: "grid", gap: "16px" }}>
-                {normalizedOffers.map((offer) => (
+            <div style={styles.sectionMiniBadge}>
+              {normalizedOffers.length} oferta
+            </div>
+          </div>
+
+          {loading ? (
+            <div style={emptyStateStyle}>Duke i ngarkuar ofertat...</div>
+          ) : normalizedOffers.length === 0 ? (
+            <div style={emptyStateStyle}>Nuk ka oferta të regjistruara.</div>
+          ) : (
+            <div className="offers-grid-pro" style={styles.offersGrid}>
+              {normalizedOffers.map((offer) => (
+                <div
+                  key={offer.id}
+                  style={{
+                    ...offerListCardStyle,
+                    background: offer.backgroundColor,
+                    color: offer.textColor
+                  }}
+                >
                   <div
-                    key={offer.id}
                     style={{
-                      ...offerListCardStyle,
-                      background: offer.backgroundColor,
-                      color: offer.textColor
+                      display: "flex",
+                      justifyContent: "space-between",
+                      gap: "12px",
+                      flexWrap: "wrap",
+                      marginBottom: "10px"
+                    }}
+                  >
+                    <div>
+                      <h4
+                        style={{
+                          margin: 0,
+                          fontSize: "20px",
+                          fontWeight: "800",
+                          color: offer.textColor
+                        }}
+                      >
+                        {offer.title}
+                      </h4>
+
+                      <p
+                        style={{
+                          margin: "6px 0 0",
+                          color: offer.textColor,
+                          opacity: 0.78,
+                          fontSize: "14px",
+                          lineHeight: 1.6
+                        }}
+                      >
+                        {offer.isActive ? "Aktive" : "Jo aktive"}
+                        {offer.activeUntil ? ` • deri më ${offer.activeUntil}` : ""}
+                        {offer.highlighted ? " • Featured" : ""}
+                      </p>
+                    </div>
+
+                    <div
+                      style={{
+                        fontWeight: "800",
+                        fontSize: "20px",
+                        color: offer.textColor
+                      }}
+                    >
+                      {offer.price ? `${offer.price} €` : "Pa çmim"}
+                    </div>
+                  </div>
+
+                  {offer.offerBadge ? (
+                    <div
+                      style={{
+                        ...inlineBadgeStyle,
+                        background: "rgba(255,255,255,0.18)",
+                        color: offer.textColor,
+                        border: "1px solid rgba(255,255,255,0.22)"
+                      }}
+                    >
+                      {offer.offerBadge}
+                    </div>
+                  ) : null}
+
+                  <p
+                    style={{
+                      margin: "0 0 14px",
+                      color: offer.textColor,
+                      opacity: 0.86,
+                      lineHeight: 1.7
+                    }}
+                  >
+                    {offer.description}
+                  </p>
+
+                  {(offer.phone || offer.whatsapp || offer.messenger) && (
+                    <div
+                      style={{
+                        display: "grid",
+                        gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))",
+                        gap: "10px",
+                        marginBottom: "14px"
+                      }}
+                    >
+                      {offer.phone ? <InfoTag label="Tel" value={offer.phone} /> : null}
+                      {offer.whatsapp ? (
+                        <InfoTag label="WhatsApp" value={offer.whatsapp} />
+                      ) : null}
+                      {offer.messenger ? (
+                        <InfoTag label="Messenger" value="Link aktiv" />
+                      ) : null}
+                    </div>
+                  )}
+
+                  <div
+                    style={{
+                      background: "rgba(255,255,255,0.42)",
+                      borderRadius: "14px",
+                      padding: "14px",
+                      marginBottom: "14px",
+                      border: "1px solid rgba(255,255,255,0.35)"
                     }}
                   >
                     <div
                       style={{
-                        display: "flex",
-                        justifyContent: "space-between",
-                        gap: "12px",
-                        flexWrap: "wrap",
-                        marginBottom: "10px"
+                        fontSize: "13px",
+                        fontWeight: "800",
+                        color: offer.textColor,
+                        marginBottom: "10px",
+                        textTransform: "uppercase",
+                        letterSpacing: "0.04em"
                       }}
                     >
-                      <div>
-                        <h4
-                          style={{
-                            margin: 0,
-                            fontSize: "20px",
-                            fontWeight: "800",
-                            color: offer.textColor
-                          }}
-                        >
-                          {offer.title}
-                        </h4>
-
-                        <p
-                          style={{
-                            margin: "6px 0 0",
-                            color: offer.textColor,
-                            opacity: 0.78,
-                            fontSize: "14px",
-                            lineHeight: 1.6
-                          }}
-                        >
-                          {offer.isActive ? "Aktive" : "Jo aktive"}
-                          {offer.activeUntil ? ` • deri më ${offer.activeUntil}` : ""}
-                          {offer.highlighted ? " • Featured" : ""}
-                        </p>
-                      </div>
-
-                      <div
-                        style={{
-                          fontWeight: "800",
-                          fontSize: "20px",
-                          color: offer.textColor
-                        }}
-                      >
-                        {offer.price ? `${offer.price} €` : "Pa çmim"}
-                      </div>
+                      Pikat e ofertës
                     </div>
 
-                    {offer.offerBadge ? (
-                      <div
-                        style={{
-                          ...inlineBadgeStyle,
-                          background: "rgba(255,255,255,0.18)",
-                          color: offer.textColor,
-                          border: "1px solid rgba(255,255,255,0.22)"
-                        }}
-                      >
-                        {offer.offerBadge}
-                      </div>
-                    ) : null}
-
-                    <p
-                      style={{
-                        margin: "0 0 14px",
-                        color: offer.textColor,
-                        opacity: 0.86,
-                        lineHeight: 1.7
-                      }}
-                    >
-                      {offer.description}
-                    </p>
-
-                    {(offer.phone || offer.whatsapp || offer.messenger) && (
-                      <div
-                        style={{
-                          display: "grid",
-                          gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))",
-                          gap: "10px",
-                          marginBottom: "14px"
-                        }}
-                      >
-                        {offer.phone ? (
-                          <InfoTag label="Tel" value={offer.phone} />
-                        ) : null}
-
-                        {offer.whatsapp ? (
-                          <InfoTag label="WhatsApp" value={offer.whatsapp} />
-                        ) : null}
-
-                        {offer.messenger ? (
-                          <InfoTag label="Messenger" value="Link aktiv" />
-                        ) : null}
-                      </div>
-                    )}
-
-                    <div
-                      style={{
-                        background: "rgba(255,255,255,0.42)",
-                        borderRadius: "14px",
-                        padding: "14px",
-                        marginBottom: "14px",
-                        border: "1px solid rgba(255,255,255,0.35)"
-                      }}
-                    >
-                      <div
-                        style={{
-                          fontSize: "13px",
-                          fontWeight: "800",
-                          color: offer.textColor,
-                          marginBottom: "10px",
-                          textTransform: "uppercase",
-                          letterSpacing: "0.04em"
-                        }}
-                      >
-                        Pikat e ofertës
-                      </div>
-
-                      {offer.offerFeatures && offer.offerFeatures.length ? (
-                        <div style={{ display: "grid", gap: "10px" }}>
-                          {offer.offerFeatures.map((feature, index) => (
-                            <div key={index}>
-                              <div
+                    {offer.offerFeatures && offer.offerFeatures.length ? (
+                      <div style={{ display: "grid", gap: "10px" }}>
+                        {offer.offerFeatures.map((feature, index) => (
+                          <div key={index}>
+                            <div
+                              style={{
+                                display: "flex",
+                                alignItems: "flex-start",
+                                gap: "10px"
+                              }}
+                            >
+                              <span
                                 style={{
-                                  display: "flex",
-                                  alignItems: "flex-start",
-                                  gap: "10px"
+                                  color: feature.included ? "#10b981" : "#ef4444",
+                                  fontWeight: "900",
+                                  minWidth: "16px",
+                                  marginTop: "1px"
                                 }}
                               >
-                                <span
-                                  style={{
-                                    color: feature.included ? "#10b981" : "#ef4444",
-                                    fontWeight: "900",
-                                    minWidth: "16px",
-                                    marginTop: "1px"
-                                  }}
-                                >
-                                  {feature.included ? "✓" : "✕"}
-                                </span>
+                                {feature.included ? "✓" : "✕"}
+                              </span>
 
-                                <span
-                                  style={{
-                                    color: offer.textColor,
-                                    fontWeight: "700",
-                                    lineHeight: 1.5
-                                  }}
-                                >
-                                  {feature.text}
-                                </span>
-                              </div>
-
-                              {feature.note ? (
-                                <div
-                                  style={{
-                                    marginLeft: "26px",
-                                    marginTop: "4px",
-                                    color: offer.textColor,
-                                    opacity: 0.72,
-                                    fontSize: "13px",
-                                    lineHeight: 1.5
-                                  }}
-                                >
-                                  {feature.note}
-                                </div>
-                              ) : null}
+                              <span
+                                style={{
+                                  color: offer.textColor,
+                                  fontWeight: "700",
+                                  lineHeight: 1.5
+                                }}
+                              >
+                                {feature.text}
+                              </span>
                             </div>
-                          ))}
-                        </div>
-                      ) : (
-                        <div style={{ color: offer.textColor, opacity: 0.78 }}>
-                          Nuk ka pika të shtuara.
-                        </div>
-                      )}
-                    </div>
 
-                    <div
-                      style={{
-                        display: "flex",
-                        gap: "10px",
-                        flexWrap: "wrap"
-                      }}
-                    >
-                      <button
-                        onClick={() => handleEdit(offer)}
-                        style={secondaryBtnStyle}
-                      >
-                        Ndrysho
-                      </button>
-
-                      <button
-                        onClick={() => handleDelete(offer.id)}
-                        style={dangerBtnStyle}
-                      >
-                        Fshij
-                      </button>
-                    </div>
+                            {feature.note ? (
+                              <div
+                                style={{
+                                  marginLeft: "26px",
+                                  marginTop: "4px",
+                                  color: offer.textColor,
+                                  opacity: 0.72,
+                                  fontSize: "13px",
+                                  lineHeight: 1.5
+                                }}
+                              >
+                                {feature.note}
+                              </div>
+                            ) : null}
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <div style={{ color: offer.textColor, opacity: 0.78 }}>
+                        Nuk ka pika të shtuara.
+                      </div>
+                    )}
                   </div>
-                ))}
-              </div>
-            )}
-          </div>
-        </div>
+
+                  <div
+                    style={{
+                      display: "flex",
+                      gap: "10px",
+                      flexWrap: "wrap"
+                    }}
+                  >
+                    <button
+                      onClick={() => handleEdit(offer)}
+                      style={secondaryBtnStyle}
+                    >
+                      Ndrysho
+                    </button>
+
+                    <button
+                      onClick={() => handleDelete(offer.id)}
+                      style={dangerBtnStyle}
+                    >
+                      Fshij
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+
+          <style>{`
+            @media (max-width: 1180px) {
+              .admin-offers-hero-top {
+                grid-template-columns: 1fr !important;
+              }
+
+              .admin-offers-hero-stats {
+                grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+              }
+            }
+
+            @media (min-width: 1700px) {
+              .offers-grid-pro {
+                grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+              }
+            }
+
+            @media (max-width: 1699px) and (min-width: 980px) {
+              .offers-grid-pro {
+                grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+              }
+            }
+
+            @media (max-width: 979px) {
+              .offers-grid-pro {
+                grid-template-columns: 1fr !important;
+              }
+            }
+
+            @media (max-width: 768px) {
+              .admin-offers-hero-stats {
+                grid-template-columns: 1fr !important;
+              }
+            }
+          `}</style>
+        </section>
       </div>
     </div>
   );
@@ -1022,22 +918,26 @@ function SectionTitle({ title }) {
   );
 }
 
-function StatCard({ label, value }) {
+function StatCard({ label, value, dark = false }) {
   return (
     <div
       style={{
-        background: "#fff",
+        background: dark ? "rgba(255,255,255,0.10)" : "#fff",
         borderRadius: "20px",
         padding: "18px",
-        boxShadow: "0 10px 30px rgba(15,23,42,0.06)",
-        border: "1px solid #e2e8f0"
+        border: dark ? "1px solid rgba(255,255,255,0.16)" : "1px solid #e2e8f0",
+        boxShadow: dark
+          ? "inset 0 1px 0 rgba(255,255,255,0.08)"
+          : "0 10px 30px rgba(15,23,42,0.06)",
+        backdropFilter: dark ? "blur(10px)" : "none"
       }}
     >
       <div
         style={{
-          color: "#64748b",
+          color: dark ? "rgba(255,255,255,0.80)" : "#64748b",
           fontSize: "14px",
-          marginBottom: "8px"
+          marginBottom: "8px",
+          fontWeight: "700"
         }}
       >
         {label}
@@ -1046,7 +946,7 @@ function StatCard({ label, value }) {
         style={{
           fontSize: "30px",
           fontWeight: "800",
-          color: "#0f172a"
+          color: dark ? "#ffffff" : "#0f172a"
         }}
       >
         {value}
@@ -1089,6 +989,175 @@ function InfoTag({ label, value }) {
   );
 }
 
+const styles = {
+  page: {
+    minHeight: "100vh",
+    background:
+      "linear-gradient(180deg, #f8fafc 0%, #eef4ff 45%, #f8fafc 100%)",
+    padding: "8px 14px 48px"
+  },
+
+  container: {
+    maxWidth: "1620px",
+    margin: "0 auto"
+  },
+
+  heroCard: {
+    position: "relative",
+    overflow: "hidden",
+    background: "linear-gradient(135deg, #0f172a 0%, #1d4ed8 100%)",
+    borderRadius: "30px",
+    padding: "26px",
+    marginBottom: "22px",
+    boxShadow: "0 22px 60px rgba(37,99,235,0.22)"
+  },
+
+  heroGlow: {
+    position: "absolute",
+    inset: 0,
+    pointerEvents: "none",
+    background:
+      "radial-gradient(circle at top right, rgba(255,255,255,0.16), transparent 24%), radial-gradient(circle at bottom left, rgba(255,255,255,0.08), transparent 20%)"
+  },
+
+  heroTop: {
+    position: "relative",
+    zIndex: 2,
+    display: "grid",
+    gridTemplateColumns: "minmax(0, 1.35fr) minmax(320px, 0.9fr)",
+    gap: "22px",
+    alignItems: "start"
+  },
+
+  heroLeft: {
+    minWidth: 0
+  },
+
+  heroBadge: {
+    display: "inline-flex",
+    alignItems: "center",
+    padding: "9px 14px",
+    borderRadius: "999px",
+    background: "rgba(255,255,255,0.12)",
+    border: "1px solid rgba(255,255,255,0.16)",
+    color: "#ffffff",
+    fontSize: "12px",
+    fontWeight: "800",
+    marginBottom: "14px"
+  },
+
+  heroTitle: {
+    margin: 0,
+    color: "#ffffff",
+    fontSize: "clamp(32px, 4vw, 52px)",
+    lineHeight: 1.02,
+    fontWeight: "900",
+    letterSpacing: "-0.04em"
+  },
+
+  heroSubtitle: {
+    margin: "14px 0 0",
+    color: "rgba(255,255,255,0.92)",
+    fontSize: "15px",
+    lineHeight: 1.8,
+    maxWidth: "760px",
+    fontWeight: "500"
+  },
+
+  heroNavWrap: {
+    marginTop: "22px"
+  },
+
+  heroStatsWrap: {
+    display: "grid",
+    gridTemplateColumns: "1fr 1fr 1fr",
+    gap: "12px",
+    alignSelf: "start"
+  },
+
+  errorBox: {
+    marginBottom: "20px",
+    background: "#fee2e2",
+    color: "#991b1b",
+    border: "1px solid #fecaca",
+    borderRadius: "16px",
+    padding: "14px 16px",
+    fontWeight: "600"
+  },
+
+  formSectionCard: {
+    background: "#ffffff",
+    borderRadius: "28px",
+    padding: "22px",
+    border: "1px solid #e2e8f0",
+    boxShadow: "0 18px 44px rgba(15,23,42,0.06)",
+    marginBottom: "22px"
+  },
+
+  listSectionCard: {
+    background: "#ffffff",
+    borderRadius: "28px",
+    padding: "22px",
+    border: "1px solid #e2e8f0",
+    boxShadow: "0 18px 44px rgba(15,23,42,0.06)"
+  },
+
+  sectionTopRow: {
+    display: "flex",
+    justifyContent: "space-between",
+    alignItems: "flex-start",
+    gap: "16px",
+    flexWrap: "wrap",
+    marginBottom: "18px"
+  },
+
+  sectionMainTitle: {
+    margin: 0,
+    fontSize: "24px",
+    fontWeight: "900",
+    color: "#0f172a",
+    letterSpacing: "-0.02em"
+  },
+
+  sectionMainSubtitle: {
+    margin: "8px 0 0",
+    color: "#64748b",
+    fontSize: "14px",
+    lineHeight: 1.7,
+    maxWidth: "760px"
+  },
+
+  sectionMiniBadge: {
+    padding: "10px 14px",
+    borderRadius: "999px",
+    background: "#eff6ff",
+    border: "1px solid #bfdbfe",
+    color: "#1d4ed8",
+    fontWeight: "800",
+    fontSize: "13px"
+  },
+
+  formInnerWrap: {
+    background: "linear-gradient(180deg, #ffffff 0%, #f8fbff 100%)",
+    border: "1px solid #e8eef8",
+    borderRadius: "24px",
+    padding: "16px"
+  },
+
+  formActions: {
+    display: "flex",
+    gap: "10px",
+    flexWrap: "wrap",
+    marginTop: "4px"
+  },
+
+  offersGrid: {
+    display: "grid",
+    gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
+    gap: "16px"
+  }
+};
+
 const emptyStateStyle = {
   padding: "34px 18px",
   textAlign: "center",
@@ -1096,23 +1165,6 @@ const emptyStateStyle = {
   borderRadius: "16px",
   color: "#64748b",
   background: "#f8fafc"
-};
-
-const navBtnStyle = {
-  textDecoration: "none",
-  background: "rgba(255,255,255,0.12)",
-  color: "#fff",
-  padding: "12px 18px",
-  borderRadius: "14px",
-  fontWeight: "700",
-  border: "1px solid rgba(255,255,255,0.14)"
-};
-
-const activeNavBtnStyle = {
-  ...navBtnStyle,
-  background: "#ffffff",
-  color: "#0f172a",
-  border: "1px solid #ffffff"
 };
 
 const labelStyle = {

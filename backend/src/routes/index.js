@@ -12,13 +12,21 @@ const adPlacementsRoutes = require("./adPlacements");
 const adCreativesRoutes = require("./adCreatives");
 const publicAdsRoutes = require("./publicAds");
 
+const analyticsRoutes = require("./analytics/publicAnalyticsRoutes");
+const adminAnalyticsRoutes = require("./analytics/adminAnalyticsRoutes");
+
 const upload = require("../config/multer");
 
+/* MAIN MODULES */
 router.use("/posts", postRoutes);
 router.use("/packages", packageRoutes);
 router.use("/clients", clientRoutes);
 router.use("/public-clients", publicClientsRoutes);
 router.use("/stats", statsRoutes);
+
+/* ANALYTICS */
+router.use("/analytics", analyticsRoutes);
+router.use("/admin/analytics", adminAnalyticsRoutes);
 
 /* ADS PLATFORM */
 router.use("/advertisers", advertisersRoutes);
@@ -28,7 +36,7 @@ router.use("/ad-creatives", adCreativesRoutes);
 router.use("/public/ads", publicAdsRoutes);
 
 /*
- SINGLE FILE (backward compatibility)
+ SINGLE FILE
 */
 router.post("/upload", upload.single("image"), (req, res) => {
   if (!req.file) {
@@ -37,15 +45,14 @@ router.post("/upload", upload.single("image"), (req, res) => {
     });
   }
 
-  res.json({
+  return res.json({
     message: "File uploaded successfully",
     imageUrl: `http://localhost:5000/uploads/${req.file.filename}`
   });
 });
 
 /*
- NEW MULTI MEDIA UPLOAD
- 10 images + 1 video
+ MULTI MEDIA UPLOAD
 */
 router.post(
   "/upload/media",

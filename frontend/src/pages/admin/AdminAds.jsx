@@ -1,6 +1,13 @@
 import React, { useEffect, useMemo, useState } from "react";
+import AdminTopNav from "../../components/admin/AdminTopNav";
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
+
+const PACKAGES = {
+  basic: ["home_in_feed_1"],
+  standard: ["home_in_feed_1", "realestate_inline"],
+  premium: ["home_header_banner", "sidebar_top", "mobile_sticky_bottom"]
+};
 
 const cardStyle = {
   background: "#ffffff",
@@ -72,6 +79,12 @@ export default function AdminAds() {
   const [editingAdvertiserId, setEditingAdvertiserId] = useState(null);
   const [editingCampaignId, setEditingCampaignId] = useState(null);
   const [editingCreativeId, setEditingCreativeId] = useState(null);
+
+  const [searchAdvertiser, setSearchAdvertiser] = useState("");
+  const [searchCampaign, setSearchCampaign] = useState("");
+  const [searchCreative, setSearchCreative] = useState("");
+  const [campaignStatusFilter, setCampaignStatusFilter] = useState("all");
+  const [campaignSort, setCampaignSort] = useState("priority_desc");
 
   const [message, setMessage] = useState("");
 
@@ -174,6 +187,94 @@ export default function AdminAds() {
     setEditingCreativeId(null);
   };
 
+  const filteredAdvertisers = useMemo(() => {
+    const q = searchAdvertiser.toLowerCase().trim();
+
+    return advertisers.filter((a) => {
+      const haystack = [
+        a.name,
+        a.company_name,
+        a.contact_person,
+        a.phone,
+        a.email,
+        a.whatsapp,
+        a.status
+      ]
+        .filter(Boolean)
+        .join(" ")
+        .toLowerCase();
+
+      return haystack.includes(q);
+    });
+  }, [advertisers, searchAdvertiser]);
+
+  const filteredCampaigns = useMemo(() => {
+    const q = searchCampaign.toLowerCase().trim();
+
+    let list = campaigns.filter((c) => {
+      const haystack = [
+        c.title,
+        c.advertiser_name,
+        c.campaign_type,
+        c.pricing_model,
+        c.status,
+        c.price,
+        c.priority
+      ]
+        .filter(Boolean)
+        .join(" ")
+        .toLowerCase();
+
+      const matchesSearch = haystack.includes(q);
+      const matchesStatus =
+        campaignStatusFilter === "all" || c.status === campaignStatusFilter;
+
+      return matchesSearch && matchesStatus;
+    });
+
+    if (campaignSort === "priority_desc") {
+      list = [...list].sort(
+        (a, b) => Number(b.priority || 0) - Number(a.priority || 0)
+      );
+    }
+
+    if (campaignSort === "priority_asc") {
+      list = [...list].sort(
+        (a, b) => Number(a.priority || 0) - Number(b.priority || 0)
+      );
+    }
+
+    if (campaignSort === "price_desc") {
+      list = [...list].sort((a, b) => Number(b.price || 0) - Number(a.price || 0));
+    }
+
+    if (campaignSort === "price_asc") {
+      list = [...list].sort((a, b) => Number(a.price || 0) - Number(b.price || 0));
+    }
+
+    return list;
+  }, [campaigns, searchCampaign, campaignStatusFilter, campaignSort]);
+
+  const filteredCreatives = useMemo(() => {
+    const q = searchCreative.toLowerCase().trim();
+
+    return creatives.filter((c) => {
+      const haystack = [
+        c.title,
+        c.headline,
+        c.description,
+        c.creative_type,
+        c.device_type,
+        c.campaign_id
+      ]
+        .filter(Boolean)
+        .join(" ")
+        .toLowerCase();
+
+      return haystack.includes(q);
+    });
+  }, [creatives, searchCreative]);
+
   const fetchAll = async () => {
     try {
       setLoading(true);
@@ -245,7 +346,6 @@ export default function AdminAds() {
 
   const handleCampaignChange = (e) => {
     const { name, value, type, checked } = e.target;
-
     setCampaignForm((prev) => ({
       ...prev,
       [name]: type === "checkbox" ? checked : value
@@ -254,7 +354,6 @@ export default function AdminAds() {
 
   const handleCreativeChange = (e) => {
     const { name, value, type, checked } = e.target;
-
     setCreativeForm((prev) => ({
       ...prev,
       [name]: type === "checkbox" ? checked : value,
@@ -264,7 +363,6 @@ export default function AdminAds() {
 
   const handleCreativeFileChange = (e) => {
     const file = e.target.files?.[0];
-
     if (!file) return;
 
     setCreativeForm((prev) => ({
@@ -277,7 +375,6 @@ export default function AdminAds() {
   const togglePlacement = (placementId) => {
     setCampaignForm((prev) => {
       const exists = prev.placements.includes(placementId);
-
       return {
         ...prev,
         placements: exists
@@ -285,6 +382,26 @@ export default function AdminAds() {
           : [...prev.placements, placementId]
       };
     });
+  };
+
+  const handlePackageSelect = (packageName) => {
+    const selectedSlugs = PACKAGES[packageName];
+    if (!selectedSlugs) return;
+
+    const selectedIds = placements
+      .filter((placement) => selectedSlugs.includes(placement.slug))
+      .map((placement) => placement.id);
+
+    setCampaignForm((prev) => ({
+      ...prev,
+      placements: selectedIds,
+      priority:
+        packageName === "premium"
+          ? 10
+          : packageName === "standard"
+            ? 5
+            : prev.priority
+    }));
   };
 
   const submitAdvertiser = async (e) => {
@@ -302,9 +419,7 @@ export default function AdminAds() {
 
       const res = await fetch(url, {
         method,
-        headers: {
-          "Content-Type": "application/json"
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(advertiserForm)
       });
 
@@ -354,9 +469,7 @@ export default function AdminAds() {
 
       const res = await fetch(url, {
         method,
-        headers: {
-          "Content-Type": "application/json"
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload)
       });
 
@@ -396,7 +509,6 @@ export default function AdminAds() {
       }
 
       const formData = new FormData();
-
       formData.append("campaign_id", creativeForm.campaign_id);
       formData.append("creative_type", creativeForm.creative_type);
       formData.append("title", creativeForm.title);
@@ -465,17 +577,13 @@ export default function AdminAds() {
       status: advertiser.status || "active"
     });
 
-    window.scrollTo({
-      top: 0,
-      behavior: "smooth"
-    });
+    window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
   const handleDeleteAdvertiser = async (id) => {
     const confirmed = window.confirm(
       "A je i sigurt që don me fshi këtë reklamues?"
     );
-
     if (!confirmed) return;
 
     try {
@@ -528,17 +636,13 @@ export default function AdminAds() {
         : []
     });
 
-    window.scrollTo({
-      top: 0,
-      behavior: "smooth"
-    });
+    window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
   const handleDeleteCampaign = async (id) => {
     const confirmed = window.confirm(
       "A je i sigurt që don me fshi këtë fushatë?"
     );
-
     if (!confirmed) return;
 
     try {
@@ -585,17 +689,13 @@ export default function AdminAds() {
       is_primary: !!creative.is_primary
     });
 
-    window.scrollTo({
-      top: 0,
-      behavior: "smooth"
-    });
+    window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
   const handleDeleteCreative = async (id) => {
     const confirmed = window.confirm(
       "A je i sigurt që don me fshi këtë creative?"
     );
-
     if (!confirmed) return;
 
     try {
@@ -624,202 +724,49 @@ export default function AdminAds() {
   };
 
   return (
-    <div
-      style={{
-        minHeight: "100vh",
-        background: "#f8fafc",
-        padding: "24px 16px 60px"
-      }}
-    >
-      <div
-        style={{
-          maxWidth: "1400px",
-          margin: "0 auto"
-        }}
-      >
-        <div
-          style={{
-            ...cardStyle,
-            padding: "24px",
-            marginBottom: "20px",
-            background:
-              "linear-gradient(135deg, #ffffff 0%, #f8fafc 55%, #eef2ff 100%)"
-          }}
-        >
-          <div
-            style={{
-              display: "flex",
-              justifyContent: "space-between",
-              gap: "16px",
-              flexWrap: "wrap",
-              alignItems: "center"
-            }}
-          >
-            <div>
-              <div
-                style={{
-                  display: "inline-flex",
-                  padding: "7px 12px",
-                  borderRadius: "999px",
-                  background: "rgba(37,99,235,0.08)",
-                  color: "#1d4ed8",
-                  fontSize: "12px",
-                  fontWeight: 800,
-                  textTransform: "uppercase",
-                  letterSpacing: "0.05em",
-                  marginBottom: "12px"
-                }}
-              >
-                Ads Platform
-              </div>
+    <div style={styles.page}>
+      <div style={styles.container}>
+        <section style={styles.heroCard}>
+          <div style={styles.heroGlow} />
 
-              <h1
-                style={{
-                  margin: 0,
-                  fontSize: "clamp(28px, 4vw, 42px)",
-                  lineHeight: 1.05,
-                  color: "#0f172a"
-                }}
-              >
-                Menaxhimi i reklamave
-              </h1>
+          <div style={styles.heroTop} className="admin-ads-hero-top">
+            <div style={styles.heroLeft}>
+              <div style={styles.heroBadge}>Ads Platform</div>
 
-              <p
-                style={{
-                  margin: "10px 0 0",
-                  color: "#475569",
-                  fontSize: "15px",
-                  maxWidth: "760px",
-                  lineHeight: 1.7
-                }}
-              >
+              <h1 style={styles.heroTitle}>Menaxhimi i reklamave</h1>
+
+              <p style={styles.heroSubtitle}>
                 Këtu menaxhon reklamuesit, fushatat, creatives dhe placement-et
                 për krejt portalin.
               </p>
+
+              <div style={styles.heroNavWrap}>
+                <AdminTopNav />
+              </div>
             </div>
 
-            <div
-              style={{
-                display: "grid",
-                gridTemplateColumns: "repeat(4, minmax(120px, 1fr))",
-                gap: "12px",
-                width: "100%",
-                maxWidth: "560px"
-              }}
-            >
-              {[
-                { label: "Reklamues", value: advertisers.length },
-                { label: "Fushata", value: campaigns.length },
-                { label: "Creatives", value: creatives.length },
-                { label: "Placements", value: placements.length }
-              ].map((item) => (
-                <div
-                  key={item.label}
-                  style={{
-                    background: "#fff",
-                    border: "1px solid rgba(15,23,42,0.06)",
-                    borderRadius: "18px",
-                    padding: "16px"
-                  }}
-                >
-                  <div
-                    style={{
-                      fontSize: "12px",
-                      color: "#64748b",
-                      fontWeight: 700,
-                      marginBottom: "8px"
-                    }}
-                  >
-                    {item.label}
-                  </div>
-                  <div
-                    style={{
-                      fontSize: "26px",
-                      fontWeight: 900,
-                      color: "#0f172a"
-                    }}
-                  >
-                    {item.value}
-                  </div>
-                </div>
-              ))}
+            <div style={styles.heroStatsWrap} className="admin-ads-hero-stats">
+              <StatCard label="Reklamues" value={advertisers.length} dark />
+              <StatCard label="Fushata" value={campaigns.length} dark />
+              <StatCard label="Creatives" value={creatives.length} dark />
+              <StatCard label="Placements" value={placements.length} dark />
             </div>
           </div>
 
-          {message && (
-            <div
-              style={{
-                marginTop: "18px",
-                padding: "14px 16px",
-                borderRadius: "14px",
-                background: "#fff",
-                border: "1px solid rgba(15,23,42,0.08)",
-                color: "#0f172a",
-                fontWeight: 700
-              }}
-            >
-              {message}
-            </div>
-          )}
-        </div>
+          {message ? <div style={styles.messageBox}>{message}</div> : null}
+        </section>
 
-        <div
-          className="admin-ads-layout"
-          style={{
-            display: "grid",
-            gridTemplateColumns: "1.05fr 1fr",
-            gap: "20px",
-            alignItems: "start"
-          }}
-        >
-          <div
-            style={{
-              display: "grid",
-              gap: "20px"
-            }}
-          >
-            <section style={{ ...cardStyle, padding: "22px" }}>
-              <div
-                style={{
-                  display: "flex",
-                  justifyContent: "space-between",
-                  gap: "12px",
-                  flexWrap: "wrap",
-                  alignItems: "center",
-                  marginBottom: "16px"
-                }}
-              >
-                <h2
-                  style={{
-                    margin: 0,
-                    fontSize: "22px",
-                    color: "#0f172a"
-                  }}
-                >
-                  {editingAdvertiserId ? "Edito reklamuesin" : "Shto reklamues"}
-                </h2>
+        <div className="admin-ads-layout" style={styles.mainLayout}>
+          <div style={styles.leftColumn}>
+            <section style={styles.sectionCard}>
+              <SectionHeader
+                title={editingAdvertiserId ? "Edito reklamuesin" : "Shto reklamues"}
+                actionLabel={editingAdvertiserId ? "Anulo editimin" : null}
+                onAction={editingAdvertiserId ? resetAdvertiserForm : null}
+              />
 
-                {editingAdvertiserId ? (
-                  <button
-                    type="button"
-                    style={buttonSecondary}
-                    onClick={resetAdvertiserForm}
-                  >
-                    Anulo editimin
-                  </button>
-                ) : null}
-              </div>
-
-              <form
-                onSubmit={submitAdvertiser}
-                style={{
-                  display: "grid",
-                  gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
-                  gap: "14px"
-                }}
-              >
-                <div>
-                  <label style={labelStyle}>Emri</label>
+              <form onSubmit={submitAdvertiser} style={styles.twoColForm}>
+                <Field label="Emri">
                   <input
                     style={inputStyle}
                     name="name"
@@ -827,84 +774,72 @@ export default function AdminAds() {
                     onChange={handleAdvertiserChange}
                     required
                   />
-                </div>
+                </Field>
 
-                <div>
-                  <label style={labelStyle}>Kompania</label>
+                <Field label="Kompania">
                   <input
                     style={inputStyle}
                     name="company_name"
                     value={advertiserForm.company_name}
                     onChange={handleAdvertiserChange}
                   />
-                </div>
+                </Field>
 
-                <div>
-                  <label style={labelStyle}>Kontakt person</label>
+                <Field label="Kontakt person">
                   <input
                     style={inputStyle}
                     name="contact_person"
                     value={advertiserForm.contact_person}
                     onChange={handleAdvertiserChange}
                   />
-                </div>
+                </Field>
 
-                <div>
-                  <label style={labelStyle}>Telefoni</label>
+                <Field label="Telefoni">
                   <input
                     style={inputStyle}
                     name="phone"
                     value={advertiserForm.phone}
                     onChange={handleAdvertiserChange}
                   />
-                </div>
+                </Field>
 
-                <div>
-                  <label style={labelStyle}>Email</label>
+                <Field label="Email">
                   <input
                     style={inputStyle}
                     name="email"
                     value={advertiserForm.email}
                     onChange={handleAdvertiserChange}
                   />
-                </div>
+                </Field>
 
-                <div>
-                  <label style={labelStyle}>WhatsApp</label>
+                <Field label="WhatsApp">
                   <input
                     style={inputStyle}
                     name="whatsapp"
                     value={advertiserForm.whatsapp}
                     onChange={handleAdvertiserChange}
                   />
-                </div>
+                </Field>
 
-                <div style={{ gridColumn: "1 / -1" }}>
-                  <label style={labelStyle}>Adresa</label>
+                <Field label="Adresa" full>
                   <input
                     style={inputStyle}
                     name="address"
                     value={advertiserForm.address}
                     onChange={handleAdvertiserChange}
                   />
-                </div>
+                </Field>
 
-                <div style={{ gridColumn: "1 / -1" }}>
-                  <label style={labelStyle}>Shënime</label>
+                <Field label="Shënime" full>
                   <textarea
-                    style={{
-                      ...inputStyle,
-                      minHeight: "100px",
-                      resize: "vertical"
-                    }}
+                    style={{ ...inputStyle, minHeight: "100px", resize: "vertical" }}
                     name="notes"
                     value={advertiserForm.notes}
                     onChange={handleAdvertiserChange}
                   />
-                </div>
+                </Field>
 
-                <div>
-                  <label style={labelStyle}>Status</label>
+                <Field label="Status">
                   <select
                     style={inputStyle}
                     name="status"
@@ -914,19 +849,10 @@ export default function AdminAds() {
                     <option value="active">active</option>
                     <option value="inactive">inactive</option>
                   </select>
-                </div>
+                </Field>
 
-                <div
-                  style={{
-                    display: "flex",
-                    alignItems: "end"
-                  }}
-                >
-                  <button
-                    type="submit"
-                    style={buttonPrimary}
-                    disabled={savingAdvertiser}
-                  >
+                <div style={styles.formActionWrap}>
+                  <button type="submit" style={buttonPrimary} disabled={savingAdvertiser}>
                     {savingAdvertiser
                       ? "Duke ruajtur..."
                       : editingAdvertiserId
@@ -937,48 +863,15 @@ export default function AdminAds() {
               </form>
             </section>
 
-            <section style={{ ...cardStyle, padding: "22px" }}>
-              <div
-                style={{
-                  display: "flex",
-                  justifyContent: "space-between",
-                  gap: "12px",
-                  flexWrap: "wrap",
-                  alignItems: "center",
-                  marginBottom: "16px"
-                }}
-              >
-                <h2
-                  style={{
-                    margin: 0,
-                    fontSize: "22px",
-                    color: "#0f172a"
-                  }}
-                >
-                  {editingCampaignId ? "Edito fushatë" : "Shto fushatë"}
-                </h2>
+            <section style={styles.sectionCard}>
+              <SectionHeader
+                title={editingCampaignId ? "Edito fushatë" : "Shto fushatë"}
+                actionLabel={editingCampaignId ? "Anulo editimin" : null}
+                onAction={editingCampaignId ? resetCampaignForm : null}
+              />
 
-                {editingCampaignId ? (
-                  <button
-                    type="button"
-                    style={buttonSecondary}
-                    onClick={resetCampaignForm}
-                  >
-                    Anulo editimin
-                  </button>
-                ) : null}
-              </div>
-
-              <form
-                onSubmit={submitCampaign}
-                style={{
-                  display: "grid",
-                  gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
-                  gap: "14px"
-                }}
-              >
-                <div>
-                  <label style={labelStyle}>Reklamuesi</label>
+              <form onSubmit={submitCampaign} style={styles.twoColForm}>
+                <Field label="Reklamuesi">
                   <select
                     style={inputStyle}
                     name="advertiser_id"
@@ -993,10 +886,9 @@ export default function AdminAds() {
                       </option>
                     ))}
                   </select>
-                </div>
+                </Field>
 
-                <div>
-                  <label style={labelStyle}>Titulli</label>
+                <Field label="Titulli">
                   <input
                     style={inputStyle}
                     name="title"
@@ -1004,24 +896,18 @@ export default function AdminAds() {
                     onChange={handleCampaignChange}
                     required
                   />
-                </div>
+                </Field>
 
-                <div style={{ gridColumn: "1 / -1" }}>
-                  <label style={labelStyle}>Përshkrimi</label>
+                <Field label="Përshkrimi" full>
                   <textarea
-                    style={{
-                      ...inputStyle,
-                      minHeight: "100px",
-                      resize: "vertical"
-                    }}
+                    style={{ ...inputStyle, minHeight: "100px", resize: "vertical" }}
                     name="description"
                     value={campaignForm.description}
                     onChange={handleCampaignChange}
                   />
-                </div>
+                </Field>
 
-                <div>
-                  <label style={labelStyle}>Campaign type</label>
+                <Field label="Campaign type">
                   <select
                     style={inputStyle}
                     name="campaign_type"
@@ -1035,10 +921,9 @@ export default function AdminAds() {
                     <option value="sticky">sticky</option>
                     <option value="hero">hero</option>
                   </select>
-                </div>
+                </Field>
 
-                <div>
-                  <label style={labelStyle}>Pricing model</label>
+                <Field label="Pricing model">
                   <select
                     style={inputStyle}
                     name="pricing_model"
@@ -1049,21 +934,20 @@ export default function AdminAds() {
                     <option value="cpm">cpm</option>
                     <option value="cpc">cpc</option>
                   </select>
-                </div>
+                </Field>
 
-                <div>
-                  <label style={labelStyle}>Çmimi</label>
+                <Field label="Çmimi">
                   <input
                     style={inputStyle}
                     name="price"
                     type="number"
                     value={campaignForm.price}
                     onChange={handleCampaignChange}
+                    placeholder="Vendose çmimin vetë"
                   />
-                </div>
+                </Field>
 
-                <div>
-                  <label style={labelStyle}>Prioriteti</label>
+                <Field label="Prioriteti">
                   <input
                     style={inputStyle}
                     name="priority"
@@ -1071,10 +955,9 @@ export default function AdminAds() {
                     value={campaignForm.priority}
                     onChange={handleCampaignChange}
                   />
-                </div>
+                </Field>
 
-                <div>
-                  <label style={labelStyle}>Data fillimit</label>
+                <Field label="Data fillimit">
                   <input
                     style={inputStyle}
                     name="start_date"
@@ -1082,10 +965,9 @@ export default function AdminAds() {
                     value={campaignForm.start_date}
                     onChange={handleCampaignChange}
                   />
-                </div>
+                </Field>
 
-                <div>
-                  <label style={labelStyle}>Data mbarimit</label>
+                <Field label="Data mbarimit">
                   <input
                     style={inputStyle}
                     name="end_date"
@@ -1093,10 +975,9 @@ export default function AdminAds() {
                     value={campaignForm.end_date}
                     onChange={handleCampaignChange}
                   />
-                </div>
+                </Field>
 
-                <div>
-                  <label style={labelStyle}>Status</label>
+                <Field label="Status">
                   <select
                     style={inputStyle}
                     name="status"
@@ -1108,98 +989,82 @@ export default function AdminAds() {
                     <option value="paused">paused</option>
                     <option value="expired">expired</option>
                   </select>
-                </div>
+                </Field>
 
-                <div>
-                  <label style={labelStyle}>Target URL</label>
+                <Field label="Target URL">
                   <input
                     style={inputStyle}
                     name="target_url"
                     value={campaignForm.target_url}
                     onChange={handleCampaignChange}
                   />
-                </div>
+                </Field>
 
-                <div style={{ gridColumn: "1 / -1" }}>
-                  <label style={labelStyle}>Shënime</label>
+                <Field label="Shënime" full>
                   <textarea
-                    style={{
-                      ...inputStyle,
-                      minHeight: "90px",
-                      resize: "vertical"
-                    }}
+                    style={{ ...inputStyle, minHeight: "90px", resize: "vertical" }}
                     name="notes"
                     value={campaignForm.notes}
                     onChange={handleCampaignChange}
                   />
-                </div>
+                </Field>
 
-                <div
-                  style={{
-                    gridColumn: "1 / -1",
-                    border: "1px solid rgba(15,23,42,0.08)",
-                    borderRadius: "18px",
-                    padding: "16px",
-                    background: "#f8fafc"
-                  }}
-                >
-                  <div
-                    style={{
-                      fontSize: "14px",
-                      fontWeight: 800,
-                      color: "#0f172a",
-                      marginBottom: "12px"
-                    }}
-                  >
-                    Zgjedh placement-et
+                <div style={styles.packageBox}>
+                  <div style={styles.packageTitle}>Zgjedh paketën</div>
+                  <div style={styles.packageSubtitle}>
+                    Paketa zgjedh placement-et automatikisht. Çmimin e vendos admini vetë.
                   </div>
 
-                  <div
-                    style={{
-                      display: "grid",
-                      gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
-                      gap: "16px"
-                    }}
-                  >
-                    {Object.keys(placementGroups).map((group) => (
-                      <div
-                        key={group}
-                        style={{
-                          background: "#fff",
-                          borderRadius: "16px",
-                          border: "1px solid rgba(15,23,42,0.06)",
-                          padding: "14px"
-                        }}
-                      >
-                        <div
-                          style={{
-                            fontSize: "12px",
-                            fontWeight: 900,
-                            letterSpacing: "0.05em",
-                            textTransform: "uppercase",
-                            color: "#64748b",
-                            marginBottom: "10px"
-                          }}
-                        >
-                          {group}
-                        </div>
+                  <div style={styles.packageGrid}>
+                    <button
+                      type="button"
+                      style={styles.packageButton}
+                      onClick={() => handlePackageSelect("basic")}
+                    >
+                      <span style={styles.packageEmoji}>🟢</span>
+                      <strong>Basic</strong>
+                      <small>Home mid</small>
+                    </button>
 
-                        <div
-                          style={{
-                            display: "grid",
-                            gap: "10px"
-                          }}
-                        >
+                    <button
+                      type="button"
+                      style={styles.packageButton}
+                      onClick={() => handlePackageSelect("standard")}
+                    >
+                      <span style={styles.packageEmoji}>🟡</span>
+                      <strong>Standard</strong>
+                      <small>Home mid + kategori</small>
+                    </button>
+
+                    <button
+                      type="button"
+                      style={{
+                        ...styles.packageButton,
+                        background: "linear-gradient(135deg, #0f172a, #1e293b)",
+                        color: "#fff"
+                      }}
+                      onClick={() => handlePackageSelect("premium")}
+                    >
+                      <span style={styles.packageEmoji}>🔴</span>
+                      <strong>Premium</strong>
+                      <small style={{ color: "rgba(255,255,255,.78)" }}>
+                        Header + Sidebar + Mobile
+                      </small>
+                    </button>
+                  </div>
+                </div>
+
+                <div style={styles.placementBox}>
+                  <div style={styles.placementTitle}>Zgjedh placement-et</div>
+
+                  <div style={styles.placementGroupsGrid}>
+                    {Object.keys(placementGroups).map((group) => (
+                      <div key={group} style={styles.placementGroupCard}>
+                        <div style={styles.placementGroupLabel}>{group}</div>
+
+                        <div style={styles.placementChecks}>
                           {placementGroups[group].map((item) => (
-                            <label
-                              key={item.id}
-                              style={{
-                                display: "flex",
-                                gap: "10px",
-                                alignItems: "flex-start",
-                                cursor: "pointer"
-                              }}
-                            >
+                            <label key={item.id} style={styles.placementCheckLabel}>
                               <input
                                 type="checkbox"
                                 checked={campaignForm.placements.includes(item.id)}
@@ -1207,23 +1072,8 @@ export default function AdminAds() {
                                 style={{ marginTop: "3px" }}
                               />
                               <div>
-                                <div
-                                  style={{
-                                    fontWeight: 700,
-                                    color: "#0f172a",
-                                    fontSize: "14px"
-                                  }}
-                                >
-                                  {item.name}
-                                </div>
-                                <div
-                                  style={{
-                                    color: "#64748b",
-                                    fontSize: "12px"
-                                  }}
-                                >
-                                  {item.slug}
-                                </div>
+                                <div style={styles.placementName}>{item.name}</div>
+                                <div style={styles.placementSlug}>{item.slug}</div>
                               </div>
                             </label>
                           ))}
@@ -1233,23 +1083,8 @@ export default function AdminAds() {
                   </div>
                 </div>
 
-                <div
-                  style={{
-                    gridColumn: "1 / -1",
-                    display: "flex",
-                    gap: "10px",
-                    flexWrap: "wrap"
-                  }}
-                >
-                  <label
-                    style={{
-                      display: "flex",
-                      alignItems: "center",
-                      gap: "10px",
-                      fontWeight: 700,
-                      color: "#334155"
-                    }}
-                  >
+                <div style={styles.fullWidthRow}>
+                  <label style={styles.inlineCheckLabel}>
                     <input
                       type="checkbox"
                       name="open_in_new_tab"
@@ -1260,19 +1095,8 @@ export default function AdminAds() {
                   </label>
                 </div>
 
-                <div
-                  style={{
-                    gridColumn: "1 / -1",
-                    display: "flex",
-                    gap: "10px",
-                    flexWrap: "wrap"
-                  }}
-                >
-                  <button
-                    type="submit"
-                    style={buttonPrimary}
-                    disabled={savingCampaign}
-                  >
+                <div style={styles.fullWidthRow}>
+                  <button type="submit" style={buttonPrimary} disabled={savingCampaign}>
                     {savingCampaign
                       ? "Duke ruajtur..."
                       : editingCampaignId
@@ -1283,48 +1107,15 @@ export default function AdminAds() {
               </form>
             </section>
 
-            <section style={{ ...cardStyle, padding: "22px" }}>
-              <div
-                style={{
-                  display: "flex",
-                  justifyContent: "space-between",
-                  gap: "12px",
-                  flexWrap: "wrap",
-                  alignItems: "center",
-                  marginBottom: "16px"
-                }}
-              >
-                <h2
-                  style={{
-                    margin: 0,
-                    fontSize: "22px",
-                    color: "#0f172a"
-                  }}
-                >
-                  {editingCreativeId ? "Edito creative" : "Shto creative"}
-                </h2>
+            <section style={styles.sectionCard}>
+              <SectionHeader
+                title={editingCreativeId ? "Edito creative" : "Shto creative"}
+                actionLabel={editingCreativeId ? "Anulo editimin" : null}
+                onAction={editingCreativeId ? resetCreativeForm : null}
+              />
 
-                {editingCreativeId ? (
-                  <button
-                    type="button"
-                    style={buttonSecondary}
-                    onClick={resetCreativeForm}
-                  >
-                    Anulo editimin
-                  </button>
-                ) : null}
-              </div>
-
-              <form
-                onSubmit={submitCreative}
-                style={{
-                  display: "grid",
-                  gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
-                  gap: "14px"
-                }}
-              >
-                <div>
-                  <label style={labelStyle}>Campaign</label>
+              <form onSubmit={submitCreative} style={styles.twoColForm}>
+                <Field label="Campaign">
                   <select
                     style={inputStyle}
                     name="campaign_id"
@@ -1339,10 +1130,9 @@ export default function AdminAds() {
                       </option>
                     ))}
                   </select>
-                </div>
+                </Field>
 
-                <div>
-                  <label style={labelStyle}>Creative type</label>
+                <Field label="Creative type">
                   <select
                     style={inputStyle}
                     name="creative_type"
@@ -1354,20 +1144,18 @@ export default function AdminAds() {
                     <option value="html">html</option>
                     <option value="text">text</option>
                   </select>
-                </div>
+                </Field>
 
-                <div>
-                  <label style={labelStyle}>Titulli</label>
+                <Field label="Titulli">
                   <input
                     style={inputStyle}
                     name="title"
                     value={creativeForm.title}
                     onChange={handleCreativeChange}
                   />
-                </div>
+                </Field>
 
-                <div>
-                  <label style={labelStyle}>Device type</label>
+                <Field label="Device type">
                   <select
                     style={inputStyle}
                     name="device_type"
@@ -1378,34 +1166,18 @@ export default function AdminAds() {
                     <option value="desktop">desktop</option>
                     <option value="mobile">mobile</option>
                   </select>
-                </div>
+                </Field>
 
-                <div style={{ gridColumn: "1 / -1" }}>
-                  <label style={labelStyle}>Ngarko Banner</label>
-                  <input
-                    type="file"
-                    accept="image/*"
-                    onChange={handleCreativeFileChange}
-                  />
-
-                  {creativeForm.image_file && (
-                    <div
-                      style={{
-                        marginTop: "10px",
-                        padding: "10px 14px",
-                        background: "#eef2ff",
-                        borderRadius: "12px",
-                        fontWeight: 700,
-                        color: "#1e293b"
-                      }}
-                    >
+                <Field label="Ngarko Banner" full>
+                  <input type="file" accept="image/*" onChange={handleCreativeFileChange} />
+                  {creativeForm.image_file ? (
+                    <div style={styles.selectedFileBox}>
                       Zgjedhur: {creativeForm.image_file.name}
                     </div>
-                  )}
-                </div>
+                  ) : null}
+                </Field>
 
-                <div style={{ gridColumn: "1 / -1" }}>
-                  <label style={labelStyle}>Image URL (opsionale)</label>
+                <Field label="Image URL (opsionale)" full>
                   <input
                     style={inputStyle}
                     name="image_url"
@@ -1413,93 +1185,64 @@ export default function AdminAds() {
                     onChange={handleCreativeChange}
                     placeholder="Përdore vetëm nëse s’po ngarkon file"
                   />
-                </div>
+                </Field>
 
-                <div style={{ gridColumn: "1 / -1" }}>
-                  <label style={labelStyle}>Video URL</label>
+                <Field label="Video URL" full>
                   <input
                     style={inputStyle}
                     name="video_url"
                     value={creativeForm.video_url}
                     onChange={handleCreativeChange}
                   />
-                </div>
+                </Field>
 
-                <div style={{ gridColumn: "1 / -1" }}>
-                  <label style={labelStyle}>HTML Code</label>
+                <Field label="HTML Code" full>
                   <textarea
-                    style={{
-                      ...inputStyle,
-                      minHeight: "100px",
-                      resize: "vertical"
-                    }}
+                    style={{ ...inputStyle, minHeight: "100px", resize: "vertical" }}
                     name="html_code"
                     value={creativeForm.html_code}
                     onChange={handleCreativeChange}
                   />
-                </div>
+                </Field>
 
-                <div style={{ gridColumn: "1 / -1" }}>
-                  <label style={labelStyle}>Headline</label>
+                <Field label="Headline" full>
                   <input
                     style={inputStyle}
                     name="headline"
                     value={creativeForm.headline}
                     onChange={handleCreativeChange}
                   />
-                </div>
+                </Field>
 
-                <div style={{ gridColumn: "1 / -1" }}>
-                  <label style={labelStyle}>Description</label>
+                <Field label="Description" full>
                   <textarea
-                    style={{
-                      ...inputStyle,
-                      minHeight: "100px",
-                      resize: "vertical"
-                    }}
+                    style={{ ...inputStyle, minHeight: "100px", resize: "vertical" }}
                     name="description"
                     value={creativeForm.description}
                     onChange={handleCreativeChange}
                   />
-                </div>
+                </Field>
 
-                <div>
-                  <label style={labelStyle}>Button text</label>
+                <Field label="Button text">
                   <input
                     style={inputStyle}
                     name="button_text"
                     value={creativeForm.button_text}
                     onChange={handleCreativeChange}
                   />
-                </div>
+                </Field>
 
-                <div>
-                  <label style={labelStyle}>Button link</label>
+                <Field label="Button link">
                   <input
                     style={inputStyle}
                     name="button_link"
                     value={creativeForm.button_link}
                     onChange={handleCreativeChange}
                   />
-                </div>
+                </Field>
 
-                <div
-                  style={{
-                    gridColumn: "1 / -1",
-                    display: "flex",
-                    gap: "10px",
-                    flexWrap: "wrap"
-                  }}
-                >
-                  <label
-                    style={{
-                      display: "flex",
-                      alignItems: "center",
-                      gap: "10px",
-                      fontWeight: 700,
-                      color: "#334155"
-                    }}
-                  >
+                <div style={styles.fullWidthRow}>
+                  <label style={styles.inlineCheckLabel}>
                     <input
                       type="checkbox"
                       name="is_primary"
@@ -1510,19 +1253,8 @@ export default function AdminAds() {
                   </label>
                 </div>
 
-                <div
-                  style={{
-                    gridColumn: "1 / -1",
-                    display: "flex",
-                    gap: "10px",
-                    flexWrap: "wrap"
-                  }}
-                >
-                  <button
-                    type="submit"
-                    style={buttonPrimary}
-                    disabled={savingCreative}
-                  >
+                <div style={styles.fullWidthRow}>
+                  <button type="submit" style={buttonPrimary} disabled={savingCreative}>
                     {savingCreative
                       ? "Duke ruajtur..."
                       : editingCreativeId
@@ -1534,95 +1266,38 @@ export default function AdminAds() {
             </section>
           </div>
 
-          <div
-            style={{
-              display: "grid",
-              gap: "20px"
-            }}
-          >
-            <section style={{ ...cardStyle, padding: "22px" }}>
-              <h2
-                style={{
-                  margin: "0 0 16px",
-                  fontSize: "22px",
-                  color: "#0f172a"
-                }}
-              >
-                Reklamuesit
-              </h2>
+          <div style={styles.rightColumn}>
+            <section style={styles.sectionCard}>
+              <h2 style={styles.sideTitle}>Reklamuesit</h2>
+
+              <input
+                style={{ ...inputStyle, marginBottom: "12px" }}
+                placeholder="Kërko reklamues..."
+                value={searchAdvertiser}
+                onChange={(e) => setSearchAdvertiser(e.target.value)}
+              />
 
               {loading ? (
-                <div style={{ color: "#64748b" }}>Duke ngarkuar...</div>
+                <div style={styles.sideEmpty}>Duke ngarkuar...</div>
               ) : advertisers.length === 0 ? (
-                <div style={{ color: "#64748b" }}>Nuk ka reklamues ende.</div>
+                <div style={styles.sideEmpty}>Nuk ka reklamues ende.</div>
+              ) : filteredAdvertisers.length === 0 ? (
+                <div style={styles.sideEmpty}>Nuk u gjet asnjë reklamues.</div>
               ) : (
-                <div style={{ display: "grid", gap: "12px" }}>
-                  {advertisers.map((item) => (
-                    <div
-                      key={item.id}
-                      style={{
-                        border: "1px solid rgba(15,23,42,0.06)",
-                        borderRadius: "18px",
-                        padding: "14px"
-                      }}
-                    >
-                      <div
-                        style={{
-                          fontWeight: 800,
-                          color: "#0f172a",
-                          marginBottom: "6px"
-                        }}
-                      >
-                        {item.name}
-                      </div>
-
-                      <div style={{ color: "#64748b", fontSize: "13px" }}>
+                <div style={styles.sideList}>
+                  {filteredAdvertisers.map((item) => (
+                    <div key={item.id} style={styles.sideItemCard}>
+                      <div style={styles.sideItemTitle}>{item.name}</div>
+                      <div style={styles.sideItemSub}>
                         {item.company_name || "Pa kompani"}
                       </div>
 
-                      <div
-                        style={{
-                          marginTop: "10px",
-                          display: "flex",
-                          gap: "8px",
-                          flexWrap: "wrap",
-                          marginBottom: "12px"
-                        }}
-                      >
-                        <span
-                          style={{
-                            fontSize: "12px",
-                            padding: "6px 10px",
-                            borderRadius: "999px",
-                            background: "rgba(15,23,42,0.04)",
-                            color: "#475569"
-                          }}
-                        >
-                          {item.status}
-                        </span>
-
-                        {item.phone && (
-                          <span
-                            style={{
-                              fontSize: "12px",
-                              padding: "6px 10px",
-                              borderRadius: "999px",
-                              background: "rgba(15,23,42,0.04)",
-                              color: "#475569"
-                            }}
-                          >
-                            {item.phone}
-                          </span>
-                        )}
+                      <div style={styles.tagRow}>
+                        <span style={styles.defaultTag}>{item.status}</span>
+                        {item.phone ? <span style={styles.defaultTag}>{item.phone}</span> : null}
                       </div>
 
-                      <div
-                        style={{
-                          display: "flex",
-                          gap: "10px",
-                          flexWrap: "wrap"
-                        }}
-                      >
+                      <div style={styles.actionsRow}>
                         <button
                           type="button"
                           style={buttonSecondary}
@@ -1645,162 +1320,102 @@ export default function AdminAds() {
               )}
             </section>
 
-            <section style={{ ...cardStyle, padding: "22px" }}>
-              <h2
-                style={{
-                  margin: "0 0 16px",
-                  fontSize: "22px",
-                  color: "#0f172a"
-                }}
-              >
-                Fushatat
-              </h2>
+            <section style={styles.sectionCard}>
+              <h2 style={styles.sideTitle}>Fushatat</h2>
+
+              <div style={styles.filterGrid}>
+                <input
+                  style={inputStyle}
+                  placeholder="Kërko fushatë..."
+                  value={searchCampaign}
+                  onChange={(e) => setSearchCampaign(e.target.value)}
+                />
+
+                <select
+                  style={inputStyle}
+                  value={campaignStatusFilter}
+                  onChange={(e) => setCampaignStatusFilter(e.target.value)}
+                >
+                  <option value="all">Të gjitha statuset</option>
+                  <option value="active">active</option>
+                  <option value="paused">paused</option>
+                  <option value="draft">draft</option>
+                  <option value="expired">expired</option>
+                </select>
+
+                <select
+                  style={inputStyle}
+                  value={campaignSort}
+                  onChange={(e) => setCampaignSort(e.target.value)}
+                >
+                  <option value="priority_desc">Priority: më i larti</option>
+                  <option value="priority_asc">Priority: më i ulëti</option>
+                  <option value="price_desc">Çmimi: më i larti</option>
+                  <option value="price_asc">Çmimi: më i ulëti</option>
+                </select>
+              </div>
+
+              <div style={styles.countText}>
+                Shfaqen {filteredCampaigns.length} nga {campaigns.length} fushata
+              </div>
 
               {loading ? (
-                <div style={{ color: "#64748b" }}>Duke ngarkuar...</div>
+                <div style={styles.sideEmpty}>Duke ngarkuar...</div>
               ) : campaigns.length === 0 ? (
-                <div style={{ color: "#64748b" }}>Nuk ka fushata ende.</div>
+                <div style={styles.sideEmpty}>Nuk ka fushata ende.</div>
+              ) : filteredCampaigns.length === 0 ? (
+                <div style={styles.sideEmpty}>Nuk u gjet asnjë fushatë.</div>
               ) : (
-                <div style={{ display: "grid", gap: "12px" }}>
-                  {campaigns.map((item) => {
+                <div style={styles.sideList}>
+                  {filteredCampaigns.map((item) => {
                     const linkedCreatives = creativesByCampaignId[item.id] || [];
 
                     return (
-                      <div
-                        key={item.id}
-                        style={{
-                          border: "1px solid rgba(15,23,42,0.06)",
-                          borderRadius: "18px",
-                          padding: "14px"
-                        }}
-                      >
-                        <div
-                          style={{
-                            display: "flex",
-                            justifyContent: "space-between",
-                            gap: "10px",
-                            alignItems: "start",
-                            marginBottom: "8px"
-                          }}
-                        >
+                      <div key={item.id} style={styles.sideItemCard}>
+                        <div style={styles.campaignTopRow}>
                           <div>
-                            <div
-                              style={{
-                                fontWeight: 800,
-                                color: "#0f172a"
-                              }}
-                            >
-                              {item.title}
-                            </div>
-                            <div
-                              style={{
-                                color: "#64748b",
-                                fontSize: "13px",
-                                marginTop: "4px"
-                              }}
-                            >
+                            <div style={styles.sideItemTitle}>{item.title}</div>
+                            <div style={styles.sideItemSub}>
                               {item.advertiser_name || "Pa reklamues"}
                             </div>
                           </div>
 
                           <span
                             style={{
-                              fontSize: "12px",
-                              padding: "6px 10px",
-                              borderRadius: "999px",
+                              ...styles.defaultTag,
                               background:
                                 item.status === "active"
                                   ? "rgba(34,197,94,0.12)"
-                                  : "rgba(148,163,184,0.12)",
+                                  : item.status === "paused"
+                                    ? "rgba(245,158,11,0.14)"
+                                    : "rgba(148,163,184,0.12)",
                               color:
                                 item.status === "active"
                                   ? "#15803d"
-                                  : "#475569",
-                              fontWeight: 800
+                                  : item.status === "paused"
+                                    ? "#b45309"
+                                    : "#475569"
                             }}
                           >
                             {item.status}
                           </span>
                         </div>
 
-                        <div
-                          style={{
-                            display: "flex",
-                            gap: "8px",
-                            flexWrap: "wrap",
-                            marginBottom: "10px"
-                          }}
-                        >
-                          <span
-                            style={{
-                              fontSize: "12px",
-                              padding: "6px 10px",
-                              borderRadius: "999px",
-                              background: "rgba(15,23,42,0.04)",
-                              color: "#475569"
-                            }}
-                          >
-                            {item.campaign_type}
-                          </span>
-
-                          <span
-                            style={{
-                              fontSize: "12px",
-                              padding: "6px 10px",
-                              borderRadius: "999px",
-                              background: "rgba(15,23,42,0.04)",
-                              color: "#475569"
-                            }}
-                          >
-                            € {item.price}
-                          </span>
-
-                          <span
-                            style={{
-                              fontSize: "12px",
-                              padding: "6px 10px",
-                              borderRadius: "999px",
-                              background: "rgba(15,23,42,0.04)",
-                              color: "#475569"
-                            }}
-                          >
-                            priority {item.priority}
-                          </span>
-
-                          <span
-                            style={{
-                              fontSize: "12px",
-                              padding: "6px 10px",
-                              borderRadius: "999px",
-                              background: "rgba(15,23,42,0.04)",
-                              color: "#475569"
-                            }}
-                          >
+                        <div style={styles.tagRow}>
+                          <span style={styles.defaultTag}>{item.campaign_type}</span>
+                          <span style={styles.defaultTag}>€ {item.price}</span>
+                          <span style={styles.defaultTag}>priority {item.priority}</span>
+                          <span style={styles.defaultTag}>
                             creatives {linkedCreatives.length}
                           </span>
                         </div>
 
-                        {Array.isArray(item.placements) &&
-                        item.placements.length > 0 ? (
-                          <div
-                            style={{
-                              display: "flex",
-                              gap: "8px",
-                              flexWrap: "wrap",
-                              marginBottom: "12px"
-                            }}
-                          >
+                        {Array.isArray(item.placements) && item.placements.length > 0 ? (
+                          <div style={styles.tagRow}>
                             {item.placements.map((placement) => (
                               <span
                                 key={`${item.id}-${placement.placement_id}`}
-                                style={{
-                                  fontSize: "11px",
-                                  padding: "6px 9px",
-                                  borderRadius: "999px",
-                                  background: "rgba(37,99,235,0.08)",
-                                  color: "#1d4ed8",
-                                  fontWeight: 700
-                                }}
+                                style={styles.blueTag}
                               >
                                 {placement.placement_slug}
                               </span>
@@ -1808,13 +1423,7 @@ export default function AdminAds() {
                           </div>
                         ) : null}
 
-                        <div
-                          style={{
-                            display: "flex",
-                            gap: "10px",
-                            flexWrap: "wrap"
-                          }}
-                        >
+                        <div style={styles.actionsRow}>
                           <button
                             type="button"
                             style={buttonSecondary}
@@ -1838,143 +1447,53 @@ export default function AdminAds() {
               )}
             </section>
 
-            <section style={{ ...cardStyle, padding: "22px" }}>
-              <h2
-                style={{
-                  margin: "0 0 16px",
-                  fontSize: "22px",
-                  color: "#0f172a"
-                }}
-              >
-                Creatives
-              </h2>
+            <section style={styles.sectionCard}>
+              <h2 style={styles.sideTitle}>Creatives</h2>
+
+              <input
+                style={{ ...inputStyle, marginBottom: "12px" }}
+                placeholder="Kërko creative..."
+                value={searchCreative}
+                onChange={(e) => setSearchCreative(e.target.value)}
+              />
 
               {loading ? (
-                <div style={{ color: "#64748b" }}>Duke ngarkuar...</div>
+                <div style={styles.sideEmpty}>Duke ngarkuar...</div>
               ) : creatives.length === 0 ? (
-                <div style={{ color: "#64748b" }}>Nuk ka creatives ende.</div>
+                <div style={styles.sideEmpty}>Nuk ka creatives ende.</div>
+              ) : filteredCreatives.length === 0 ? (
+                <div style={styles.sideEmpty}>Nuk u gjet asnjë creative.</div>
               ) : (
-                <div style={{ display: "grid", gap: "12px" }}>
-                  {creatives.map((item) => (
-                    <div
-                      key={item.id}
-                      style={{
-                        border: "1px solid rgba(15,23,42,0.06)",
-                        borderRadius: "18px",
-                        padding: "14px"
-                      }}
-                    >
-                      {(item.image_url || item.video_url) && (
-                        <div
-                          style={{
-                            marginBottom: "12px",
-                            borderRadius: "12px",
-                            overflow: "hidden",
-                            background: "#f1f5f9",
-                            border: "1px solid rgba(15,23,42,0.06)"
-                          }}
-                        >
+                <div style={styles.sideList}>
+                  {filteredCreatives.map((item) => (
+                    <div key={item.id} style={styles.sideItemCard}>
+                      {item.image_url || item.video_url ? (
+                        <div style={styles.previewWrap}>
                           {item.image_url ? (
                             <img
                               src={item.image_url}
                               alt={item.title || item.headline || "creative"}
-                              style={{
-                                width: "100%",
-                                height: "160px",
-                                objectFit: "cover",
-                                display: "block"
-                              }}
+                              style={styles.previewMedia}
                             />
                           ) : (
-                            <video
-                              src={item.video_url}
-                              style={{
-                                width: "100%",
-                                height: "160px",
-                                objectFit: "cover",
-                                display: "block"
-                              }}
-                              muted
-                            />
+                            <video src={item.video_url} style={styles.previewMedia} muted />
                           )}
                         </div>
-                      )}
+                      ) : null}
 
-                      <div
-                        style={{
-                          fontWeight: 800,
-                          color: "#0f172a",
-                          marginBottom: "6px"
-                        }}
-                      >
+                      <div style={styles.sideItemTitle}>
                         {item.title || item.headline || `Creative #${item.id}`}
                       </div>
 
-                      <div
-                        style={{
-                          color: "#64748b",
-                          fontSize: "13px",
-                          marginBottom: "10px"
-                        }}
-                      >
-                        campaign #{item.campaign_id}
+                      <div style={styles.sideItemSub}>campaign #{item.campaign_id}</div>
+
+                      <div style={styles.tagRow}>
+                        <span style={styles.defaultTag}>{item.creative_type}</span>
+                        <span style={styles.defaultTag}>{item.device_type}</span>
+                        {item.is_primary ? <span style={styles.blueTag}>primary</span> : null}
                       </div>
 
-                      <div
-                        style={{
-                          display: "flex",
-                          gap: "8px",
-                          flexWrap: "wrap",
-                          marginBottom: "12px"
-                        }}
-                      >
-                        <span
-                          style={{
-                            fontSize: "11px",
-                            padding: "6px 9px",
-                            borderRadius: "999px",
-                            background: "rgba(15,23,42,0.04)",
-                            color: "#475569"
-                          }}
-                        >
-                          {item.creative_type}
-                        </span>
-
-                        <span
-                          style={{
-                            fontSize: "11px",
-                            padding: "6px 9px",
-                            borderRadius: "999px",
-                            background: "rgba(15,23,42,0.04)",
-                            color: "#475569"
-                          }}
-                        >
-                          {item.device_type}
-                        </span>
-
-                        {item.is_primary && (
-                          <span
-                            style={{
-                              fontSize: "11px",
-                              padding: "6px 9px",
-                              borderRadius: "999px",
-                              background: "rgba(37,99,235,0.08)",
-                              color: "#1d4ed8",
-                              fontWeight: 700
-                            }}
-                          >
-                            primary
-                          </span>
-                        )}
-                      </div>
-
-                      <div
-                        style={{
-                          display: "flex",
-                          gap: "10px",
-                          flexWrap: "wrap"
-                        }}
-                      >
+                      <div style={styles.actionsRow}>
                         <button
                           type="button"
                           style={buttonSecondary}
@@ -1997,82 +1516,23 @@ export default function AdminAds() {
               )}
             </section>
 
-            <section style={{ ...cardStyle, padding: "22px" }}>
-              <h2
-                style={{
-                  margin: "0 0 16px",
-                  fontSize: "22px",
-                  color: "#0f172a"
-                }}
-              >
-                Placement-et
-              </h2>
+            <section style={styles.sectionCard}>
+              <h2 style={styles.sideTitle}>Placement-et</h2>
 
               {loading ? (
-                <div style={{ color: "#64748b" }}>Duke ngarkuar...</div>
+                <div style={styles.sideEmpty}>Duke ngarkuar...</div>
               ) : placements.length === 0 ? (
-                <div style={{ color: "#64748b" }}>Nuk ka placements.</div>
+                <div style={styles.sideEmpty}>Nuk ka placements.</div>
               ) : (
-                <div style={{ display: "grid", gap: "12px" }}>
+                <div style={styles.sideList}>
                   {placements.map((item) => (
-                    <div
-                      key={item.id}
-                      style={{
-                        border: "1px solid rgba(15,23,42,0.06)",
-                        borderRadius: "18px",
-                        padding: "14px"
-                      }}
-                    >
-                      <div
-                        style={{
-                          fontWeight: 800,
-                          color: "#0f172a",
-                          marginBottom: "5px"
-                        }}
-                      >
-                        {item.name}
-                      </div>
+                    <div key={item.id} style={styles.sideItemCard}>
+                      <div style={styles.sideItemTitle}>{item.name}</div>
+                      <div style={styles.sideItemSub}>{item.slug}</div>
 
-                      <div
-                        style={{
-                          color: "#64748b",
-                          fontSize: "13px",
-                          marginBottom: "8px"
-                        }}
-                      >
-                        {item.slug}
-                      </div>
-
-                      <div
-                        style={{
-                          display: "flex",
-                          gap: "8px",
-                          flexWrap: "wrap"
-                        }}
-                      >
-                        <span
-                          style={{
-                            fontSize: "11px",
-                            padding: "6px 9px",
-                            borderRadius: "999px",
-                            background: "rgba(15,23,42,0.04)",
-                            color: "#475569"
-                          }}
-                        >
-                          {item.page_type}
-                        </span>
-
-                        <span
-                          style={{
-                            fontSize: "11px",
-                            padding: "6px 9px",
-                            borderRadius: "999px",
-                            background: "rgba(15,23,42,0.04)",
-                            color: "#475569"
-                          }}
-                        >
-                          {item.device_type}
-                        </span>
+                      <div style={styles.tagRow}>
+                        <span style={styles.defaultTag}>{item.page_type}</span>
+                        <span style={styles.defaultTag}>{item.device_type}</span>
                       </div>
                     </div>
                   ))}
@@ -2083,21 +1543,472 @@ export default function AdminAds() {
         </div>
       </div>
 
-      <style>
-        {`
-          @media (max-width: 1100px) {
-            .admin-ads-layout {
-              grid-template-columns: 1fr !important;
-            }
+      <style>{`
+        @media (max-width: 1180px) {
+          .admin-ads-layout {
+            grid-template-columns: 1fr !important;
+          }
+        }
+
+        @media (max-width: 1100px) {
+          .admin-ads-hero-top {
+            grid-template-columns: 1fr !important;
+          }
+        }
+
+        @media (max-width: 768px) {
+          .admin-ads-hero-stats {
+            grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
           }
 
-          @media (max-width: 768px) {
-            input, select, textarea, button {
-              font-size: 16px !important;
-            }
+          input, select, textarea, button {
+            font-size: 16px !important;
           }
-        `}
-      </style>
+        }
+
+        @media (max-width: 520px) {
+          .admin-ads-hero-stats {
+            grid-template-columns: 1fr !important;
+          }
+        }
+      `}</style>
     </div>
   );
 }
+
+function Field({ label, children, full = false }) {
+  return (
+    <div style={full ? { gridColumn: "1 / -1" } : undefined}>
+      <label style={labelStyle}>{label}</label>
+      {children}
+    </div>
+  );
+}
+
+function SectionHeader({ title, actionLabel, onAction }) {
+  return (
+    <div style={styles.sectionHeader}>
+      <h2 style={styles.sectionTitle}>{title}</h2>
+
+      {actionLabel ? (
+        <button type="button" style={buttonSecondary} onClick={onAction}>
+          {actionLabel}
+        </button>
+      ) : null}
+    </div>
+  );
+}
+
+function StatCard({ label, value, dark = false }) {
+  return (
+    <div
+      style={{
+        background: dark ? "rgba(255,255,255,0.10)" : "#fff",
+        borderRadius: "20px",
+        padding: "18px",
+        border: dark ? "1px solid rgba(255,255,255,0.16)" : "1px solid #e2e8f0",
+        boxShadow: dark
+          ? "inset 0 1px 0 rgba(255,255,255,0.08)"
+          : "0 10px 30px rgba(15,23,42,0.06)",
+        backdropFilter: dark ? "blur(10px)" : "none"
+      }}
+    >
+      <div
+        style={{
+          color: dark ? "rgba(255,255,255,0.80)" : "#64748b",
+          fontSize: "13px",
+          marginBottom: "8px",
+          fontWeight: "700"
+        }}
+      >
+        {label}
+      </div>
+      <div
+        style={{
+          fontSize: "30px",
+          fontWeight: "900",
+          color: dark ? "#ffffff" : "#0f172a",
+          lineHeight: 1
+        }}
+      >
+        {value}
+      </div>
+    </div>
+  );
+}
+
+const styles = {
+  page: {
+    minHeight: "100vh",
+    background:
+      "linear-gradient(180deg, #f8fafc 0%, #eef4ff 45%, #f8fafc 100%)",
+    padding: "8px 14px 48px"
+  },
+
+  container: {
+    maxWidth: "1620px",
+    margin: "0 auto"
+  },
+
+  heroCard: {
+    position: "relative",
+    overflow: "hidden",
+    background: "linear-gradient(135deg, #0f1f4d 0%, #1d3d9f 58%, #2563eb 100%)",
+    borderRadius: "30px",
+    padding: "26px",
+    marginBottom: "22px",
+    boxShadow: "0 22px 60px rgba(37,99,235,0.22)"
+  },
+
+  heroGlow: {
+    position: "absolute",
+    inset: 0,
+    pointerEvents: "none",
+    background:
+      "radial-gradient(circle at top right, rgba(255,255,255,0.16), transparent 24%), radial-gradient(circle at bottom left, rgba(255,255,255,0.08), transparent 20%)"
+  },
+
+  heroTop: {
+    position: "relative",
+    zIndex: 2,
+    display: "grid",
+    gridTemplateColumns: "minmax(0, 1.35fr) minmax(320px, 0.95fr)",
+    gap: "22px",
+    alignItems: "start"
+  },
+
+  heroLeft: {
+    minWidth: 0
+  },
+
+  heroBadge: {
+    display: "inline-flex",
+    alignItems: "center",
+    padding: "9px 14px",
+    borderRadius: "999px",
+    background: "rgba(255,255,255,0.12)",
+    border: "1px solid rgba(255,255,255,0.16)",
+    color: "#ffffff",
+    fontSize: "12px",
+    fontWeight: "800",
+    marginBottom: "14px"
+  },
+
+  heroTitle: {
+    margin: 0,
+    color: "#ffffff",
+    fontSize: "clamp(32px, 4vw, 52px)",
+    lineHeight: 1.02,
+    fontWeight: "900",
+    letterSpacing: "-0.04em"
+  },
+
+  heroSubtitle: {
+    margin: "14px 0 0",
+    color: "rgba(255,255,255,0.92)",
+    fontSize: "15px",
+    lineHeight: 1.8,
+    maxWidth: "760px",
+    fontWeight: "500"
+  },
+
+  heroNavWrap: {
+    marginTop: "22px"
+  },
+
+  heroStatsWrap: {
+    display: "grid",
+    gridTemplateColumns: "1fr 1fr",
+    gap: "12px",
+    alignSelf: "start"
+  },
+
+  messageBox: {
+    position: "relative",
+    zIndex: 2,
+    marginTop: "18px",
+    padding: "14px 16px",
+    borderRadius: "14px",
+    background: "#fff",
+    border: "1px solid rgba(15,23,42,0.08)",
+    color: "#0f172a",
+    fontWeight: "700"
+  },
+
+  mainLayout: {
+    display: "grid",
+    gridTemplateColumns: "1.05fr 1fr",
+    gap: "20px",
+    alignItems: "start"
+  },
+
+  leftColumn: {
+    display: "grid",
+    gap: "20px"
+  },
+
+  rightColumn: {
+    display: "grid",
+    gap: "20px"
+  },
+
+  sectionCard: {
+    ...cardStyle,
+    padding: "22px"
+  },
+
+  sectionHeader: {
+    display: "flex",
+    justifyContent: "space-between",
+    gap: "12px",
+    flexWrap: "wrap",
+    alignItems: "center",
+    marginBottom: "16px"
+  },
+
+  sectionTitle: {
+    margin: 0,
+    fontSize: "22px",
+    color: "#0f172a"
+  },
+
+  twoColForm: {
+    display: "grid",
+    gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
+    gap: "14px"
+  },
+
+  formActionWrap: {
+    display: "flex",
+    alignItems: "end"
+  },
+
+  filterGrid: {
+    display: "grid",
+    gridTemplateColumns: "1fr 150px 170px",
+    gap: "10px",
+    marginBottom: "10px"
+  },
+
+  countText: {
+    fontSize: "12px",
+    color: "#64748b",
+    fontWeight: 700,
+    marginBottom: "12px"
+  },
+
+  packageBox: {
+    gridColumn: "1 / -1",
+    border: "1px solid rgba(37,99,235,0.14)",
+    borderRadius: "20px",
+    padding: "16px",
+    background: "linear-gradient(180deg, #ffffff 0%, #f8fbff 100%)"
+  },
+
+  packageTitle: {
+    fontSize: "15px",
+    fontWeight: 900,
+    color: "#0f172a",
+    marginBottom: "4px"
+  },
+
+  packageSubtitle: {
+    fontSize: "13px",
+    color: "#64748b",
+    fontWeight: 600,
+    marginBottom: "14px"
+  },
+
+  packageGrid: {
+    display: "grid",
+    gridTemplateColumns: "repeat(3, minmax(0, 1fr))",
+    gap: "12px"
+  },
+
+  packageButton: {
+    border: "1px solid rgba(15,23,42,0.08)",
+    background: "#fff",
+    borderRadius: "18px",
+    padding: "14px",
+    cursor: "pointer",
+    display: "grid",
+    gap: "6px",
+    textAlign: "left",
+    color: "#0f172a",
+    boxShadow: "0 10px 24px rgba(15,23,42,0.05)"
+  },
+
+  packageEmoji: {
+    fontSize: "20px"
+  },
+
+  placementBox: {
+    gridColumn: "1 / -1",
+    border: "1px solid rgba(15,23,42,0.08)",
+    borderRadius: "18px",
+    padding: "16px",
+    background: "#f8fafc"
+  },
+
+  placementTitle: {
+    fontSize: "14px",
+    fontWeight: 800,
+    color: "#0f172a",
+    marginBottom: "12px"
+  },
+
+  placementGroupsGrid: {
+    display: "grid",
+    gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
+    gap: "16px"
+  },
+
+  placementGroupCard: {
+    background: "#fff",
+    borderRadius: "16px",
+    border: "1px solid rgba(15,23,42,0.06)",
+    padding: "14px"
+  },
+
+  placementGroupLabel: {
+    fontSize: "12px",
+    fontWeight: 900,
+    letterSpacing: "0.05em",
+    textTransform: "uppercase",
+    color: "#64748b",
+    marginBottom: "10px"
+  },
+
+  placementChecks: {
+    display: "grid",
+    gap: "10px"
+  },
+
+  placementCheckLabel: {
+    display: "flex",
+    gap: "10px",
+    alignItems: "flex-start",
+    cursor: "pointer"
+  },
+
+  placementName: {
+    fontWeight: 700,
+    color: "#0f172a",
+    fontSize: "14px"
+  },
+
+  placementSlug: {
+    color: "#64748b",
+    fontSize: "12px"
+  },
+
+  fullWidthRow: {
+    gridColumn: "1 / -1",
+    display: "flex",
+    gap: "10px",
+    flexWrap: "wrap"
+  },
+
+  inlineCheckLabel: {
+    display: "flex",
+    alignItems: "center",
+    gap: "10px",
+    fontWeight: 700,
+    color: "#334155"
+  },
+
+  selectedFileBox: {
+    marginTop: "10px",
+    padding: "10px 14px",
+    background: "#eef2ff",
+    borderRadius: "12px",
+    fontWeight: 700,
+    color: "#1e293b"
+  },
+
+  sideTitle: {
+    margin: "0 0 16px",
+    fontSize: "22px",
+    color: "#0f172a"
+  },
+
+  sideEmpty: {
+    color: "#64748b"
+  },
+
+  sideList: {
+    display: "grid",
+    gap: "12px"
+  },
+
+  sideItemCard: {
+    border: "1px solid rgba(15,23,42,0.06)",
+    borderRadius: "18px",
+    padding: "14px"
+  },
+
+  sideItemTitle: {
+    fontWeight: 800,
+    color: "#0f172a",
+    marginBottom: "6px"
+  },
+
+  sideItemSub: {
+    color: "#64748b",
+    fontSize: "13px"
+  },
+
+  tagRow: {
+    marginTop: "10px",
+    display: "flex",
+    gap: "8px",
+    flexWrap: "wrap",
+    marginBottom: "12px"
+  },
+
+  defaultTag: {
+    fontSize: "12px",
+    padding: "6px 10px",
+    borderRadius: "999px",
+    background: "rgba(15,23,42,0.04)",
+    color: "#475569"
+  },
+
+  blueTag: {
+    fontSize: "11px",
+    padding: "6px 9px",
+    borderRadius: "999px",
+    background: "rgba(37,99,235,0.08)",
+    color: "#1d4ed8",
+    fontWeight: 700
+  },
+
+  actionsRow: {
+    display: "flex",
+    gap: "10px",
+    flexWrap: "wrap"
+  },
+
+  campaignTopRow: {
+    display: "flex",
+    justifyContent: "space-between",
+    gap: "10px",
+    alignItems: "start",
+    marginBottom: "8px"
+  },
+
+  previewWrap: {
+    marginBottom: "12px",
+    borderRadius: "12px",
+    overflow: "hidden",
+    background: "#f1f5f9",
+    border: "1px solid rgba(15,23,42,0.06)"
+  },
+
+  previewMedia: {
+    width: "100%",
+    height: "160px",
+    objectFit: "cover",
+    display: "block"
+  }
+};

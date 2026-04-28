@@ -2,13 +2,17 @@ const db = require("../config/db");
 
 const getPublicAd = async (req, res) => {
   try {
-    const { placement, device } = req.query;
+    const { placement, device = "desktop" } = req.query;
 
     if (!placement) {
       return res.status(400).json({
         message: "placement është i detyrueshëm."
       });
     }
+
+    const cleanDevice = ["desktop", "mobile", "all"].includes(device)
+      ? device
+      : "desktop";
 
     const result = await db.query(
       `
@@ -65,18 +69,14 @@ const getPublicAd = async (req, res) => {
 
       LIMIT 3
       `,
-      [placement, device || "all"]
+      [placement, cleanDevice]
     );
 
     if (!result.rows.length) {
       return res.json(null);
     }
 
-    if (result.rows.length === 1) {
-      return res.json(result.rows[0]);
-    }
-
-    return res.json(result.rows);
+    return res.json(result.rows.length === 1 ? result.rows[0] : result.rows);
   } catch (err) {
     console.error("getPublicAd error:", err);
     res.status(500).json({

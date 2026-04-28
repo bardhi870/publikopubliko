@@ -1,9 +1,9 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
+import { trackEvent } from "../../utils/analytics";
 
 const normalizeGalleryImages = (galleryImages) => {
   if (!galleryImages) return [];
-
   if (Array.isArray(galleryImages)) return galleryImages.filter(Boolean);
 
   try {
@@ -14,16 +14,42 @@ const normalizeGalleryImages = (galleryImages) => {
   }
 };
 
-const VehiclePostCard = ({ post, index = 0 }) => {
-  const city = post.city || post.location || "";
-  const year = post.year || post.vehicle_year || "";
-  const fuel = post.fuel || post.fuel_type || "";
-  const gearbox = post.gearbox || post.transmission || "";
+const stripHtml = (html = "") =>
+  String(html || "")
+    .replace(/&amp;/g, "&")
+    .replace(/<[^>]*>/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+
+const isPostNew = (createdAt) => {
+  if (!createdAt) return false;
+  const created = new Date(createdAt);
+  const now = new Date();
+  const diffDays = (now - created) / (1000 * 60 * 60 * 24);
+  return diffDays <= 3;
+};
+
+const formatPrice = (price) => {
+  if (!price) return "Me marrëveshje";
+  return `${Number(price).toLocaleString("de-DE")} €`;
+};
+
+export default function VehiclePostCard({ post }) {
+  const city = post.location || post.city || "";
+  const year = post.vehicle_year || post.year || "";
+  const fuel = post.fuel_type || post.fuel || "";
+  const gearbox = post.transmission || post.gearbox || "";
   const mileage = post.mileage || post.kilometers || "";
   const price = post.price || "";
   const status = post.status || "Aktiv";
 
-  const isNew = index < 30;
+  const cleanDescription = stripHtml(post.description);
+  const isNew = isPostNew(post.created_at);
+
+  const isFeatured =
+    post?.featured === true || post?.featured === "true" || post?.featured === 1;
+
+  const isNewOnly = isNew && !isFeatured;
 
   const galleryImages = useMemo(
     () => normalizeGalleryImages(post.gallery_images),
@@ -51,50 +77,90 @@ const VehiclePostCard = ({ post, index = 0 }) => {
 
     const interval = setInterval(() => {
       setActiveIndex((prev) => (prev + 1) % mediaItems.length);
-    }, 3200);
+    }, 3400);
 
     return () => clearInterval(interval);
   }, [mediaItems.length]);
 
   const activeMedia = mediaItems[activeIndex];
 
+  const handlePostClick = () => {
+    trackEvent({
+      event_type: "post_click",
+      page_url: window.location.pathname,
+      post_id: post.id,
+      category: "automjete",
+      element_name: "vehicle_post_card"
+    });
+  };
+
   return (
     <>
       <style>{`
-        .vehicle-card-wrap {
-          width: 100%;
-          display: flex;
-          justify-content: center;
-        }
-
         .vehicle-card-link {
           width: 100%;
+          height: 100%;
+          display: block;
           text-decoration: none;
           color: inherit;
-          display: block;
         }
 
         .vehicle-card {
+          position: relative;
           width: 100%;
+          height: 100%;
           background: #ffffff;
           border: 1px solid #e2e8f0;
-          border-radius: 28px;
+          border-radius: 20px;
           overflow: hidden;
-          box-shadow: 0 18px 40px rgba(15,23,42,0.07);
-          transition: transform 0.25s ease, box-shadow 0.25s ease;
+          box-shadow: 0 10px 28px rgba(15,23,42,0.05);
+          transition: transform .25s ease, box-shadow .25s ease, border-color .25s ease;
+          display: flex;
+          flex-direction: column;
+          isolation: isolate;
         }
 
         .vehicle-card:hover {
-          transform: translateY(-3px);
-          box-shadow: 0 24px 50px rgba(15,23,42,0.10);
+          transform: translateY(-5px);
+          box-shadow: 0 18px 44px rgba(15,23,42,0.12);
+          border-color: #cbd5e1;
+        }
+
+        .vehicle-card::after {
+          content: "";
+          position: absolute;
+          inset: 0;
+          background: linear-gradient(120deg, transparent 0%, rgba(255,255,255,.65) 45%, transparent 70%);
+          transform: translateX(-135%);
+          transition: transform .75s ease;
+          pointer-events: none;
+          z-index: 3;
+        }
+
+        .vehicle-card:hover::after {
+          transform: translateX(135%);
+        }
+
+        .vehicle-featured {
+          border: 2px solid #facc15;
+          box-shadow:
+            0 0 0 1px rgba(250,204,21,0.18),
+            0 14px 34px rgba(250,204,21,0.22);
+        }
+
+        .vehicle-new-card {
+          border: 2px solid #0ea5e9;
+          box-shadow:
+            0 0 0 1px rgba(14,165,233,0.16),
+            0 14px 34px rgba(14,165,233,0.18);
         }
 
         .vehicle-image-wrap {
           position: relative;
           width: 100%;
-          height: 320px;
+          height: 185px;
           overflow: hidden;
-          background: #f8fafc;
+          background: #eef8ff;
         }
 
         .vehicle-image {
@@ -102,412 +168,512 @@ const VehiclePostCard = ({ post, index = 0 }) => {
           height: 100%;
           object-fit: cover;
           display: block;
+          transition: transform .35s ease;
+        }
+
+        .vehicle-card:hover .vehicle-image {
+          transform: scale(1.04);
         }
 
         .vehicle-image-fallback {
           width: 100%;
           height: 100%;
-          background: linear-gradient(135deg, #dcfce7 0%, #bbf7d0 50%, #86efac 100%);
+          background:
+            radial-gradient(circle at 28% 18%, rgba(14,165,233,.18), transparent 34%),
+            linear-gradient(135deg,#f8fafc,#e0f2fe);
           display: flex;
           align-items: center;
           justify-content: center;
-          color: #166534;
-          font-weight: 900;
-          font-size: 24px;
-        }
-
-        .vehicle-overlay {
-          position: absolute;
-          inset: 0;
-          background: linear-gradient(to top, rgba(15,23,42,0.58) 0%, rgba(15,23,42,0.12) 45%, rgba(15,23,42,0) 100%);
-          pointer-events: none;
+          color: #020617;
+          font-weight: 950;
+          font-size: 20px;
         }
 
         .vehicle-top-badges {
           position: absolute;
-          top: 18px;
-          left: 18px;
+          top: 10px;
+          left: 10px;
+          right: 10px;
+          z-index: 4;
           display: flex;
+          justify-content: space-between;
           gap: 8px;
+        }
+
+        .vehicle-left-badges {
+          display: flex;
+          gap: 6px;
           flex-wrap: wrap;
-          z-index: 2;
+          align-items: center;
+        }
+
+        .vehicle-badge {
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          padding: 6px 10px;
+          border-radius: 999px;
+          font-size: 11px;
+          font-weight: 900;
+          background: rgba(255,255,255,0.94);
+          color: #020617;
+          box-shadow: 0 5px 14px rgba(15,23,42,0.10);
+          white-space: nowrap;
+          backdrop-filter: blur(8px);
+        }
+
+        .vehicle-badge-featured {
+          min-width: 28px;
+          background: linear-gradient(135deg,#facc15,#f59e0b);
+          color: #fff;
+          box-shadow: 0 6px 18px rgba(245,158,11,0.38);
+        }
+
+        .vehicle-badge-new {
+          position: relative;
+          overflow: hidden;
+          background: linear-gradient(135deg,#06b6d4,#2563eb);
+          color: #fff;
+          box-shadow: 0 6px 18px rgba(37,99,235,0.34);
+        }
+
+        .vehicle-badge-new::after {
+          content: "";
+          position: absolute;
+          top: 0;
+          left: -120%;
+          width: 60%;
+          height: 100%;
+          background: linear-gradient(120deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0.65) 50%, rgba(255,255,255,0) 100%);
+          transform: skewX(-20deg);
+          animation: vehicleShimmerMove 2.4s infinite;
+        }
+
+        @keyframes vehicleShimmerMove {
+          0% { left: -120%; }
+          100% { left: 130%; }
         }
 
         .vehicle-status-wrap {
           position: absolute;
-          right: 18px;
-          bottom: 18px;
-          z-index: 2;
+          right: 10px;
+          bottom: 10px;
+          z-index: 4;
+        }
+
+        .vehicle-status-badge {
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          padding: 6px 10px;
+          border-radius: 999px;
+          font-size: 10px;
+          font-weight: 950;
+          background: rgba(15,23,42,.78);
+          color: #fff;
+          backdrop-filter: blur(8px);
+          box-shadow: 0 8px 18px rgba(15,23,42,.18);
         }
 
         .vehicle-slide-dots {
           position: absolute;
           left: 50%;
-          bottom: 18px;
+          bottom: 13px;
           transform: translateX(-50%);
           display: flex;
-          gap: 7px;
-          z-index: 2;
+          gap: 5px;
+          z-index: 4;
         }
 
         .vehicle-slide-dot {
-          width: 9px;
-          height: 9px;
+          width: 6px;
+          height: 6px;
           border-radius: 999px;
-          background: rgba(255,255,255,0.45);
-          border: 1px solid rgba(255,255,255,0.4);
-          transition: all 0.2s ease;
+          background: rgba(255,255,255,.58);
+          transition: width .2s ease, background .2s ease;
         }
 
         .vehicle-slide-dot.active {
-          width: 22px;
-          background: #ffffff;
-        }
-
-        .vehicle-badge-white,
-        .vehicle-badge-green,
-        .vehicle-badge-dark,
-        .vehicle-badge-soft {
-          display: inline-flex;
-          align-items: center;
-          justify-content: center;
-          border-radius: 999px;
-          font-weight: 800;
-          white-space: nowrap;
-        }
-
-        .vehicle-badge-white {
-          background: rgba(255,255,255,0.96);
-          color: #0f172a;
-          padding: 9px 14px;
-          font-size: 12px;
-          box-shadow: 0 4px 14px rgba(15,23,42,0.08);
-        }
-
-        .vehicle-badge-green {
-          background: #06b6d4;
-          color: #ffffff;
-          padding: 9px 14px;
-          font-size: 12px;
-          box-shadow: 0 4px 14px rgba(14,165,233,0.22);
-        }
-
-        .vehicle-badge-dark {
-          background: rgba(15,23,42,0.92);
-          color: #fff;
-          padding: 9px 15px;
-          font-size: 12px;
-        }
-
-        .vehicle-badge-soft {
-          background: #ecfdf5;
-          color: #15803d;
-          border: 1px solid #86efac;
-          padding: 7px 12px;
-          font-size: 12px;
+          width: 17px;
+          background: #fff;
         }
 
         .vehicle-body {
-          padding: 22px;
-        }
-
-        .vehicle-row-top {
+          padding: 16px;
           display: flex;
-          justify-content: space-between;
-          align-items: center;
-          gap: 12px;
-          margin-bottom: 12px;
-          flex-wrap: wrap;
+          flex-direction: column;
+          flex: 1;
+          position: relative;
+          z-index: 2;
         }
 
         .vehicle-city {
-          font-size: 14px;
-          color: #64748b;
-          font-weight: 700;
+          font-size: 13px;
+          color: #475569;
+          font-weight: 850;
+          margin-bottom: 7px;
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
         }
 
         .vehicle-title {
           margin: 0 0 10px;
-          font-size: 32px;
-          line-height: 1.15;
-          font-weight: 900;
-          color: #0f172a;
+          font-size: 18px;
+          line-height: 1.25;
+          font-weight: 950;
+          color: #020617;
+          letter-spacing: -.035em;
           word-break: break-word;
+          min-height: 44px;
         }
 
         .vehicle-desc {
-          margin: 0 0 18px;
-          font-size: 15px;
-          line-height: 1.7;
+          margin: 0 0 12px;
+          font-size: 13px;
+          line-height: 1.45;
           color: #475569;
+          display: -webkit-box;
+          -webkit-line-clamp: 2;
+          -webkit-box-orient: vertical;
+          overflow: hidden;
+        }
+
+        .vehicle-chips {
+          display: flex;
+          flex-wrap: wrap;
+          gap: 6px;
+          margin: 0 0 14px;
+        }
+
+        .vehicle-chip {
+          display: inline-flex;
+          align-items: center;
+          padding: 6px 9px;
+          border-radius: 999px;
+          background: #f8fafc;
+          border: 1px solid #e2e8f0;
+          color: #475569;
+          font-size: 11px;
+          font-weight: 850;
+          max-width: 100%;
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
         }
 
         .vehicle-stats {
           display: grid;
           grid-template-columns: repeat(3, minmax(0, 1fr));
-          gap: 12px;
-          margin-bottom: 18px;
+          gap: 7px;
+          margin-bottom: 14px;
         }
 
         .vehicle-stat {
           background: #f8fafc;
           border: 1px solid #e2e8f0;
-          border-radius: 18px;
-          padding: 14px 12px;
+          border-radius: 13px;
+          padding: 9px 6px;
           text-align: center;
+          min-width: 0;
         }
 
         .vehicle-stat-label {
-          font-size: 12px;
-          font-weight: 700;
-          color: #64748b;
-          margin-bottom: 6px;
-        }
-
-        .vehicle-stat-value {
-          font-size: 18px;
-          font-weight: 800;
-          color: #0f172a;
-        }
-
-        .vehicle-meta {
-          display: flex;
-          flex-wrap: wrap;
-          gap: 10px;
-          margin-bottom: 18px;
-        }
-
-        .vehicle-bottom {
-          border-top: 1px solid #e2e8f0;
-          padding-top: 18px;
-        }
-
-        .vehicle-price-label {
-          font-size: 11px;
-          font-weight: 800;
+          font-size: 9px;
+          font-weight: 900;
           color: #64748b;
           margin-bottom: 5px;
           text-transform: uppercase;
-          letter-spacing: 0.5px;
+          letter-spacing: .3px;
         }
 
-        .vehicle-price {
-          font-size: 38px;
-          font-weight: 900;
-          color: #0f172a;
-          line-height: 1.05;
-          margin-bottom: 16px;
+        .vehicle-stat-value {
+          font-size: 12px;
+          font-weight: 950;
+          color: #020617;
+          overflow: hidden;
+          text-overflow: ellipsis;
+          white-space: nowrap;
         }
 
-        .vehicle-buttons {
-          display: grid;
-          grid-template-columns: 1fr;
+        .vehicle-bottom {
+          margin-top: auto;
+          padding-top: 12px;
+          border-top: 1px solid #e5e7eb;
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
           gap: 10px;
         }
 
-        .vehicle-btn {
-          text-decoration: none;
-          text-align: center;
-          padding: 14px 16px;
-          border-radius: 16px;
-          font-size: 15px;
-          font-weight: 800;
-          display: inline-flex;
-          align-items: center;
-          justify-content: center;
-          background: #16a34a;
-          color: #fff;
+        .vehicle-price-box {
+          min-width: 0;
         }
 
-        .vehicle-note {
-          margin-top: 12px;
-          font-size: 12px;
+        .vehicle-price-label {
+          font-size: 10px;
+          font-weight: 950;
           color: #64748b;
-          line-height: 1.5;
+          margin-bottom: 3px;
+          text-transform: uppercase;
+          letter-spacing: .4px;
         }
 
-        @media (max-width: 768px) {
+        .vehicle-price {
+          font-size: 21px;
+          font-weight: 950;
+          color: #020617;
+          line-height: 1;
+          letter-spacing: -.045em;
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
+        }
+
+        .vehicle-cta {
+          color: #020617;
+          font-size: 13px;
+          font-weight: 950;
+          white-space: nowrap;
+          transition: transform .2s ease, color .2s ease;
+        }
+
+        .vehicle-card:hover .vehicle-cta {
+          color: #2563eb;
+          transform: translateX(3px);
+        }
+
+        @media (max-width: 640px) {
           .vehicle-card {
-            border-radius: 22px;
+            border-radius: 14px;
+            box-shadow: 0 8px 20px rgba(15,23,42,.045);
+            min-height: 262px;
+          }
+
+          .vehicle-card:hover {
+            transform: none;
+          }
+
+          .vehicle-card::after {
+            display: none;
           }
 
           .vehicle-image-wrap {
-            height: 250px;
+            height: 118px;
+          }
+
+          .vehicle-image-fallback {
+            font-size: 14px;
           }
 
           .vehicle-top-badges {
-            top: 14px;
-            left: 14px;
+            top: 8px;
+            left: 8px;
+            right: 8px;
+          }
+
+          .vehicle-badge {
+            font-size: 9.5px;
+            padding: 5px 8px;
+          }
+
+          .vehicle-badge-featured {
+            min-width: 26px;
+            padding: 5px 8px;
           }
 
           .vehicle-status-wrap {
-            right: 14px;
-            bottom: 14px;
+            right: 8px;
+            bottom: 8px;
+          }
+
+          .vehicle-status-badge {
+            font-size: 8.8px;
+            padding: 5px 8px;
           }
 
           .vehicle-slide-dots {
-            bottom: 14px;
-          }
-
-          .vehicle-badge-white,
-          .vehicle-badge-green,
-          .vehicle-badge-dark,
-          .vehicle-badge-soft {
-            font-size: 11px;
-          }
-
-          .vehicle-badge-white,
-          .vehicle-badge-green {
-            padding: 7px 11px;
-          }
-
-          .vehicle-badge-dark {
-            padding: 8px 12px;
+            bottom: 9px;
           }
 
           .vehicle-body {
-            padding: 16px;
+            padding: 12px;
+          }
+
+          .vehicle-city {
+            font-size: 11.3px;
+            margin-bottom: 6px;
           }
 
           .vehicle-title {
-            font-size: 24px;
+            font-size: 13.5px;
+            line-height: 1.28;
+            min-height: 34px;
+            margin-bottom: 9px;
           }
 
           .vehicle-desc {
-            font-size: 14px;
-            margin-bottom: 14px;
+            display: none;
+          }
+
+          .vehicle-chips {
+            gap: 5px;
+            margin-bottom: 11px;
+          }
+
+          .vehicle-chip {
+            font-size: 9.6px;
+            padding: 5px 7px;
           }
 
           .vehicle-stats {
-            gap: 8px;
+            grid-template-columns: 1fr;
+            gap: 5px;
+            margin-bottom: 11px;
           }
 
           .vehicle-stat {
-            padding: 11px 8px;
-            border-radius: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 8px;
+            text-align: left;
+            min-height: 30px;
+            padding: 6px 8px;
+            border-radius: 10px;
           }
 
           .vehicle-stat-label {
-            font-size: 10px;
+            font-size: 8px;
+            margin-bottom: 0;
           }
 
           .vehicle-stat-value {
-            font-size: 14px;
+            max-width: 58%;
+            text-align: right;
+            font-size: 10px;
+          }
+
+          .vehicle-bottom {
+            gap: 6px;
+            padding-top: 10px;
+          }
+
+          .vehicle-price-label {
+            font-size: 8px;
           }
 
           .vehicle-price {
-            font-size: 30px;
+            font-size: 15px;
+            max-width: 90px;
           }
 
-          .vehicle-btn {
-            width: 100%;
-            padding: 13px 14px;
-            font-size: 14px;
+          .vehicle-cta {
+            font-size: 10.8px;
+            max-width: 86px;
+            overflow: hidden;
+            text-overflow: ellipsis;
           }
         }
       `}</style>
 
-      <div className="vehicle-card-wrap">
-        <Link to={`/automjete/${post.id}`} className="vehicle-card-link">
-          <article className="vehicle-card">
-            <div className="vehicle-image-wrap">
-              {activeMedia ? (
-                <img
-                  src={activeMedia.url}
-                  alt={post.title}
-                  className="vehicle-image"
-                />
-              ) : (
-                <div className="vehicle-image-fallback">Automjet</div>
-              )}
+      <Link
+        to={`/automjete/${post.id}`}
+        className="vehicle-card-link"
+        onClick={handlePostClick}
+      >
+        <article
+          className={`vehicle-card ${isFeatured ? "vehicle-featured" : ""} ${
+            isNewOnly ? "vehicle-new-card" : ""
+          }`}
+        >
+          <div className="vehicle-image-wrap">
+            {activeMedia ? (
+              <img
+                src={activeMedia.url}
+                alt={post.title || "Automjet"}
+                className="vehicle-image"
+                loading="lazy"
+              />
+            ) : (
+              <div className="vehicle-image-fallback">Automjet</div>
+            )}
 
-              <div className="vehicle-overlay" />
-
-              <div className="vehicle-top-badges">
-                <span className="vehicle-badge-white">Automjet</span>
-                {isNew && <span className="vehicle-badge-green">E RE</span>}
-              </div>
-
-              <div className="vehicle-status-wrap">
-                <span className="vehicle-badge-dark">{status}</span>
-              </div>
-
-              {mediaItems.length > 1 && (
-                <div className="vehicle-slide-dots">
-                  {mediaItems.map((_, dotIndex) => (
-                    <span
-                      key={dotIndex}
-                      className={`vehicle-slide-dot ${
-                        dotIndex === activeIndex ? "active" : ""
-                      }`}
-                    />
-                  ))}
-                </div>
-              )}
-            </div>
-
-            <div className="vehicle-body">
-              <div className="vehicle-row-top">
-                {city ? <div className="vehicle-city">📍 {city}</div> : <div />}
-                {(fuel || gearbox) && (
-                  <span className="vehicle-badge-soft">{fuel || gearbox}</span>
+            <div className="vehicle-top-badges">
+              <div className="vehicle-left-badges">
+                <span className="vehicle-badge">Auto</span>
+                {isFeatured && (
+                  <span className="vehicle-badge vehicle-badge-featured">⭐</span>
                 )}
               </div>
 
-              <h3 className="vehicle-title">{post.title}</h3>
+              {isNew && <span className="vehicle-badge vehicle-badge-new">E RE</span>}
+            </div>
 
-              {post.description && (
-                <p className="vehicle-desc">
-                  {post.description.length > 110
-                    ? `${post.description.slice(0, 110)}...`
-                    : post.description}
-                </p>
-              )}
+            <div className="vehicle-status-wrap">
+              <span className="vehicle-status-badge">{status}</span>
+            </div>
 
-              <div className="vehicle-stats">
-                <div className="vehicle-stat">
-                  <div className="vehicle-stat-label">Viti</div>
-                  <div className="vehicle-stat-value">{year || "—"}</div>
-                </div>
+            {mediaItems.length > 1 && (
+              <div className="vehicle-slide-dots">
+                {mediaItems.map((_, dotIndex) => (
+                  <span
+                    key={dotIndex}
+                    className={`vehicle-slide-dot ${
+                      dotIndex === activeIndex ? "active" : ""
+                    }`}
+                  />
+                ))}
+              </div>
+            )}
+          </div>
 
-                <div className="vehicle-stat">
-                  <div className="vehicle-stat-label">Kilometra</div>
-                  <div className="vehicle-stat-value">
-                    {mileage ? `${mileage} km` : "—"}
-                  </div>
-                </div>
+          <div className="vehicle-body">
+            {city && <div className="vehicle-city">📍 {city}</div>}
 
-                <div className="vehicle-stat">
-                  <div className="vehicle-stat-label">Ndërruesi</div>
-                  <div className="vehicle-stat-value">{gearbox || "—"}</div>
+            <h3 className="vehicle-title">{post.title}</h3>
+
+            {cleanDescription && (
+              <p className="vehicle-desc">{cleanDescription}</p>
+            )}
+
+            {(fuel || gearbox) && (
+              <div className="vehicle-chips">
+                {fuel && <span className="vehicle-chip">{fuel}</span>}
+                {gearbox && <span className="vehicle-chip">{gearbox}</span>}
+              </div>
+            )}
+
+            <div className="vehicle-stats">
+              <div className="vehicle-stat">
+                <div className="vehicle-stat-label">Viti</div>
+                <div className="vehicle-stat-value">{year || "—"}</div>
+              </div>
+
+              <div className="vehicle-stat">
+                <div className="vehicle-stat-label">Km</div>
+                <div className="vehicle-stat-value">
+                  {mileage ? `${mileage} km` : "—"}
                 </div>
               </div>
 
-              <div className="vehicle-meta">
-                {fuel && <span className="vehicle-badge-soft">{fuel}</span>}
-                {gearbox && <span className="vehicle-badge-soft">{gearbox}</span>}
-              </div>
-
-              <div className="vehicle-bottom">
-                <div className="vehicle-price-label">Çmimi</div>
-                <div className="vehicle-price">
-                  {price ? `${price} €` : "Me marrëveshje"}
-                </div>
-
-                <div className="vehicle-buttons">
-                  <div className="vehicle-btn">Shiko detajet</div>
-                </div>
-
-                <div className="vehicle-note">
-                  Kliko për të parë detajet e plota të automjetit.
-                </div>
+              <div className="vehicle-stat">
+                <div className="vehicle-stat-label">Ndërr.</div>
+                <div className="vehicle-stat-value">{gearbox || "—"}</div>
               </div>
             </div>
-          </article>
-        </Link>
-      </div>
+
+            <div className="vehicle-bottom">
+              <div className="vehicle-price-box">
+                <div className="vehicle-price-label">Çmimi</div>
+                <div className="vehicle-price">{formatPrice(price)}</div>
+              </div>
+
+              <span className="vehicle-cta">Shiko detajet →</span>
+            </div>
+          </div>
+        </article>
+      </Link>
     </>
   );
-};
-
-export default VehiclePostCard;
+}

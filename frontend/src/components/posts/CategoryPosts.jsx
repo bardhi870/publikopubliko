@@ -7,17 +7,32 @@ import VehicleCategoryPosts from "./VehicleCategoryPosts";
 export default function CategoryPosts(props) {
   const { category } = props;
 
-  if (category === "konkurse-pune") {
-    return <JobCategoryPosts {...props} />;
-  }
+  const sharedProps = {
+    initialLimit: props.initialLimit ?? 16,
+    showMoreStep: props.showMoreStep ?? 16,
+    variant: props.variant || "category",
+    filters: props.filters || {},
+    ...props
+  };
 
-  if (category === "patundshmeri") {
-    return <RealEstateCategoryPosts {...props} />;
-  }
+  switch (category) {
+    case "konkurse-pune":
+      return <JobCategoryPosts {...sharedProps} />;
 
-  if (category === "automjete") {
-    return <VehicleCategoryPosts {...props} />;
-  }
+    case "patundshmeri":
+      return <RealEstateCategoryPosts {...sharedProps} />;
 
-  return null;
+    case "automjete":
+      return <VehicleCategoryPosts {...sharedProps} />;
+
+    case "lajme":
+      return (
+        <div style={{ padding: 18, color: "#64748b", fontWeight: 800 }}>
+          Lajmet do t’i lidhim në hapin tjetër.
+        </div>
+      );
+
+    default:
+      return null;
+  }
 }

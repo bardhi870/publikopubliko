@@ -1,10 +1,7 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 
 const categoryTitles = {
   lajme: "Lajme",
-  vendi: "Vendi",
-  rajoni: "Rajoni",
-  bota: "Bota",
   patundshmeri: "Patundshmëri",
   automjete: "Automjete",
   oferta: "Oferta",
@@ -13,50 +10,63 @@ const categoryTitles = {
 
 const categoryDescriptions = {
   lajme:
-    "Zhvillimet më të fundit, informacionet kryesore dhe temat më të rëndësishme të ditës.",
-  vendi:
-    "Ngjarje, aktualitete dhe përmbajtje me fokus nga Kosova dhe hapësira vendore.",
-  rajoni:
-    "Lajme, zhvillime dhe temat më me ndikim nga rajoni ynë.",
-  bota:
-    "Ngjarje ndërkombëtare, analiza dhe zhvillime globale në një vend.",
+    "Zhvillimet më të fundit, përmbajtje informative dhe temat kryesore të ditës në një paraqitje moderne.",
   patundshmeri:
-    "Banesë, shtëpi, toka dhe prona të ndryshme të organizuara qartë dhe bukur.",
+    "Prona të selektuara me paraqitje premium, kërkim të lehtë dhe prezantim profesional.",
   automjete:
-    "Automjete, publikime të reja dhe oferta të përzgjedhura për çdo interes.",
+    "Automjete të publikuara me fotografi të pastra, detaje të qarta dhe pamje moderne.",
   oferta:
-    "Paketa profesionale, oferta promocionale dhe zgjidhje të personalizuara për biznesin tuaj.",
+    "Oferta promocionale, paketa profesionale dhe zgjidhje të personalizuara për biznesin tuaj.",
   "konkurse-pune":
-    "Gjej konkurse pune, pozita të hapura dhe mundësi të reja për karrierën tënde."
+    "Mundësi pune të organizuara qartë për kërkim më të lehtë dhe prezantim më serioz."
 };
 
-const heroImages = {
-  lajme:
-    "https://res.cloudinary.com/dzyn3rfgk/image/upload/v1770616331/pexels-gdtography-277628-911738_avu5ml.jpg",
-  vendi:
-    "https://res.cloudinary.com/dzyn3rfgk/image/upload/v1770616331/pexels-gdtography-277628-911738_avu5ml.jpg",
-  rajoni:
-    "https://res.cloudinary.com/dzyn3rfgk/image/upload/v1770616331/pexels-gdtography-277628-911738_avu5ml.jpg",
-  bota:
-    "https://res.cloudinary.com/dzyn3rfgk/image/upload/v1770616331/pexels-gdtography-277628-911738_avu5ml.jpg",
-  patundshmeri:
-    "https://res.cloudinary.com/dbz7fjuty/image/upload/v1776272072/pexels-aubin-kirch-280714467-18098706_typ0ey_nawh9b.jpg",
-  automjete:
-    "https://res.cloudinary.com/dbz7fjuty/image/upload/v1776272072/pexels-aubin-kirch-280714467-18098706_typ0ey_nawh9b.jpg",
-  oferta:
-    "https://res.cloudinary.com/dbz7fjuty/image/upload/v1776474870/p_lomjpm.png",
-  "konkurse-pune":
-    "https://res.cloudinary.com/dzyn3rfgk/image/upload/v1770616331/pexels-gdtography-277628-911738_avu5ml.jpg"
+const heroSlides = {
+  lajme: [
+    "https://images.unsplash.com/photo-1504711434969-e33886168f5c?q=80&w=1800&auto=format&fit=crop",
+    "https://images.unsplash.com/photo-1495020689067-958852a7765e?q=80&w=1800&auto=format&fit=crop",
+    "https://images.unsplash.com/photo-1486312338219-ce68d2c6f44d?q=80&w=1800&auto=format&fit=crop"
+  ],
+  patundshmeri: [
+    "https://images.unsplash.com/photo-1560518883-ce09059eeffa?q=80&w=1800&auto=format&fit=crop",
+    "https://images.unsplash.com/photo-1570129477492-45c003edd2be?q=80&w=1800&auto=format&fit=crop",
+    "https://images.unsplash.com/photo-1512917774080-9991f1c4c750?q=80&w=1800&auto=format&fit=crop"
+  ],
+  automjete: [
+    "https://images.unsplash.com/photo-1492144534655-ae79c964c9d7?q=80&w=1800&auto=format&fit=crop",
+    "https://images.unsplash.com/photo-1503376780353-7e6692767b70?q=80&w=1800&auto=format&fit=crop",
+    "https://images.unsplash.com/photo-1489824904134-891ab64532f1?q=80&w=1800&auto=format&fit=crop"
+  ],
+  oferta: [
+    "https://images.unsplash.com/photo-1556740749-887f6717d7e4?q=80&w=1800&auto=format&fit=crop",
+    "https://images.unsplash.com/photo-1441986300917-64674bd600d8?q=80&w=1800&auto=format&fit=crop",
+    "https://images.unsplash.com/photo-1555529771-35a1b1e44b1e?q=80&w=1800&auto=format&fit=crop"
+  ],
+  "konkurse-pune": [
+    "https://images.unsplash.com/photo-1521737604893-d14cc237f11d?q=80&w=1800&auto=format&fit=crop",
+    "https://images.unsplash.com/photo-1552664730-d307ca884978?q=80&w=1800&auto=format&fit=crop",
+    "https://images.unsplash.com/photo-1522202176988-66273c2fd55f?q=80&w=1800&auto=format&fit=crop"
+  ]
 };
 
-const offerSlides = [
-  "https://res.cloudinary.com/dbz7fjuty/image/upload/v1776474870/p_lomjpm.png",
-  "https://res.cloudinary.com/dbz7fjuty/image/upload/v1776285534/ChatGPT_Image_Apr_15_2026_10_38_27_PM_bf2mf9.png",
-  "https://images.unsplash.com/photo-1556740749-887f6717d7e4?q=80&w=1800&auto=format&fit=crop"
-];
+const categoryBadges = {
+  lajme: "Informim i shpejtë",
+  patundshmeri: "Prona premium",
+  automjete: "Oferta të reja",
+  oferta: "Paketa & promo",
+  "konkurse-pune": "Karrierë & punë"
+};
 
-const offerLogo =
-  "https://res.cloudinary.com/dbz7fjuty/image/upload/v1776285534/ChatGPT_Image_Apr_15_2026_10_38_27_PM_bf2mf9.png";
+const NEW_HERO_LOGO =
+  "https://res.cloudinary.com/dbz7fjuty/image/upload/v1776969626/ChatGPT_Image_Apr_23_2026_08_40_09_PM_ycq88d.png";
+
+const heroLogos = {
+  lajme: NEW_HERO_LOGO,
+  patundshmeri: NEW_HERO_LOGO,
+  automjete: NEW_HERO_LOGO,
+  oferta: NEW_HERO_LOGO,
+  "konkurse-pune": NEW_HERO_LOGO
+};
 
 export default function CategoryHero({ category }) {
   const [screenWidth, setScreenWidth] = useState(
@@ -70,226 +80,278 @@ export default function CategoryHero({ category }) {
     return () => window.removeEventListener("resize", onResize);
   }, []);
 
-  const isMobile = screenWidth <= 768;
-  const isTablet = screenWidth > 768 && screenWidth <= 1100;
-  const isOffersPage = category === "oferta";
+  const slides = useMemo(() => {
+    return (
+      heroSlides[category] || [
+        "https://images.unsplash.com/photo-1504711434969-e33886168f5c?q=80&w=1800&auto=format&fit=crop"
+      ]
+    );
+  }, [category]);
 
   useEffect(() => {
-    if (!isOffersPage) return;
+    setSlideIndex(0);
+  }, [category]);
+
+  useEffect(() => {
+    if (slides.length <= 1) return;
 
     const interval = setInterval(() => {
-      setSlideIndex((prev) => (prev + 1) % offerSlides.length);
-    }, 4500);
+      setSlideIndex((prev) => (prev + 1) % slides.length);
+    }, 3500);
 
     return () => clearInterval(interval);
-  }, [isOffersPage]);
+  }, [slides]);
 
-  const title = categoryTitles[category] || "Kategoria";
+  const isMobile = screenWidth <= 768;
+  const isTablet = screenWidth > 768 && screenWidth <= 1100;
+
+  const title = categoryTitles[category] || "Kategori";
   const description =
-    categoryDescriptions[category] ||
-    "Përmbajtje dhe publikime për këtë kategori.";
-
-  const heroImage = isOffersPage
-    ? offerSlides[slideIndex]
-    : heroImages[category] ||
-      "https://res.cloudinary.com/dzyn3rfgk/image/upload/v1770616331/pexels-gdtography-277628-911738_avu5ml.jpg";
-
-  const contentMaxWidth = isOffersPage ? "780px" : isMobile ? "100%" : "800px";
+    categoryDescriptions[category] || "Përmbajtje për këtë kategori.";
+  const badge = categoryBadges[category] || "Përmbajtje";
+  const heroLogo = heroLogos[category] || NEW_HERO_LOGO;
 
   return (
     <section
       style={{
         position: "relative",
-        overflow: "hidden",
-        minHeight: isOffersPage
-          ? isMobile
-            ? "520px"
-            : isTablet
-            ? "590px"
-            : "650px"
-          : isMobile
-          ? "340px"
-          : isTablet
-          ? "390px"
-          : "450px",
+        minHeight: isMobile ? "360px" : isTablet ? "430px" : "500px",
         display: "flex",
         alignItems: "center",
-        borderBottomLeftRadius: isOffersPage ? (isMobile ? "28px" : "40px") : "0",
-        borderBottomRightRadius: isOffersPage ? (isMobile ? "28px" : "40px") : "0"
+        overflow: "hidden"
       }}
     >
-      {isOffersPage
-        ? offerSlides.map((image, index) => (
-            <div
-              key={image}
-              style={{
-                position: "absolute",
-                inset: 0,
-                backgroundImage: `url(${image})`,
-                backgroundSize: "cover",
-                backgroundPosition: "center center",
-                backgroundRepeat: "no-repeat",
-                transform: isMobile ? "scale(1.05)" : "scale(1.03)",
-                opacity: slideIndex === index ? 1 : 0,
-                transition: "opacity 1s ease"
-              }}
-            />
-          ))
-        : (
-          <div
-            style={{
-              position: "absolute",
-              inset: 0,
-              backgroundImage: `url(${heroImage})`,
-              backgroundSize: "cover",
-              backgroundPosition: "center",
-              backgroundRepeat: "no-repeat",
-              transform: isMobile ? "scale(1.02)" : "scale(1.05)"
-            }}
-          />
-        )}
+      <style>{`
+        @keyframes heroFloatLogo {
+          0% {
+            transform: translateY(0px) rotate(-2deg) scale(1);
+          }
+          50% {
+            transform: translateY(-8px) rotate(0deg) scale(1.015);
+          }
+          100% {
+            transform: translateY(0px) rotate(-2deg) scale(1);
+          }
+        }
+
+        @keyframes heroPulseGlow {
+          0% {
+            opacity: 0.22;
+            transform: scale(1);
+          }
+          50% {
+            opacity: 0.36;
+            transform: scale(1.04);
+          }
+          100% {
+            opacity: 0.22;
+            transform: scale(1);
+          }
+        }
+
+        @keyframes heroLogoShine {
+          0% {
+            opacity: 0;
+            transform: translateX(-40px) skewX(-12deg);
+          }
+          30% {
+            opacity: 0.30;
+          }
+          100% {
+            opacity: 0;
+            transform: translateX(220px) skewX(-12deg);
+          }
+        }
+      `}</style>
+
+      {slides.map((image, index) => (
+        <div
+          key={`${image}-${index}`}
+          style={{
+            position: "absolute",
+            inset: 0,
+            backgroundImage: `url(${image})`,
+            backgroundSize: "cover",
+            backgroundPosition: "center center",
+            backgroundRepeat: "no-repeat",
+            transform: isMobile ? "scale(1.04)" : "scale(1.06)",
+            opacity: slideIndex === index ? 1 : 0,
+            transition: "opacity 1s ease"
+          }}
+        />
+      ))}
 
       <div
         style={{
           position: "absolute",
           inset: 0,
-          background: isOffersPage
-            ? isMobile
-              ? "linear-gradient(180deg, rgba(3,12,29,0.86) 0%, rgba(7,20,42,0.68) 42%, rgba(8,32,43,0.50) 72%, rgba(20,184,166,0.24) 100%)"
-              : "linear-gradient(90deg, rgba(5,15,35,0.90) 0%, rgba(7,20,42,0.76) 36%, rgba(8,32,43,0.48) 65%, rgba(20,184,166,0.34) 100%)"
-            : "linear-gradient(135deg, rgba(7,16,34,0.92) 0%, rgba(15,23,42,0.82) 42%, rgba(37,99,235,0.62) 100%)"
+          background: isMobile
+            ? "linear-gradient(180deg, rgba(2,6,23,0.58) 0%, rgba(2,6,23,0.78) 70%, rgba(2,6,23,0.88) 100%)"
+            : "linear-gradient(90deg, rgba(2,6,23,0.84) 0%, rgba(2,6,23,0.62) 42%, rgba(2,6,23,0.48) 68%, rgba(2,6,23,0.62) 100%)"
         }}
       />
-
-      {isOffersPage && (
-        <>
-          <div
-            style={{
-              position: "absolute",
-              inset: 0,
-              background:
-                "radial-gradient(circle at 78% 24%, rgba(94,234,212,0.20), transparent 24%), radial-gradient(circle at 18% 86%, rgba(59,130,246,0.16), transparent 28%)"
-            }}
-          />
-
-          <div
-            style={{
-              position: "absolute",
-              left: isMobile ? "-18%" : "-6%",
-              bottom: isMobile ? "-80px" : "-120px",
-              width: isMobile ? "320px" : "540px",
-              height: isMobile ? "320px" : "540px",
-              borderRadius: "50%",
-              background: "radial-gradient(circle, rgba(59,130,246,0.18), transparent 65%)",
-              pointerEvents: "none"
-            }}
-          />
-
-          <div
-            style={{
-              position: "absolute",
-              right: isMobile ? "-18%" : "-6%",
-              top: isMobile ? "-80px" : "-120px",
-              width: isMobile ? "320px" : "540px",
-              height: isMobile ? "540px" : "540px",
-              borderRadius: "50%",
-              background: "radial-gradient(circle, rgba(20,184,166,0.18), transparent 65%)",
-              pointerEvents: "none"
-            }}
-          />
-        </>
-      )}
 
       <div
         style={{
           position: "absolute",
           inset: 0,
           background:
-            "linear-gradient(180deg, rgba(255,255,255,0) 0%, rgba(15,23,42,0.10) 100%)"
+            "radial-gradient(circle at 20% 20%, rgba(59,130,246,0.18), transparent 28%), radial-gradient(circle at 80% 80%, rgba(255,255,255,0.08), transparent 24%)"
         }}
       />
 
-      {isOffersPage && !isMobile && (
-        <img
-          src={offerLogo}
-          alt="Publiko"
-          style={{
-            position: "absolute",
-            right: isTablet ? "7%" : "8%",
-            top: isTablet ? "15%" : "16%",
-            width: isTablet ? "118px" : "150px",
-            opacity: 0.13,
-            objectFit: "contain",
-            filter: "drop-shadow(0 0 34px rgba(94,234,212,0.55))",
-            pointerEvents: "none",
-            zIndex: 1
-          }}
-        />
+      <div
+        style={{
+          position: "absolute",
+          left: isMobile ? "-80px" : "-40px",
+          bottom: isMobile ? "-90px" : "-120px",
+          width: isMobile ? "220px" : "320px",
+          height: isMobile ? "220px" : "320px",
+          borderRadius: "999px",
+          background:
+            "radial-gradient(circle, rgba(59,130,246,0.18), transparent 70%)",
+          pointerEvents: "none"
+        }}
+      />
+
+      <div
+        style={{
+          position: "absolute",
+          right: isMobile ? "-70px" : "-30px",
+          top: isMobile ? "-80px" : "-110px",
+          width: isMobile ? "220px" : "320px",
+          height: isMobile ? "220px" : "320px",
+          borderRadius: "999px",
+          background:
+            "radial-gradient(circle, rgba(255,255,255,0.10), transparent 70%)",
+          pointerEvents: "none"
+        }}
+      />
+
+      {!isMobile && (
+        <>
+          <div
+            style={{
+              position: "absolute",
+              right: isTablet ? "7%" : "8%",
+              top: isTablet ? "17%" : "15%",
+              width: isTablet ? "210px" : "270px",
+              height: isTablet ? "210px" : "270px",
+              borderRadius: "50%",
+              background:
+                "radial-gradient(circle, rgba(14,165,233,0.22), rgba(37,99,235,0.08), transparent 72%)",
+              filter: "blur(20px)",
+              animation: "heroPulseGlow 5.2s ease-in-out infinite",
+              pointerEvents: "none",
+              zIndex: 1
+            }}
+          />
+
+          <div
+            style={{
+              position: "absolute",
+              right: isTablet ? "5.2%" : "6%",
+              top: isTablet ? "12%" : "10%",
+              width: isTablet ? "250px" : "340px",
+              height: isTablet ? "250px" : "340px",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              animation: "heroFloatLogo 5.8s ease-in-out infinite",
+              pointerEvents: "none",
+              zIndex: 2
+            }}
+          >
+            <div
+              style={{
+                position: "relative",
+                width: "100%",
+                height: "100%"
+              }}
+            >
+              <img
+                src={heroLogo}
+                alt="Publiko"
+                style={{
+                  width: "100%",
+                  height: "100%",
+                  objectFit: "contain",
+                  opacity: 0.28,
+                  filter:
+                    "drop-shadow(0 10px 24px rgba(2,6,23,0.25)) drop-shadow(0 0 26px rgba(59,130,246,0.18))"
+                }}
+              />
+
+              <div
+                style={{
+                  position: "absolute",
+                  top: "18%",
+                  left: "10%",
+                  width: "36%",
+                  height: "56%",
+                  background:
+                    "linear-gradient(120deg, rgba(255,255,255,0), rgba(255,255,255,0.32), rgba(255,255,255,0))",
+                  filter: "blur(4px)",
+                  transform: "skewX(-12deg)",
+                  animation: "heroLogoShine 4.5s ease-in-out infinite"
+                }}
+              />
+            </div>
+          </div>
+        </>
       )}
 
       <div
         style={{
           position: "relative",
-          zIndex: 2,
-          maxWidth: "1280px",
+          zIndex: 3,
           width: "100%",
+          maxWidth: "1500px",
           margin: "0 auto",
-          padding: isOffersPage
-            ? isMobile
-              ? "48px 16px 94px"
-              : isTablet
-              ? "72px 24px 116px"
-              : "86px 24px 132px"
-            : isMobile
-            ? "38px 16px 88px"
+          padding: isMobile
+            ? "38px 14px 92px"
             : isTablet
-            ? "56px 24px 100px"
-            : "70px 24px 112px"
+              ? "54px 22px 110px"
+              : "72px 26px 130px",
+          boxSizing: "border-box"
         }}
       >
-        <div style={{ maxWidth: contentMaxWidth }}>
+        <div style={{ maxWidth: isMobile ? "100%" : "780px" }}>
           <div
             style={{
               display: "inline-flex",
               alignItems: "center",
               gap: "8px",
-              padding: isMobile ? "8px 13px" : "10px 17px",
+              padding: isMobile ? "8px 13px" : "10px 16px",
               borderRadius: "999px",
               background: "rgba(255,255,255,0.10)",
-              border: "1px solid rgba(255,255,255,0.14)",
-              fontSize: isMobile ? "12px" : "13px",
-              fontWeight: 700,
+              border: "1px solid rgba(255,255,255,0.18)",
               color: "#dbeafe",
-              marginBottom: isMobile ? "18px" : "22px",
-              backdropFilter: "blur(12px)",
-              WebkitBackdropFilter: "blur(12px)",
-              boxShadow: "0 10px 24px rgba(15,23,42,0.12)",
-              letterSpacing: "0.01em"
+              fontSize: isMobile ? "11px" : "12px",
+              fontWeight: "800",
+              letterSpacing: "0.05em",
+              textTransform: "uppercase",
+              backdropFilter: "blur(10px)",
+              WebkitBackdropFilter: "blur(10px)",
+              marginBottom: isMobile ? "16px" : "20px"
             }}
           >
-            Kategoria • {title}
+            {badge}
           </div>
 
           <h1
             style={{
-              fontSize: isOffersPage
-                ? isMobile
-                  ? "50px"
-                  : isTablet
-                  ? "64px"
-                  : "82px"
-                : isMobile
-                ? "44px"
-                : isTablet
-                ? "56px"
-                : "72px",
-              lineHeight: isMobile ? 0.98 : 0.94,
-              margin: "0 0 16px",
+              margin: "0 0 14px",
               color: "#ffffff",
+              fontSize: isMobile
+                ? "clamp(34px, 10vw, 42px)"
+                : isTablet
+                  ? "58px"
+                  : "76px",
+              lineHeight: isMobile ? 0.98 : 0.94,
+              fontWeight: "900",
               letterSpacing: "-0.045em",
-              fontWeight: 900,
-              textWrap: "balance",
-              textShadow: "0 10px 30px rgba(0,0,0,0.18)"
+              textShadow: "0 10px 26px rgba(0,0,0,0.18)"
             }}
           >
             {title}
@@ -297,66 +359,101 @@ export default function CategoryHero({ category }) {
 
           <p
             style={{
-              fontSize: isOffersPage
-                ? isMobile
-                  ? "15px"
-                  : isTablet
-                  ? "18px"
-                  : "20px"
-                : isMobile
-                ? "15px"
-                : isTablet
-                ? "17px"
-                : "20px",
-              color: "rgba(219,234,254,0.94)",
-              lineHeight: isMobile ? 1.75 : 1.82,
               margin: 0,
               maxWidth: isMobile ? "100%" : "760px",
-              fontWeight: 500,
-              letterSpacing: "0.002em",
+              color: "rgba(255,255,255,0.92)",
+              fontSize: isMobile ? "14px" : isTablet ? "17px" : "20px",
+              lineHeight: isMobile ? 1.72 : 1.82,
+              fontWeight: "500",
               textShadow: "0 6px 22px rgba(0,0,0,0.12)"
             }}
           >
             {description}
           </p>
 
-          {isOffersPage && (
+          <div
+            style={{
+              display: "flex",
+              flexWrap: "wrap",
+              gap: isMobile ? "8px" : "10px",
+              marginTop: isMobile ? "18px" : "24px"
+            }}
+          >
             <div
               style={{
-                display: "flex",
-                alignItems: "center",
-                gap: "8px",
-                marginTop: isMobile ? "20px" : "26px"
+                padding: isMobile ? "9px 12px" : "10px 14px",
+                borderRadius: "999px",
+                background: "rgba(255,255,255,0.10)",
+                border: "1px solid rgba(255,255,255,0.16)",
+                color: "#ffffff",
+                fontSize: isMobile ? "12px" : "13px",
+                fontWeight: "700",
+                backdropFilter: "blur(8px)",
+                WebkitBackdropFilter: "blur(8px)"
               }}
             >
-              {offerSlides.map((_, index) => (
-                <button
-                  key={index}
-                  onClick={() => setSlideIndex(index)}
-                  aria-label={`Slide ${index + 1}`}
-                  style={{
-                    width: slideIndex === index ? "28px" : "9px",
-                    height: "9px",
-                    borderRadius: "999px",
-                    border: "none",
-                    cursor: "pointer",
-                    background:
-                      slideIndex === index
-                        ? "linear-gradient(135deg, #5eead4, #14b8a6)"
-                        : "rgba(255,255,255,0.35)",
-                    boxShadow:
-                      slideIndex === index
-                        ? "0 0 18px rgba(94,234,212,0.45)"
-                        : "none",
-                    transition: "all .28s ease",
-                    padding: 0
-                  }}
-                />
-              ))}
+              Responsive
             </div>
-          )}
+
+            <div
+              style={{
+                padding: isMobile ? "9px 12px" : "10px 14px",
+                borderRadius: "999px",
+                background: "rgba(255,255,255,0.10)",
+                border: "1px solid rgba(255,255,255,0.16)",
+                color: "#ffffff",
+                fontSize: isMobile ? "12px" : "13px",
+                fontWeight: "700",
+                backdropFilter: "blur(8px)",
+                WebkitBackdropFilter: "blur(8px)"
+              }}
+            >
+              Dizajn premium
+            </div>
+          </div>
         </div>
       </div>
+
+      {slides.length > 1 && (
+        <div
+          style={{
+            position: "absolute",
+            left: "50%",
+            bottom: isMobile ? "18px" : "28px",
+            transform: "translateX(-50%)",
+            zIndex: 4,
+            display: "flex",
+            alignItems: "center",
+            gap: "8px"
+          }}
+        >
+          {slides.map((_, index) => (
+            <button
+              key={index}
+              type="button"
+              onClick={() => setSlideIndex(index)}
+              aria-label={`Slide ${index + 1}`}
+              style={{
+                width: slideIndex === index ? "28px" : "9px",
+                height: "9px",
+                borderRadius: "999px",
+                border: "none",
+                padding: 0,
+                cursor: "pointer",
+                background:
+                  slideIndex === index
+                    ? "linear-gradient(135deg, #ffffff, #dbeafe)"
+                    : "rgba(255,255,255,0.38)",
+                boxShadow:
+                  slideIndex === index
+                    ? "0 0 16px rgba(255,255,255,0.38)"
+                    : "none",
+                transition: "all .28s ease"
+              }}
+            />
+          ))}
+        </div>
+      )}
     </section>
   );
 }

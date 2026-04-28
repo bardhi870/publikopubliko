@@ -209,35 +209,7 @@ export default function NewsMenuDropdown({ mobile = false, onNavigate }) {
           zIndex: 1000,
         }}
       >
-        <div
-          style={{
-            padding: "10px 12px 12px",
-            borderBottom: "1px solid rgba(15,23,42,0.06)",
-            marginBottom: "8px",
-          }}
-        >
-          <div
-            style={{
-              fontSize: "12px",
-              fontWeight: 800,
-              letterSpacing: "0.08em",
-              textTransform: "uppercase",
-              color: "#2563eb",
-              marginBottom: "6px",
-            }}
-          >
-            Newsroom
-          </div>
-          <div
-            style={{
-              fontSize: "14px",
-              color: "#475569",
-              lineHeight: 1.6,
-            }}
-          >
-            Qasje e shpejtë në të gjitha seksionet e lajmeve.
-          </div>
-        </div>
+       
 
         <div
           style={{

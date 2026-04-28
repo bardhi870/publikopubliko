@@ -1,6 +1,13 @@
 import React, { useEffect, useMemo, useState } from "react";
 import OfferCard from "./OfferCard";
 import AdSlot from "../../components/ads/AdSlot";
+import {
+  FiUsers,
+  FiHome,
+  FiTrendingUp,
+  FiBriefcase,
+  FiBarChart2
+} from "react-icons/fi";
 
 const API = import.meta.env.VITE_API_URL || "http://localhost:5000";
 
@@ -77,6 +84,7 @@ export default function OffersSection() {
                   Number(a?.sort_order ?? a?.sortOrder ?? 0) -
                   Number(b?.sort_order ?? b?.sortOrder ?? 0)
               )
+              .slice(0, 3)
           );
         }
       } catch (err) {
@@ -345,43 +353,65 @@ export default function OffersSection() {
             }}
           >
             {stats.length ? (
-              stats.map((stat, index) => (
-                <div
-                  key={stat.id || index}
-                  style={{
-                    borderRadius: isMobile ? "18px" : "24px",
-                    padding: isMobile ? "18px 16px" : "24px 22px",
-                    background: "rgba(255,255,255,0.86)",
-                    border: "1px solid rgba(203,213,225,0.75)",
-                    boxShadow: "0 16px 34px rgba(15,23,42,0.05)",
-                    backdropFilter: "blur(8px)",
-                    textAlign: "left"
-                  }}
-                >
+              stats.map((stat, index) => {
+                const Icon = getStatIcon(stat, index);
+
+                return (
                   <div
+                    key={stat.id || index}
                     style={{
-                      color: "#0f172a",
-                      fontSize: isMobile ? "28px" : "36px",
-                      fontWeight: "900",
-                      lineHeight: 1,
-                      letterSpacing: "-0.04em",
-                      marginBottom: "10px"
+                      borderRadius: isMobile ? "18px" : "24px",
+                      padding: isMobile ? "18px 16px" : "22px 20px",
+                      background: "rgba(255,255,255,0.88)",
+                      border: "1px solid rgba(203,213,225,0.75)",
+                      boxShadow: "0 16px 34px rgba(15,23,42,0.05)",
+                      backdropFilter: "blur(8px)",
+                      textAlign: "left"
                     }}
                   >
-                    {stat.value}
+                    <div
+                      style={{
+                        width: isMobile ? "54px" : "62px",
+                        height: isMobile ? "54px" : "62px",
+                        borderRadius: isMobile ? "16px" : "18px",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        marginBottom: "14px",
+                        background: "linear-gradient(135deg, #ecfeff 0%, #e0f2fe 100%)",
+                        color: "#2bbec4",
+                        border: "1px solid #c7f0f5"
+                      }}
+                    >
+                      <Icon size={isMobile ? 24 : 28} />
+                    </div>
+
+                    <div
+                      style={{
+                        color: "#0f172a",
+                        fontSize: isMobile ? "28px" : "36px",
+                        fontWeight: "900",
+                        lineHeight: 1,
+                        letterSpacing: "-0.04em",
+                        marginBottom: "10px"
+                      }}
+                    >
+                      {stat.value}
+                    </div>
+
+                    <div
+                      style={{
+                        color: "#64748b",
+                        fontSize: isMobile ? "13px" : "14px",
+                        lineHeight: 1.7,
+                        fontWeight: "700"
+                      }}
+                    >
+                      {stat.label}
+                    </div>
                   </div>
-                  <div
-                    style={{
-                      color: "#64748b",
-                      fontSize: isMobile ? "13px" : "14px",
-                      lineHeight: 1.7,
-                      fontWeight: "600"
-                    }}
-                  >
-                    {stat.label}
-                  </div>
-                </div>
-              ))
+                );
+              })
             ) : (
               <div
                 style={{
@@ -454,6 +484,51 @@ export default function OffersSection() {
       </div>
     </section>
   );
+}
+
+function getStatIcon(item, index) {
+  const text = `${item?.label || ""} ${item?.value || ""}`.toLowerCase();
+
+  if (
+    text.includes("pun") ||
+    text.includes("klient") ||
+    text.includes("user") ||
+    text.includes("persona") ||
+    text.includes("shikime")
+  ) {
+    return FiUsers;
+  }
+
+  if (
+    text.includes("biznes") ||
+    text.includes("kompani") ||
+    text.includes("company") ||
+    text.includes("regjistr")
+  ) {
+    return FiHome;
+  }
+
+  if (
+    text.includes("rritje") ||
+    text.includes("trend") ||
+    text.includes("vizita") ||
+    text.includes("website") ||
+    text.includes("trafik")
+  ) {
+    return FiTrendingUp;
+  }
+
+  if (
+    text.includes("projekt") ||
+    text.includes("job") ||
+    text.includes("punë") ||
+    text.includes("pune")
+  ) {
+    return FiBriefcase;
+  }
+
+  const icons = [FiUsers, FiHome, FiTrendingUp, FiBriefcase, FiBarChart2];
+  return icons[index % icons.length];
 }
 
 const emptyStateStyle = {

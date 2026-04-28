@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { Link } from "react-router-dom";
+import AdminTopNav from "../../components/admin/AdminTopNav";
 
 const API = import.meta.env.VITE_API_URL || "http://localhost:5000";
 
@@ -186,9 +186,16 @@ export default function AdminPublicClients() {
       imageFile: null,
       imagePreview: client.image || ""
     });
+
+    window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
   const handleDelete = async (id) => {
+    const confirmed = window.confirm(
+      "A je i sigurt që don me fshi këtë logo?"
+    );
+    if (!confirmed) return;
+
     try {
       await fetch(`${API}/api/public-clients/${id}`, {
         method: "DELETE"
@@ -205,415 +212,214 @@ export default function AdminPublicClients() {
   };
 
   return (
-    <div
-      style={{
-        minHeight: "100vh",
-        background: "#f8fafc",
-        padding: "28px 16px 50px"
-      }}
-    >
-      <div style={{ maxWidth: "1280px", margin: "0 auto" }}>
-        <div
-          style={{
-            background: "#ffffff",
-            padding: "20px",
-            borderRadius: "18px",
-            marginBottom: "24px",
-            boxShadow: "0 8px 30px rgba(0,0,0,0.06)"
-          }}
-        >
-          <h2
-            style={{
-              marginBottom: "18px",
-              fontSize: "24px",
-              fontWeight: "700"
-            }}
-          >
-            Admin Panel
-          </h2>
+    <div style={styles.page}>
+      <div style={styles.container}>
+        <section style={styles.heroCard}>
+          <div style={styles.heroGlowOne} />
+          <div style={styles.heroGlowTwo} />
 
-          <div
- 
- 
-  style={{
-    display: "flex",
-    gap: "14px",
-    flexWrap: "wrap"
-  }}
->
-  <Link to="/admin" style={btnStyle}>
-    Dashboard
-  </Link>
+          <div style={styles.heroGrid} className="admin-public-clients-hero-grid">
+            <div style={styles.heroLeft}>
+              <div style={styles.heroBadge}>Trusted Brands</div>
 
-  <Link to="/admin/offers" style={btnStyle}>
-    Ofertat
-  </Link>
+              <h1 style={styles.heroTitle}>Klientët tanë publik</h1>
 
-  <Link to="/admin/stats" style={btnStyle}>
-    Statistikat
-  </Link>
+              <p style={styles.heroSubtitle}>
+                Menaxho logot e partnerëve dhe klientëve publik, renditjen,
+                statusin dhe prezantimin vizual në një seksion të vetëm premium.
+              </p>
 
-  <Link to="/admin/clients" style={btnStyle}>
-    Klientët
-  </Link>
+              <div style={styles.heroNavWrap}>
+                <AdminTopNav />
+              </div>
+            </div>
 
-  <Link to="/admin/public-clients" style={activeBtnStyle}>
-    Klientët tanë
-  </Link>
-
-  <Link to="/admin/payments" style={btnStyle}>
-    Pagesat
-  </Link>
-
-  <Link to="/admin/ad-requests" style={btnStyle}>
-    Reklamo me ne
-  </Link>
-</div>
-        </div>
-
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
-            gap: "16px",
-            marginBottom: "24px"
-          }}
-        >
-          <StatCard label="Totali i logove" value={stats.totalClients} />
-          <StatCard label="Logo aktive" value={stats.activeClients} />
-          <StatCard label="Jo aktive" value={stats.inactiveClients} />
-        </div>
-
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: "minmax(320px, 420px) 1fr",
-            gap: "20px"
-          }}
-        >
-          <div
-            style={{
-              background: "#fff",
-              borderRadius: "18px",
-              padding: "20px",
-              boxShadow: "0 8px 30px rgba(0,0,0,0.06)",
-              height: "fit-content"
-            }}
-          >
-            <h3
-              style={{
-                marginBottom: "18px",
-                fontSize: "20px",
-                fontWeight: "700"
-              }}
+            <div
+              style={styles.heroStatsGrid}
+              className="admin-public-clients-hero-stats"
             >
-              {editingId ? "Përditëso logon" : "Shto logo të re"}
-            </h3>
+              <StatCard label="Totali i logove" value={stats.totalClients} dark />
+              <StatCard label="Logo aktive" value={stats.activeClients} dark />
+              <StatCard label="Jo aktive" value={stats.inactiveClients} dark />
+              <StatCard
+                label="Renditja e parë"
+                value={sortedClients.length ? sortedClients[0]?.sortOrder || 0 : 0}
+                dark
+              />
+            </div>
+          </div>
+        </section>
 
-            <form
-              onSubmit={handleSubmit}
-              style={{ display: "grid", gap: "14px" }}
-            >
+        <section style={styles.contentGrid} className="admin-public-clients-content-grid">
+          <div style={styles.formCard}>
+            <div style={styles.sectionTopRow}>
               <div>
-                <label style={labelStyle}>Emri i kompanisë</label>
-                <input
-                  type="text"
-                  name="name"
-                  value={formData.name}
-                  onChange={handleChange}
-                  placeholder="p.sh. Publiko"
-                  style={inputStyle}
-                />
+                <h3 style={styles.sectionMainTitle}>
+                  {editingId ? "Përditëso logon" : "Shto logo të re"}
+                </h3>
+
+                <p style={styles.sectionMainSubtitle}>
+                  Shto ose edito partnerët publik me emër, link, renditje dhe
+                  foto/logo.
+                </p>
               </div>
 
-              <div>
-                <label style={labelStyle}>Link opsional</label>
-                <input
-                  type="text"
-                  name="website"
-                  value={formData.website}
-                  onChange={handleChange}
-                  placeholder="p.sh. https://example.com"
-                  style={inputStyle}
-                />
+              <div style={styles.sectionMiniBadge}>
+                {editingId ? "Edit mode" : "New logo"}
               </div>
+            </div>
 
-              <div>
-                <label style={labelStyle}>Renditja</label>
-                <input
-                  type="number"
-                  name="sortOrder"
-                  value={formData.sortOrder}
-                  onChange={handleChange}
-                  placeholder="p.sh. 1"
-                  style={inputStyle}
-                />
-              </div>
-
-              <div>
-                <label style={labelStyle}>Statusi</label>
-                <select
-                  name="status"
-                  value={formData.status}
-                  onChange={handleChange}
-                  style={inputStyle}
-                >
-                  <option value="Aktive">Aktive</option>
-                  <option value="Jo aktive">Jo aktive</option>
-                </select>
-              </div>
-
-              <div>
-                <label style={labelStyle}>Logo / Foto</label>
-                <input
-                  type="file"
-                  accept="image/*"
-                  onChange={handleImageChange}
-                  style={inputStyle}
-                />
-              </div>
-
-              <div
-                style={{
-                  border: "1px dashed #cbd5e1",
-                  borderRadius: "14px",
-                  padding: "14px",
-                  background: "#f8fafc"
-                }}
-              >
-                <div
-                  style={{
-                    fontSize: "13px",
-                    fontWeight: "700",
-                    color: "#0f172a",
-                    marginBottom: "10px"
-                  }}
-                >
-                  Preview
+            <div style={styles.formInnerWrap}>
+              <form onSubmit={handleSubmit} style={styles.formGrid}>
+                <div>
+                  <label style={labelStyle}>Emri i kompanisë</label>
+                  <input
+                    type="text"
+                    name="name"
+                    value={formData.name}
+                    onChange={handleChange}
+                    placeholder="p.sh. Publiko"
+                    style={inputStyle}
+                  />
                 </div>
 
-                {formData.imagePreview ? (
-                  <div
-                    style={{
-                      background: "#fff",
-                      borderRadius: "12px",
-                      padding: "14px",
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      minHeight: "150px",
-                      border: "1px solid #e2e8f0"
-                    }}
-                  >
-                    <img
-                      src={formData.imagePreview}
-                      alt="Preview"
-                      style={{
-                        maxWidth: "100%",
-                        maxHeight: "110px",
-                        objectFit: "contain",
-                        display: "block"
-                      }}
-                    />
-                  </div>
-                ) : (
-                  <div
-                    style={{
-                      background: "#fff",
-                      borderRadius: "12px",
-                      minHeight: "150px",
-                      border: "1px solid #e2e8f0",
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      color: "#64748b",
-                      textAlign: "center",
-                      padding: "12px"
-                    }}
-                  >
-                    Nuk ka logo të zgjedhur.
-                  </div>
-                )}
-              </div>
+                <div>
+                  <label style={labelStyle}>Link opsional</label>
+                  <input
+                    type="text"
+                    name="website"
+                    value={formData.website}
+                    onChange={handleChange}
+                    placeholder="p.sh. https://example.com"
+                    style={inputStyle}
+                  />
+                </div>
 
-              <div
-                style={{
-                  display: "flex",
-                  gap: "10px",
-                  flexWrap: "wrap",
-                  marginTop: "6px"
-                }}
-              >
-                <button
-                  type="submit"
-                  style={primaryBtnStyle}
-                  disabled={submitting}
-                >
-                  {submitting
-                    ? "Duke ruajtur..."
-                    : editingId
-                    ? "Ruaj ndryshimet"
-                    : "Shto logon"}
-                </button>
+                <div>
+                  <label style={labelStyle}>Renditja</label>
+                  <input
+                    type="number"
+                    name="sortOrder"
+                    value={formData.sortOrder}
+                    onChange={handleChange}
+                    placeholder="p.sh. 1"
+                    style={inputStyle}
+                  />
+                </div>
 
-                <button
-                  type="button"
-                  onClick={resetForm}
-                  style={secondaryBtnStyle}
-                >
-                  Pastro
-                </button>
-              </div>
-            </form>
+                <div>
+                  <label style={labelStyle}>Statusi</label>
+                  <select
+                    name="status"
+                    value={formData.status}
+                    onChange={handleChange}
+                    style={inputStyle}
+                  >
+                    <option value="Aktive">Aktive</option>
+                    <option value="Jo aktive">Jo aktive</option>
+                  </select>
+                </div>
+
+                <div style={{ gridColumn: "1 / -1" }}>
+                  <label style={labelStyle}>Logo / Foto</label>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={handleImageChange}
+                    style={inputStyle}
+                  />
+                </div>
+
+                <div style={{ gridColumn: "1 / -1" }}>
+                  <div style={styles.previewWrap}>
+                    <div style={styles.previewTitle}>Preview</div>
+
+                    {formData.imagePreview ? (
+                      <div style={styles.previewBox}>
+                        <img
+                          src={formData.imagePreview}
+                          alt="Preview"
+                          style={styles.previewImage}
+                        />
+                      </div>
+                    ) : (
+                      <div style={styles.previewEmpty}>
+                        Nuk ka logo të zgjedhur.
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                <div style={styles.formActions}>
+                  <button
+                    type="submit"
+                    style={primaryBtnStyle}
+                    disabled={submitting}
+                  >
+                    {submitting
+                      ? "Duke ruajtur..."
+                      : editingId
+                      ? "Ruaj ndryshimet"
+                      : "Shto logon"}
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={resetForm}
+                    style={secondaryBtnStyle}
+                  >
+                    Pastro
+                  </button>
+                </div>
+              </form>
+            </div>
           </div>
 
-          <div
-            style={{
-              background: "#fff",
-              borderRadius: "18px",
-              padding: "20px",
-              boxShadow: "0 8px 30px rgba(0,0,0,0.06)"
-            }}
-          >
-            <h3
-              style={{
-                marginBottom: "18px",
-                fontSize: "20px",
-                fontWeight: "700"
-              }}
-            >
-              Lista e klientëve tanë
-            </h3>
+          <div style={styles.listCard}>
+            <div style={styles.sectionTopRow}>
+              <div>
+                <h3 style={styles.sectionMainTitle}>Lista e klientëve tanë</h3>
+
+                <p style={styles.sectionMainSubtitle}>
+                  Menaxho logot në kartela më të pastra, më premium dhe responsive.
+                </p>
+              </div>
+
+              <div style={styles.sectionMiniBadge}>
+                {sortedClients.length} logo
+              </div>
+            </div>
 
             {sortedClients.length === 0 ? (
-              <div
-                style={{
-                  padding: "30px 16px",
-                  textAlign: "center",
-                  border: "1px dashed #cbd5e1",
-                  borderRadius: "14px",
-                  color: "#64748b"
-                }}
-              >
-                Nuk ka logo të regjistruara.
-              </div>
+              <div style={styles.emptyState}>Nuk ka logo të regjistruara.</div>
             ) : (
-              <div style={{ display: "grid", gap: "16px" }}>
+              <div style={styles.logoGrid} className="admin-public-logo-grid">
                 {sortedClients.map((client) => (
-                  <div
-                    key={client.id}
-                    style={{
-                      border: "1px solid #e2e8f0",
-                      borderRadius: "16px",
-                      padding: "18px"
-                    }}
-                  >
-                    <div
-                      style={{
-                        display: "grid",
-                        gridTemplateColumns: "120px 1fr",
-                        gap: "16px",
-                        alignItems: "center",
-                        marginBottom: "14px"
-                      }}
-                    >
-                      <div
-                        style={{
-                          background: "#fff",
-                          border: "1px solid #e2e8f0",
-                          borderRadius: "14px",
-                          height: "90px",
-                          display: "flex",
-                          alignItems: "center",
-                          justifyContent: "center",
-                          overflow: "hidden",
-                          padding: "10px"
-                        }}
-                      >
+                  <div key={client.id} style={styles.logoCard}>
+                    <div style={styles.logoCardTop}>
+                      <div style={styles.logoImageWrap}>
                         {client.image ? (
                           <img
                             src={client.image}
                             alt={client.name}
-                            style={{
-                              maxWidth: "100%",
-                              maxHeight: "70px",
-                              objectFit: "contain",
-                              display: "block"
-                            }}
+                            style={styles.logoImage}
                           />
                         ) : (
-                          <span style={{ color: "#94a3b8", fontSize: "13px" }}>
-                            Pa logo
-                          </span>
+                          <span style={styles.logoEmptyText}>Pa logo</span>
                         )}
                       </div>
 
-                      <div>
-                        <div
-                          style={{
-                            display: "flex",
-                            justifyContent: "space-between",
-                            gap: "12px",
-                            flexWrap: "wrap",
-                            marginBottom: "8px"
-                          }}
-                        >
-                          <h4
-                            style={{
-                              margin: 0,
-                              fontSize: "18px",
-                              fontWeight: "700",
-                              color: "#0f172a"
-                            }}
-                          >
-                            {client.name}
-                          </h4>
-
-                          <div
-                            style={{
-                              background:
-                                client.status === "Aktive"
-                                  ? "#eff6ff"
-                                  : "#f1f5f9",
-                              color:
-                                client.status === "Aktive"
-                                  ? "#1d4ed8"
-                                  : "#475569",
-                              padding: "8px 12px",
-                              borderRadius: "999px",
-                              fontWeight: "700",
-                              fontSize: "14px",
-                              height: "fit-content"
-                            }}
-                          >
-                            {client.status}
-                          </div>
-                        </div>
-
-                        <div
-                          style={{
-                            display: "grid",
-                            gridTemplateColumns:
-                              "repeat(auto-fit, minmax(180px, 1fr))",
-                            gap: "10px"
-                          }}
-                        >
-                          <InfoBox label="Link" value={client.website || "-"} />
-                          <InfoBox
-                            label="Renditja"
-                            value={client.sortOrder || 0}
-                          />
-                        </div>
-                      </div>
+                      <div style={statusPill(client.status)}>{client.status}</div>
                     </div>
 
-                    <div
-                      style={{
-                        display: "flex",
-                        gap: "10px",
-                        flexWrap: "wrap"
-                      }}
-                    >
+                    <h4 style={styles.logoName}>{client.name}</h4>
+
+                    <div style={styles.logoMetaGrid}>
+                      <InfoBox label="Link" value={client.website || "-"} />
+                      <InfoBox label="Renditja" value={client.sortOrder || 0} />
+                    </div>
+
+                    <div style={styles.logoCardActions}>
                       <button
                         onClick={() => handleEdit(client)}
                         style={secondaryBtnStyle}
@@ -632,37 +438,81 @@ export default function AdminPublicClients() {
                 ))}
               </div>
             )}
+
+            <style>{`
+              @media (max-width: 1180px) {
+                .admin-public-clients-hero-grid {
+                  grid-template-columns: 1fr !important;
+                }
+
+                .admin-public-clients-content-grid {
+                  grid-template-columns: 1fr !important;
+                }
+              }
+
+              @media (max-width: 760px) {
+                .admin-public-clients-hero-stats {
+                  grid-template-columns: 1fr !important;
+                }
+
+                .admin-public-logo-grid {
+                  grid-template-columns: 1fr !important;
+                }
+              }
+
+              @media (min-width: 761px) and (max-width: 1150px) {
+                .admin-public-logo-grid {
+                  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+                }
+              }
+
+              @media (min-width: 1151px) {
+                .admin-public-logo-grid {
+                  grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+                }
+              }
+            `}</style>
           </div>
-        </div>
+        </section>
       </div>
     </div>
   );
 }
 
-function StatCard({ label, value }) {
+function StatCard({ label, value, dark = false }) {
   return (
     <div
       style={{
-        background: "#fff",
-        borderRadius: "18px",
-        padding: "18px",
-        boxShadow: "0 8px 30px rgba(0,0,0,0.06)"
+        background: dark
+          ? "linear-gradient(135deg, rgba(255,255,255,0.12), rgba(255,255,255,0.07))"
+          : "#fff",
+        borderRadius: "22px",
+        padding: "18px 18px 16px",
+        border: dark ? "1px solid rgba(255,255,255,0.14)" : "1px solid #e2e8f0",
+        boxShadow: dark
+          ? "inset 0 1px 0 rgba(255,255,255,0.08)"
+          : "0 8px 30px rgba(0,0,0,0.06)",
+        backdropFilter: dark ? "blur(10px)" : "none",
+        minHeight: "92px"
       }}
     >
       <div
         style={{
-          color: "#64748b",
-          fontSize: "14px",
-          marginBottom: "8px"
+          color: dark ? "rgba(255,255,255,0.78)" : "#64748b",
+          fontSize: "13px",
+          marginBottom: "10px",
+          fontWeight: "700"
         }}
       >
         {label}
       </div>
+
       <div
         style={{
           fontSize: "28px",
-          fontWeight: "800",
-          color: "#0f172a"
+          fontWeight: "900",
+          color: dark ? "#ffffff" : "#0f172a",
+          lineHeight: 1
         }}
       >
         {value}
@@ -673,49 +523,361 @@ function StatCard({ label, value }) {
 
 function InfoBox({ label, value }) {
   return (
-    <div
-      style={{
-        background: "#f8fafc",
-        borderRadius: "12px",
-        padding: "12px"
-      }}
-    >
-      <div
-        style={{
-          fontSize: "12px",
-          fontWeight: "700",
-          color: "#64748b",
-          marginBottom: "4px"
-        }}
-      >
-        {label}
-      </div>
-      <div
-        style={{
-          fontSize: "15px",
-          fontWeight: "700",
-          color: "#0f172a",
-          wordBreak: "break-word"
-        }}
-      >
-        {value}
-      </div>
+    <div style={styles.infoBox}>
+      <div style={styles.infoBoxLabel}>{label}</div>
+      <div style={styles.infoBoxValue}>{value}</div>
     </div>
   );
 }
 
-const btnStyle = {
-  textDecoration: "none",
-  background: "#0f172a",
-  color: "#fff",
-  padding: "12px 18px",
-  borderRadius: "12px",
-  fontWeight: "600"
-};
+function statusPill(status) {
+  const isActive = status === "Aktive";
 
-const activeBtnStyle = {
-  ...btnStyle,
-  background: "#2563eb"
+  return {
+    background: isActive ? "#dcfce7" : "#e2e8f0",
+    color: isActive ? "#166534" : "#334155",
+    padding: "8px 12px",
+    borderRadius: "999px",
+    fontWeight: "800",
+    fontSize: "12px",
+    height: "fit-content",
+    whiteSpace: "nowrap"
+  };
+}
+
+const styles = {
+  page: {
+    minHeight: "100vh",
+    background:
+      "linear-gradient(180deg, #f5f7fb 0%, #eef3ff 42%, #f8fafc 100%)",
+    padding: "8px 12px 48px"
+  },
+
+  container: {
+    maxWidth: "1620px",
+    margin: "0 auto"
+  },
+
+  heroCard: {
+    position: "relative",
+    overflow: "hidden",
+    background: "linear-gradient(135deg, #13265e 0%, #2143aa 55%, #3b82f6 100%)",
+    borderRadius: "30px",
+    padding: "24px",
+    marginBottom: "22px",
+    boxShadow: "0 24px 60px rgba(37,99,235,0.24)"
+  },
+
+  heroGlowOne: {
+    position: "absolute",
+    top: "-80px",
+    right: "-40px",
+    width: "260px",
+    height: "260px",
+    borderRadius: "999px",
+    background: "radial-gradient(circle, rgba(255,255,255,0.16), transparent 70%)",
+    pointerEvents: "none"
+  },
+
+  heroGlowTwo: {
+    position: "absolute",
+    bottom: "-120px",
+    left: "18%",
+    width: "300px",
+    height: "300px",
+    borderRadius: "999px",
+    background: "radial-gradient(circle, rgba(255,255,255,0.08), transparent 72%)",
+    pointerEvents: "none"
+  },
+
+  heroGrid: {
+    position: "relative",
+    zIndex: 2,
+    display: "grid",
+    gridTemplateColumns: "minmax(0, 1.4fr) minmax(360px, 0.95fr)",
+    gap: "20px",
+    alignItems: "stretch"
+  },
+
+  heroLeft: {
+    minWidth: 0,
+    display: "flex",
+    flexDirection: "column",
+    justifyContent: "space-between"
+  },
+
+  heroBadge: {
+    display: "inline-flex",
+    alignItems: "center",
+    width: "fit-content",
+    padding: "10px 15px",
+    borderRadius: "999px",
+    background: "rgba(255,255,255,0.12)",
+    border: "1px solid rgba(255,255,255,0.15)",
+    color: "#ffffff",
+    fontSize: "12px",
+    fontWeight: "800",
+    marginBottom: "16px",
+    boxShadow: "inset 0 1px 0 rgba(255,255,255,0.06)"
+  },
+
+  heroTitle: {
+    margin: 0,
+    color: "#ffffff",
+    fontSize: "clamp(36px, 4.2vw, 62px)",
+    lineHeight: 0.98,
+    fontWeight: "900",
+    letterSpacing: "-0.05em",
+    fontFamily: 'Georgia, "Times New Roman", serif',
+    maxWidth: "760px"
+  },
+
+  heroSubtitle: {
+    margin: "16px 0 18px",
+    color: "rgba(255,255,255,0.92)",
+    fontSize: "15px",
+    lineHeight: 1.8,
+    maxWidth: "720px",
+    fontWeight: "500"
+  },
+
+  heroNavWrap: {
+    marginTop: "10px",
+    paddingTop: "8px",
+    maxWidth: "100%",
+    overflowX: "auto",
+    overflowY: "hidden"
+  },
+
+  heroStatsGrid: {
+    display: "grid",
+    gridTemplateColumns: "1fr 1fr",
+    gap: "12px",
+    alignSelf: "start"
+  },
+
+  contentGrid: {
+    display: "grid",
+    gridTemplateColumns: "minmax(340px, 420px) 1fr",
+    gap: "20px"
+  },
+
+  formCard: {
+    background: "#ffffff",
+    borderRadius: "28px",
+    padding: "22px",
+    border: "1px solid #e2e8f0",
+    boxShadow: "0 18px 44px rgba(15,23,42,0.06)",
+    height: "fit-content"
+  },
+
+  listCard: {
+    background: "#ffffff",
+    borderRadius: "28px",
+    padding: "22px",
+    border: "1px solid #e2e8f0",
+    boxShadow: "0 18px 44px rgba(15,23,42,0.06)"
+  },
+
+  sectionTopRow: {
+    display: "flex",
+    justifyContent: "space-between",
+    alignItems: "flex-start",
+    gap: "16px",
+    flexWrap: "wrap",
+    marginBottom: "18px"
+  },
+
+  sectionMainTitle: {
+    margin: 0,
+    fontSize: "24px",
+    fontWeight: "900",
+    color: "#0f172a",
+    letterSpacing: "-0.02em"
+  },
+
+  sectionMainSubtitle: {
+    margin: "8px 0 0",
+    color: "#64748b",
+    fontSize: "14px",
+    lineHeight: 1.7,
+    maxWidth: "760px"
+  },
+
+  sectionMiniBadge: {
+    padding: "10px 14px",
+    borderRadius: "999px",
+    background: "#eff6ff",
+    border: "1px solid #bfdbfe",
+    color: "#1d4ed8",
+    fontWeight: "800",
+    fontSize: "13px"
+  },
+
+  formInnerWrap: {
+    background: "linear-gradient(180deg, #ffffff 0%, #f8fbff 100%)",
+    border: "1px solid #e8eef8",
+    borderRadius: "24px",
+    padding: "16px"
+  },
+
+  formGrid: {
+    display: "grid",
+    gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
+    gap: "14px"
+  },
+
+  previewWrap: {
+    border: "1px dashed #cbd5e1",
+    borderRadius: "16px",
+    padding: "14px",
+    background: "#f8fafc"
+  },
+
+  previewTitle: {
+    fontSize: "13px",
+    fontWeight: "800",
+    color: "#0f172a",
+    marginBottom: "10px"
+  },
+
+  previewBox: {
+    background: "#fff",
+    borderRadius: "14px",
+    padding: "14px",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    minHeight: "170px",
+    border: "1px solid #e2e8f0"
+  },
+
+  previewImage: {
+    maxWidth: "100%",
+    maxHeight: "120px",
+    objectFit: "contain",
+    display: "block"
+  },
+
+  previewEmpty: {
+    background: "#fff",
+    borderRadius: "14px",
+    minHeight: "170px",
+    border: "1px solid #e2e8f0",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    color: "#64748b",
+    textAlign: "center",
+    padding: "12px"
+  },
+
+  formActions: {
+    display: "flex",
+    gap: "10px",
+    flexWrap: "wrap",
+    marginTop: "6px",
+    gridColumn: "1 / -1"
+  },
+
+  emptyState: {
+    padding: "30px 16px",
+    textAlign: "center",
+    border: "1px dashed #cbd5e1",
+    borderRadius: "14px",
+    color: "#64748b"
+  },
+
+  logoGrid: {
+    display: "grid",
+    gridTemplateColumns: "repeat(3, minmax(0, 1fr))",
+    gap: "16px"
+  },
+
+  logoCard: {
+    border: "1px solid #e2e8f0",
+    borderRadius: "22px",
+    padding: "16px",
+    background: "#ffffff",
+    boxShadow: "0 10px 26px rgba(15,23,42,0.05)"
+  },
+
+  logoCardTop: {
+    display: "flex",
+    justifyContent: "space-between",
+    gap: "12px",
+    alignItems: "flex-start",
+    marginBottom: "14px"
+  },
+
+  logoImageWrap: {
+    background: "#ffffff",
+    border: "1px solid #e2e8f0",
+    borderRadius: "18px",
+    minHeight: "96px",
+    width: "120px",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    overflow: "hidden",
+    padding: "12px",
+    boxSizing: "border-box"
+  },
+
+  logoImage: {
+    maxWidth: "100%",
+    maxHeight: "72px",
+    objectFit: "contain",
+    display: "block"
+  },
+
+  logoEmptyText: {
+    color: "#94a3b8",
+    fontSize: "13px"
+  },
+
+  logoName: {
+    margin: "0 0 12px",
+    fontSize: "18px",
+    fontWeight: "800",
+    color: "#0f172a",
+    lineHeight: 1.3
+  },
+
+  logoMetaGrid: {
+    display: "grid",
+    gridTemplateColumns: "1fr",
+    gap: "10px",
+    marginBottom: "14px"
+  },
+
+  infoBox: {
+    background: "#f8fafc",
+    borderRadius: "12px",
+    padding: "12px",
+    border: "1px solid #e2e8f0"
+  },
+
+  infoBoxLabel: {
+    fontSize: "12px",
+    fontWeight: "700",
+    color: "#64748b",
+    marginBottom: "4px"
+  },
+
+  infoBoxValue: {
+    fontSize: "14px",
+    fontWeight: "700",
+    color: "#0f172a",
+    wordBreak: "break-word",
+    lineHeight: 1.45
+  },
+
+  logoCardActions: {
+    display: "flex",
+    gap: "10px",
+    flexWrap: "wrap"
+  }
 };
 
 const labelStyle = {

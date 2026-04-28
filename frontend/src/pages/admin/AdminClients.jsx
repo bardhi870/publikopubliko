@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { Link } from "react-router-dom";
+import AdminTopNav from "../../components/admin/AdminTopNav";
 
 const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:5000";
 
@@ -86,10 +86,16 @@ export default function AdminClients() {
       return sum + Math.max(total - paid, 0);
     }, 0);
 
+    const totalPosts = clients.reduce(
+      (sum, client) => sum + (Number(client.postsCount) || 0),
+      0
+    );
+
     return {
       totalClients,
       activeClients,
-      totalRemaining
+      totalRemaining,
+      totalPosts
     };
   }, [clients]);
 
@@ -259,110 +265,57 @@ export default function AdminClients() {
   }
 
   return (
-    <div
-      style={{
-        minHeight: "100vh",
-        background: "#f8fafc",
-        padding: "28px 16px 50px"
-      }}
-    >
-      <div style={{ maxWidth: "1280px", margin: "0 auto" }}>
-        <div
-          style={{
-            background: "#ffffff",
-            padding: "20px",
-            borderRadius: "18px",
-            marginBottom: "24px",
-            boxShadow: "0 8px 30px rgba(0,0,0,0.06)"
-          }}
-        >
-          <h2
-            style={{
-              marginBottom: "18px",
-              fontSize: "24px",
-              fontWeight: "700"
-            }}
-          >
-            Admin Panel
-          </h2>
+    <div style={styles.page}>
+      <div style={styles.container}>
+        <section style={styles.heroCard}>
+          <div style={styles.heroGlowOne} />
+          <div style={styles.heroGlowTwo} />
 
-          <div
-            style={{
-              display: "flex",
-              gap: "14px",
-              flexWrap: "wrap"
-            }}
-          >
-            <Link to="/admin" style={btnStyle}>
-              Dashboard
-            </Link>
+          <div style={styles.heroGrid} className="admin-clients-hero-grid">
+            <div style={styles.heroLeft}>
+              <div style={styles.heroBadge}>Clients Manager</div>
 
-            <Link to="/admin/offers" style={btnStyle}>
-              Ofertat
-            </Link>
+              <h1 style={styles.heroTitle}>Menaxhimi i klientëve</h1>
 
-            <Link to="/admin/stats" style={btnStyle}>
-              Statistikat
-            </Link>
+              <p style={styles.heroSubtitle}>
+                Menaxho klientët, pagesat, statuset dhe krijimin e postimeve nga
+                një panel i vetëm, të pastër, modern dhe profesional.
+              </p>
 
-            <Link to="/admin/clients" style={activeBtnStyle}>
-              Klientët
-            </Link>
+              <div style={styles.heroNavWrap}>
+                <AdminTopNav />
+              </div>
+            </div>
 
-            <Link to="/admin/public-clients" style={btnStyle}>
-              Klientët tanë
-            </Link>
-
-            <Link to="/admin/payments" style={btnStyle}>
-              Pagesat
-            </Link>
-
-            <Link to="/admin/ad-requests" style={btnStyle}>
-              Reklamo me ne
-            </Link>
+            <div style={styles.heroStatsGrid} className="admin-clients-hero-stats">
+              <StatCard label="Totali i klientëve" value={stats.totalClients} dark />
+              <StatCard label="Klientë aktivë" value={stats.activeClients} dark />
+              <StatCard label="Shuma e mbetur" value={`${stats.totalRemaining} €`} dark />
+              <StatCard label="Postime" value={stats.totalPosts} dark />
+            </div>
           </div>
-        </div>
+        </section>
 
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
-            gap: "16px",
-            marginBottom: "24px"
-          }}
-        >
-          <StatCard label="Totali i klientëve" value={stats.totalClients} />
-          <StatCard label="Klientë aktivë" value={stats.activeClients} />
-          <StatCard label="Shuma e mbetur" value={`${stats.totalRemaining} €`} />
-        </div>
+        <section style={styles.formSectionCard}>
+          <div style={styles.sectionTopRow}>
+            <div>
+              <h3 style={styles.sectionMainTitle}>
+                {editingId ? "Përditëso klientin" : "Shto klient të ri"}
+              </h3>
 
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: "minmax(320px, 420px) 1fr",
-            gap: "20px"
-          }}
-        >
-          <div
-            style={{
-              background: "#fff",
-              borderRadius: "18px",
-              padding: "20px",
-              boxShadow: "0 8px 30px rgba(0,0,0,0.06)",
-              height: "fit-content"
-            }}
-          >
-            <h3
-              style={{
-                marginBottom: "18px",
-                fontSize: "20px",
-                fontWeight: "700"
-              }}
-            >
-              {editingId ? "Përditëso klientin" : "Shto klient të ri"}
-            </h3>
+              <p style={styles.sectionMainSubtitle}>
+                Plotëso të dhënat e klientit në një formë të rregullt, të
+                strukturuar dhe të lehtë për menaxhim.
+              </p>
+            </div>
 
-            <form onSubmit={handleSubmit} style={{ display: "grid", gap: "14px" }}>
+            <div style={styles.sectionMiniBadge}>
+              {editingId ? "Edit mode" : "New client"}
+            </div>
+          </div>
+
+          <div style={styles.formInnerWrap}>
+            <form onSubmit={handleSubmit} style={styles.formGrid}>
               <div>
                 <label style={labelStyle}>Emri dhe mbiemri</label>
                 <input
@@ -497,7 +450,7 @@ export default function AdminClients() {
                 </select>
               </div>
 
-              <div>
+              <div style={{ gridColumn: "1 / -1" }}>
                 <label style={labelStyle}>Shënime</label>
                 <textarea
                   name="notes"
@@ -505,18 +458,11 @@ export default function AdminClients() {
                   onChange={handleChange}
                   placeholder="Shënime rreth klientit..."
                   rows={4}
-                  style={{ ...inputStyle, resize: "vertical" }}
+                  style={{ ...inputStyle, resize: "vertical", minHeight: "120px" }}
                 />
               </div>
 
-              <div
-                style={{
-                  display: "flex",
-                  gap: "10px",
-                  flexWrap: "wrap",
-                  marginTop: "6px"
-                }}
-              >
+              <div style={styles.formActions}>
                 <button type="submit" style={primaryBtnStyle}>
                   {editingId ? "Ruaj ndryshimet" : "Shto klientin"}
                 </button>
@@ -531,366 +477,219 @@ export default function AdminClients() {
               </div>
             </form>
           </div>
+        </section>
 
-          <div
-            style={{
-              background: "#fff",
-              borderRadius: "18px",
-              padding: "20px",
-              boxShadow: "0 8px 30px rgba(0,0,0,0.06)"
-            }}
-          >
-            <div
-              style={{
-                display: "flex",
-                justifyContent: "space-between",
-                gap: "12px",
-                flexWrap: "wrap",
-                alignItems: "center",
-                marginBottom: "18px"
-              }}
-            >
-              <h3
-                style={{
-                  margin: 0,
-                  fontSize: "20px",
-                  fontWeight: "700"
-                }}
-              >
-                Lista e klientëve
-              </h3>
+        <section style={styles.listSectionCard}>
+          <div style={styles.sectionTopRow}>
+            <div>
+              <h3 style={styles.sectionMainTitle}>Lista e klientëve</h3>
 
+              <p style={styles.sectionMainSubtitle}>
+                Kërko, edito dhe menaxho klientët në kartela më kompakte dhe më
+                të pastra.
+              </p>
+            </div>
+
+            <div style={styles.searchWrap}>
               <input
                 type="text"
                 placeholder="Kërko klientin..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                style={{
-                  ...inputStyle,
-                  maxWidth: "320px"
-                }}
+                style={styles.searchInput}
               />
             </div>
+          </div>
 
-            {filteredClients.length === 0 ? (
-              <div
-                style={{
-                  padding: "30px 16px",
-                  textAlign: "center",
-                  border: "1px dashed #cbd5e1",
-                  borderRadius: "14px",
-                  color: "#64748b"
-                }}
-              >
-                Nuk u gjet asnjë klient.
-              </div>
-            ) : (
-              <div style={{ display: "grid", gap: "16px" }}>
-                {filteredClients.map((client) => {
-                  const total = Number(client.totalPrice) || 0;
-                  const paid = Number(client.paidAmount) || 0;
-                  const remaining = Math.max(total - paid, 0);
+          {filteredClients.length === 0 ? (
+            <div style={styles.emptyState}>Nuk u gjet asnjë klient.</div>
+          ) : (
+            <div className="clients-grid-pro" style={styles.clientsGrid}>
+              {filteredClients.map((client) => {
+                const total = Number(client.totalPrice) || 0;
+                const paid = Number(client.paidAmount) || 0;
+                const remaining = Math.max(total - paid, 0);
 
-                  return (
-                    <div
-                      key={client.id}
-                      style={{
-                        border: "1px solid #e2e8f0",
-                        borderRadius: "16px",
-                        padding: "18px"
-                      }}
-                    >
-                      <div
-                        style={{
-                          display: "flex",
-                          justifyContent: "space-between",
-                          gap: "12px",
-                          flexWrap: "wrap",
-                          marginBottom: "10px"
-                        }}
-                      >
-                        <div>
-                          <h4
-                            style={{
-                              margin: 0,
-                              fontSize: "18px",
-                              fontWeight: "700",
-                              color: "#0f172a"
-                            }}
-                          >
-                            {client.fullName}
-                          </h4>
-
-                          <p
-                            style={{
-                              margin: "6px 0 0",
-                              color: "#64748b",
-                              fontSize: "14px"
-                            }}
-                          >
-                            {client.businessName || "Pa biznes të shënuar"}
-                          </p>
-                        </div>
-
-                        <div
-                          style={{
-                            background: "#eff6ff",
-                            color: "#1d4ed8",
-                            padding: "8px 12px",
-                            borderRadius: "999px",
-                            fontWeight: "700",
-                            fontSize: "14px",
-                            height: "fit-content"
-                          }}
-                        >
-                          {client.status}
-                        </div>
+                return (
+                  <div key={client.id} style={styles.clientCard}>
+                    <div style={styles.clientCardTop}>
+                      <div style={{ minWidth: 0 }}>
+                        <h4 style={styles.clientName}>{client.fullName}</h4>
+                        <p style={styles.clientBusiness}>
+                          {client.businessName || "Pa biznes të shënuar"}
+                        </p>
                       </div>
 
-                      <div
-                        style={{
-                          display: "grid",
-                          gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))",
-                          gap: "10px",
-                          marginBottom: "14px"
-                        }}
-                      >
-                        <InfoBox label="Telefoni" value={client.phone || "-"} />
-                        <InfoBox label="Email" value={client.email || "-"} />
-                        <InfoBox label="Burimi" value={client.source || "-"} />
-                        <InfoBox
-                          label="Shërbimi"
-                          value={client.serviceType || "-"}
-                        />
-                        <InfoBox
-                          label="Oferta"
-                          value={client.selectedOffer || "-"}
-                        />
-                        <InfoBox label="Postime" value={client.postsCount || 0} />
-                        <InfoBox label="Totali" value={`${total} €`} />
-                        <InfoBox label="Ka paguar" value={`${paid} €`} />
-                        <InfoBox label="Ka mbetur" value={`${remaining} €`} />
-                      </div>
+                      <div style={statusPill(client.status)}>{client.status}</div>
+                    </div>
 
-                      <div
-                        style={{
-                          background: "#f8fafc",
-                          borderRadius: "12px",
-                          padding: "12px",
-                          marginBottom: "14px"
-                        }}
-                      >
-                        <div
-                          style={{
-                            fontSize: "13px",
-                            fontWeight: "700",
-                            color: "#0f172a",
-                            marginBottom: "6px"
-                          }}
-                        >
-                          Shënime
-                        </div>
-                        <div
-                          style={{
-                            color: "#475569",
-                            lineHeight: 1.5,
-                            whiteSpace: "pre-wrap"
-                          }}
-                        >
-                          {client.notes || "Nuk ka shënime."}
+                    <div style={styles.clientQuickInfo}>
+                      <div style={styles.clientQuickLine}>📞 {client.phone || "-"}</div>
+                      <div style={styles.clientQuickLine}>✉️ {client.email || "-"}</div>
+                    </div>
+
+                    <div style={styles.clientMiniGrid}>
+                      <MiniInfo label="Burimi" value={client.source || "-"} />
+                      <MiniInfo label="Shërbimi" value={client.serviceType || "-"} />
+                      <MiniInfo label="Oferta" value={client.selectedOffer || "-"} />
+                      <MiniInfo label="Postime" value={client.postsCount || 0} />
+                      <MiniInfo label="Totali" value={`${total} €`} />
+                      <MiniInfo label="Mbetur" value={`${remaining} €`} />
+                    </div>
+
+                    {client.notes ? (
+                      <div style={styles.notesBox}>
+                        <div style={styles.notesTitle}>Shënime</div>
+                        <div style={styles.notesText}>
+                          {client.notes.length > 90
+                            ? `${client.notes.slice(0, 90)}...`
+                            : client.notes}
                         </div>
                       </div>
+                    ) : null}
 
-                      <div
-                        style={{
-                          background: "#f8fafc",
-                          borderRadius: "12px",
-                          padding: "12px",
-                          marginBottom: "14px"
-                        }}
-                      >
-                        <div
-                          style={{
-                            fontSize: "13px",
-                            fontWeight: "700",
-                            color: "#0f172a",
-                            marginBottom: "8px"
-                          }}
-                        >
-                          Postimet e klientit
+                    {client.posts && client.posts.length > 0 ? (
+                      <div style={styles.postsPreviewBox}>
+                        <div style={styles.postsPreviewTitle}>
+                          Postime ({client.posts.length})
                         </div>
 
-                        {client.posts && client.posts.length > 0 ? (
-                          <div style={{ display: "grid", gap: "10px" }}>
-                            {client.posts.map((post) => {
-                              const postStatus = getPostStatusMeta(post);
+                        <div style={styles.postsPreviewList}>
+                          {client.posts.slice(0, 2).map((post) => {
+                            const postStatus = getPostStatusMeta(post);
 
-                              return (
-                                <div
-                                  key={post.id}
-                                  style={{
-                                    padding: "12px",
-                                    borderRadius: "10px",
-                                    background: "#ffffff",
-                                    border: "1px solid #e2e8f0"
-                                  }}
-                                >
-                                  <div
-                                    style={{
-                                      display: "flex",
-                                      justifyContent: "space-between",
-                                      gap: "10px",
-                                      flexWrap: "wrap",
-                                      alignItems: "center",
-                                      marginBottom: "8px"
-                                    }}
-                                  >
-                                    <div
-                                      style={{
-                                        fontWeight: "700",
-                                        color: "#0f172a"
-                                      }}
-                                    >
-                                      {post.title}
-                                    </div>
-
-                                    <div
-                                      style={{
-                                        background: postStatus.background,
-                                        color: postStatus.color,
-                                        padding: "6px 10px",
-                                        borderRadius: "999px",
-                                        fontWeight: "700",
-                                        fontSize: "12px"
-                                      }}
-                                    >
-                                      {postStatus.label}
-                                    </div>
+                            return (
+                              <div key={post.id} style={styles.postMiniCard}>
+                                <div style={styles.postMiniTop}>
+                                  <div style={styles.postMiniTitle}>
+                                    {post.title || "Pa titull"}
                                   </div>
-
                                   <div
                                     style={{
-                                      fontSize: "13px",
-                                      color: "#64748b",
-                                      marginBottom: "8px"
+                                      ...styles.postMiniStatus,
+                                      background: postStatus.background,
+                                      color: postStatus.color
                                     }}
                                   >
-                                    {post.category || "-"}
-                                  </div>
-
-                                  {!post.is_unlimited && post.active_until ? (
-                                    <div
-                                      style={{
-                                        fontSize: "12px",
-                                        color: "#64748b",
-                                        marginBottom: "10px"
-                                      }}
-                                    >
-                                      Aktiv deri: {formatDateTimeForDisplay(post.active_until)}
-                                    </div>
-                                  ) : null}
-
-                                  {postStatus.label === "Skaduar" ? (
-                                    <div
-                                      style={{
-                                        marginBottom: "10px",
-                                        padding: "10px 12px",
-                                        borderRadius: "10px",
-                                        background: "#fff7ed",
-                                        color: "#9a3412",
-                                        fontSize: "13px",
-                                        fontWeight: "600",
-                                        lineHeight: 1.5
-                                      }}
-                                    >
-                                      Ky postim ka skaduar dhe do të fshihet automatikisht
-                                      pas 24 orësh nëse nuk rinovohet.
-                                    </div>
-                                  ) : null}
-
-                                  <div
-                                    style={{
-                                      display: "flex",
-                                      gap: "8px",
-                                      flexWrap: "wrap"
-                                    }}
-                                  >
-                                    <button
-                                      type="button"
-                                      onClick={() => editPostForClient(client, post)}
-                                      style={primaryBtnStyle}
-                                    >
-                                      Edito postimin
-                                    </button>
-
-                                    <button
-                                      type="button"
-                                      onClick={() => handleTogglePost(post.id)}
-                                      style={secondaryBtnStyle}
-                                    >
-                                      {post.is_active === false
-                                        ? "Aktivizo"
-                                        : "Çaktivizo"}
-                                    </button>
-
-                                    <button
-                                      type="button"
-                                      onClick={() => handleDeletePost(post.id)}
-                                      style={dangerBtnStyle}
-                                    >
-                                      Fshij postimin
-                                    </button>
+                                    {postStatus.label}
                                   </div>
                                 </div>
-                              );
-                            })}
-                          </div>
-                        ) : (
-                          <div
-                            style={{
-                              color: "#64748b"
-                            }}
-                          >
-                            Ky klient nuk ka ende postime.
-                          </div>
-                        )}
-                      </div>
 
-                      <div
-                        style={{
-                          display: "flex",
-                          gap: "10px",
-                          flexWrap: "wrap"
-                        }}
+                                <div style={styles.postMiniMeta}>
+                                  {post.category || "-"}
+                                </div>
+
+                                {!post.is_unlimited && post.active_until ? (
+                                  <div style={styles.postMiniDate}>
+                                    Aktiv deri:{" "}
+                                    {formatDateTimeForDisplay(post.active_until)}
+                                  </div>
+                                ) : null}
+
+                                <div style={styles.postMiniActions}>
+                                  <button
+                                    type="button"
+                                    onClick={() => editPostForClient(client, post)}
+                                    style={styles.postMiniPrimaryBtn}
+                                  >
+                                    Edito postimin
+                                  </button>
+
+                                  <button
+                                    type="button"
+                                    onClick={() => handleTogglePost(post.id)}
+                                    style={styles.postMiniSecondaryBtn}
+                                  >
+                                    {post.is_active === false ? "Aktivizo" : "Çaktivizo"}
+                                  </button>
+
+                                  <button
+                                    type="button"
+                                    onClick={() => handleDeletePost(post.id)}
+                                    style={styles.postMiniDangerBtn}
+                                  >
+                                    Fshij
+                                  </button>
+                                </div>
+                              </div>
+                            );
+                          })}
+
+                          {client.posts.length > 2 ? (
+                            <div style={styles.morePostsBadge}>
+                              +{client.posts.length - 2} postime tjera
+                            </div>
+                          ) : null}
+                        </div>
+                      </div>
+                    ) : null}
+
+                    <div style={styles.clientCardActions}>
+                      <button
+                        onClick={() => createPostForClient(client)}
+                        style={primaryBtnStyle}
                       >
-                        <button
-                          onClick={() => createPostForClient(client)}
-                          style={primaryBtnStyle}
-                        >
-                          Krijo postim
-                        </button>
+                        Krijo postim
+                      </button>
 
-                        <button
-                          onClick={() => handleEdit(client)}
-                          style={secondaryBtnStyle}
-                        >
-                          Ndrysho klientin
-                        </button>
+                      <button
+                        onClick={() => handleEdit(client)}
+                        style={secondaryBtnStyle}
+                      >
+                        Edito klientin
+                      </button>
 
-                        <button
-                          onClick={() => handleDelete(client.id)}
-                          style={dangerBtnStyle}
-                        >
-                          Fshij klientin
-                        </button>
-                      </div>
+                      <button
+                        onClick={() => handleDelete(client.id)}
+                        style={dangerBtnStyle}
+                      >
+                        Fshij klientin
+                      </button>
                     </div>
-                  );
-                })}
-              </div>
-            )}
-          </div>
-        </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+
+          <style>{`
+            @media (min-width: 1700px) {
+              .clients-grid-pro {
+                grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+              }
+            }
+
+            @media (max-width: 1699px) and (min-width: 1180px) {
+              .clients-grid-pro {
+                grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+              }
+            }
+
+            @media (max-width: 1179px) and (min-width: 760px) {
+              .clients-grid-pro {
+                grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+              }
+            }
+
+            @media (max-width: 759px) {
+              .clients-grid-pro {
+                grid-template-columns: 1fr !important;
+              }
+            }
+
+            @media (max-width: 1180px) {
+              .admin-clients-hero-grid {
+                grid-template-columns: 1fr !important;
+              }
+            }
+
+            @media (max-width: 760px) {
+              .admin-clients-hero-stats {
+                grid-template-columns: 1fr !important;
+              }
+            }
+          `}</style>
+        </section>
       </div>
     </div>
   );
@@ -976,30 +775,36 @@ function getPostStatusMeta(post) {
   };
 }
 
-function StatCard({ label, value }) {
+function StatCard({ label, value, dark = false }) {
   return (
     <div
       style={{
-        background: "#fff",
-        borderRadius: "18px",
-        padding: "18px",
-        boxShadow: "0 8px 30px rgba(0,0,0,0.06)"
+        background: "linear-gradient(135deg, rgba(255,255,255,0.12), rgba(255,255,255,0.07))",
+        borderRadius: "22px",
+        padding: "18px 18px 16px",
+        border: "1px solid rgba(255,255,255,0.14)",
+        boxShadow: "inset 0 1px 0 rgba(255,255,255,0.08)",
+        backdropFilter: "blur(10px)",
+        minHeight: "92px"
       }}
     >
       <div
         style={{
-          color: "#64748b",
-          fontSize: "14px",
-          marginBottom: "8px"
+          color: "rgba(255,255,255,0.78)",
+          fontSize: "13px",
+          marginBottom: "10px",
+          fontWeight: "700"
         }}
       >
         {label}
       </div>
+
       <div
         style={{
           fontSize: "28px",
-          fontWeight: "800",
-          color: "#0f172a"
+          fontWeight: "900",
+          color: dark ? "#ffffff" : "#0f172a",
+          lineHeight: 1
         }}
       >
         {value}
@@ -1008,51 +813,486 @@ function StatCard({ label, value }) {
   );
 }
 
-function InfoBox({ label, value }) {
+function MiniInfo({ label, value }) {
   return (
-    <div
-      style={{
-        background: "#f8fafc",
-        borderRadius: "12px",
-        padding: "12px"
-      }}
-    >
-      <div
-        style={{
-          fontSize: "12px",
-          fontWeight: "700",
-          color: "#64748b",
-          marginBottom: "4px"
-        }}
-      >
-        {label}
-      </div>
-      <div
-        style={{
-          fontSize: "15px",
-          fontWeight: "700",
-          color: "#0f172a",
-          wordBreak: "break-word"
-        }}
-      >
-        {value}
-      </div>
+    <div style={styles.miniInfoBox}>
+      <div style={styles.miniInfoLabel}>{label}</div>
+      <div style={styles.miniInfoValue}>{value}</div>
     </div>
   );
 }
 
-const btnStyle = {
-  textDecoration: "none",
-  background: "#0f172a",
-  color: "#fff",
-  padding: "12px 18px",
-  borderRadius: "12px",
-  fontWeight: "600"
-};
+function statusPill(status) {
+  const map = {
+    Aktiv: {
+      background: "#dcfce7",
+      color: "#166534"
+    },
+    "Në pritje": {
+      background: "#fef3c7",
+      color: "#92400e"
+    },
+    Paguar: {
+      background: "#dbeafe",
+      color: "#1d4ed8"
+    },
+    Pezulluar: {
+      background: "#fee2e2",
+      color: "#991b1b"
+    },
+    Përfunduar: {
+      background: "#e2e8f0",
+      color: "#334155"
+    }
+  };
 
-const activeBtnStyle = {
-  ...btnStyle,
-  background: "#2563eb"
+  return {
+    background: map[status]?.background || "#eff6ff",
+    color: map[status]?.color || "#1d4ed8",
+    padding: "8px 12px",
+    borderRadius: "999px",
+    fontWeight: "800",
+    fontSize: "12px",
+    height: "fit-content",
+    whiteSpace: "nowrap"
+  };
+}
+
+const styles = {
+  page: {
+    minHeight: "100vh",
+    background:
+      "linear-gradient(180deg, #f5f7fb 0%, #eef3ff 42%, #f8fafc 100%)",
+    padding: "8px 12px 48px"
+  },
+
+  container: {
+    maxWidth: "1620px",
+    margin: "0 auto"
+  },
+
+  heroCard: {
+    position: "relative",
+    overflow: "hidden",
+    background: "linear-gradient(135deg, #13265e 0%, #2143aa 55%, #3b82f6 100%)",
+    borderRadius: "30px",
+    padding: "24px",
+    marginBottom: "22px",
+    boxShadow: "0 24px 60px rgba(37,99,235,0.24)"
+  },
+
+  heroGlowOne: {
+    position: "absolute",
+    top: "-80px",
+    right: "-40px",
+    width: "260px",
+    height: "260px",
+    borderRadius: "999px",
+    background: "radial-gradient(circle, rgba(255,255,255,0.16), transparent 70%)",
+    pointerEvents: "none"
+  },
+
+  heroGlowTwo: {
+    position: "absolute",
+    bottom: "-120px",
+    left: "18%",
+    width: "300px",
+    height: "300px",
+    borderRadius: "999px",
+    background: "radial-gradient(circle, rgba(255,255,255,0.08), transparent 72%)",
+    pointerEvents: "none"
+  },
+
+  heroGrid: {
+    position: "relative",
+    zIndex: 2,
+    display: "grid",
+    gridTemplateColumns: "minmax(0, 1.4fr) minmax(360px, 0.95fr)",
+    gap: "20px",
+    alignItems: "stretch"
+  },
+
+  heroLeft: {
+    minWidth: 0,
+    display: "flex",
+    flexDirection: "column",
+    justifyContent: "space-between"
+  },
+
+  heroBadge: {
+    display: "inline-flex",
+    alignItems: "center",
+    width: "fit-content",
+    padding: "10px 15px",
+    borderRadius: "999px",
+    background: "rgba(255,255,255,0.12)",
+    border: "1px solid rgba(255,255,255,0.15)",
+    color: "#ffffff",
+    fontSize: "12px",
+    fontWeight: "800",
+    marginBottom: "16px",
+    boxShadow: "inset 0 1px 0 rgba(255,255,255,0.06)"
+  },
+
+  heroTitle: {
+    margin: 0,
+    color: "#ffffff",
+    fontSize: "clamp(36px, 4.2vw, 62px)",
+    lineHeight: 0.98,
+    fontWeight: "900",
+    letterSpacing: "-0.05em",
+    fontFamily: 'Georgia, "Times New Roman", serif',
+    maxWidth: "760px"
+  },
+
+  heroSubtitle: {
+    margin: "16px 0 18px",
+    color: "rgba(255,255,255,0.92)",
+    fontSize: "15px",
+    lineHeight: 1.8,
+    maxWidth: "720px",
+    fontWeight: "500"
+  },
+
+  heroNavWrap: {
+    marginTop: "10px",
+    paddingTop: "8px",
+    maxWidth: "100%",
+    overflowX: "auto",
+    overflowY: "hidden"
+  },
+
+  heroStatsGrid: {
+    display: "grid",
+    gridTemplateColumns: "1fr 1fr",
+    gap: "12px",
+    alignSelf: "start"
+  },
+
+  formSectionCard: {
+    background: "#ffffff",
+    borderRadius: "28px",
+    padding: "22px",
+    border: "1px solid #e2e8f0",
+    boxShadow: "0 18px 44px rgba(15,23,42,0.06)",
+    marginBottom: "22px"
+  },
+
+  listSectionCard: {
+    background: "#ffffff",
+    borderRadius: "28px",
+    padding: "22px",
+    border: "1px solid #e2e8f0",
+    boxShadow: "0 18px 44px rgba(15,23,42,0.06)"
+  },
+
+  sectionTopRow: {
+    display: "flex",
+    justifyContent: "space-between",
+    alignItems: "flex-start",
+    gap: "16px",
+    flexWrap: "wrap",
+    marginBottom: "18px"
+  },
+
+  sectionMainTitle: {
+    margin: 0,
+    fontSize: "24px",
+    fontWeight: "900",
+    color: "#0f172a",
+    letterSpacing: "-0.02em"
+  },
+
+  sectionMainSubtitle: {
+    margin: "8px 0 0",
+    color: "#64748b",
+    fontSize: "14px",
+    lineHeight: 1.7,
+    maxWidth: "760px"
+  },
+
+  sectionMiniBadge: {
+    padding: "10px 14px",
+    borderRadius: "999px",
+    background: "#eff6ff",
+    border: "1px solid #bfdbfe",
+    color: "#1d4ed8",
+    fontWeight: "800",
+    fontSize: "13px"
+  },
+
+  formInnerWrap: {
+    background: "linear-gradient(180deg, #ffffff 0%, #f8fbff 100%)",
+    border: "1px solid #e8eef8",
+    borderRadius: "24px",
+    padding: "16px"
+  },
+
+  formGrid: {
+    display: "grid",
+    gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
+    gap: "14px"
+  },
+
+  formActions: {
+    display: "flex",
+    gap: "10px",
+    flexWrap: "wrap",
+    marginTop: "6px",
+    gridColumn: "1 / -1"
+  },
+
+  searchWrap: {
+    minWidth: "280px",
+    maxWidth: "340px",
+    width: "100%"
+  },
+
+  searchInput: {
+    width: "100%",
+    padding: "12px 14px",
+    borderRadius: "12px",
+    border: "1px solid #cbd5e1",
+    outline: "none",
+    fontSize: "14px",
+    boxSizing: "border-box"
+  },
+
+  emptyState: {
+    padding: "30px 16px",
+    textAlign: "center",
+    border: "1px dashed #cbd5e1",
+    borderRadius: "14px",
+    color: "#64748b"
+  },
+
+  clientsGrid: {
+    display: "grid",
+    gridTemplateColumns: "repeat(3, minmax(0, 1fr))",
+    gap: "16px"
+  },
+
+  clientCard: {
+    border: "1px solid #e2e8f0",
+    borderRadius: "20px",
+    padding: "16px",
+    background: "#ffffff",
+    boxShadow: "0 10px 26px rgba(15,23,42,0.05)"
+  },
+
+  clientCardTop: {
+    display: "flex",
+    justifyContent: "space-between",
+    gap: "12px",
+    alignItems: "flex-start",
+    marginBottom: "10px",
+    flexWrap: "wrap"
+  },
+
+  clientName: {
+    margin: 0,
+    fontSize: "18px",
+    fontWeight: "800",
+    color: "#0f172a",
+    lineHeight: 1.3
+  },
+
+  clientBusiness: {
+    margin: "5px 0 0",
+    color: "#64748b",
+    fontSize: "13px",
+    lineHeight: 1.5
+  },
+
+  clientQuickInfo: {
+    display: "grid",
+    gap: "6px",
+    marginBottom: "12px"
+  },
+
+  clientQuickLine: {
+    fontSize: "13px",
+    color: "#334155",
+    background: "#f8fafc",
+    border: "1px solid #e2e8f0",
+    borderRadius: "12px",
+    padding: "9px 10px"
+  },
+
+  clientMiniGrid: {
+    display: "grid",
+    gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
+    gap: "8px",
+    marginBottom: "12px"
+  },
+
+  miniInfoBox: {
+    background: "#f8fafc",
+    borderRadius: "12px",
+    padding: "10px",
+    border: "1px solid #e2e8f0"
+  },
+
+  miniInfoLabel: {
+    fontSize: "11px",
+    fontWeight: "800",
+    color: "#64748b",
+    marginBottom: "4px",
+    textTransform: "uppercase",
+    letterSpacing: "0.04em"
+  },
+
+  miniInfoValue: {
+    fontSize: "13px",
+    fontWeight: "800",
+    color: "#0f172a",
+    wordBreak: "break-word",
+    lineHeight: 1.35
+  },
+
+  notesBox: {
+    background: "#f8fafc",
+    borderRadius: "12px",
+    padding: "12px",
+    border: "1px solid #e2e8f0",
+    marginBottom: "12px"
+  },
+
+  notesTitle: {
+    fontSize: "12px",
+    fontWeight: "800",
+    color: "#0f172a",
+    marginBottom: "6px",
+    textTransform: "uppercase",
+    letterSpacing: "0.04em"
+  },
+
+  notesText: {
+    color: "#475569",
+    lineHeight: 1.5,
+    fontSize: "13px"
+  },
+
+  postsPreviewBox: {
+    background: "#f8fafc",
+    borderRadius: "14px",
+    padding: "12px",
+    border: "1px solid #e2e8f0",
+    marginBottom: "12px"
+  },
+
+  postsPreviewTitle: {
+    fontSize: "12px",
+    fontWeight: "900",
+    color: "#0f172a",
+    marginBottom: "8px",
+    textTransform: "uppercase",
+    letterSpacing: "0.05em"
+  },
+
+  postsPreviewList: {
+    display: "grid",
+    gap: "8px"
+  },
+
+  postMiniCard: {
+    background: "#ffffff",
+    borderRadius: "12px",
+    padding: "10px",
+    border: "1px solid #e2e8f0"
+  },
+
+  postMiniTop: {
+    display: "flex",
+    justifyContent: "space-between",
+    gap: "8px",
+    alignItems: "center",
+    flexWrap: "wrap",
+    marginBottom: "6px"
+  },
+
+  postMiniTitle: {
+    fontSize: "13px",
+    fontWeight: "800",
+    color: "#0f172a",
+    lineHeight: 1.35
+  },
+
+  postMiniStatus: {
+    padding: "5px 8px",
+    borderRadius: "999px",
+    fontWeight: "800",
+    fontSize: "11px",
+    whiteSpace: "nowrap"
+  },
+
+  postMiniMeta: {
+    fontSize: "12px",
+    color: "#64748b",
+    marginBottom: "6px"
+  },
+
+  postMiniDate: {
+    fontSize: "11px",
+    color: "#64748b",
+    marginBottom: "8px"
+  },
+
+  postMiniActions: {
+    display: "flex",
+    gap: "6px",
+    flexWrap: "wrap"
+  },
+
+  postMiniPrimaryBtn: {
+    background: "#2563eb",
+    color: "#fff",
+    border: "none",
+    padding: "8px 10px",
+    borderRadius: "10px",
+    cursor: "pointer",
+    fontWeight: "700",
+    fontSize: "12px"
+  },
+
+  postMiniSecondaryBtn: {
+    background: "#e2e8f0",
+    color: "#0f172a",
+    border: "none",
+    padding: "8px 10px",
+    borderRadius: "10px",
+    cursor: "pointer",
+    fontWeight: "700",
+    fontSize: "12px"
+  },
+
+  postMiniDangerBtn: {
+    background: "#fee2e2",
+    color: "#991b1b",
+    border: "none",
+    padding: "8px 10px",
+    borderRadius: "10px",
+    cursor: "pointer",
+    fontWeight: "700",
+    fontSize: "12px"
+  },
+
+  morePostsBadge: {
+    fontSize: "12px",
+    fontWeight: "800",
+    color: "#2563eb",
+    background: "#eff6ff",
+    border: "1px solid #bfdbfe",
+    borderRadius: "999px",
+    padding: "7px 10px",
+    width: "fit-content"
+  },
+
+  clientCardActions: {
+    display: "flex",
+    gap: "8px",
+    flexWrap: "wrap"
+  }
 };
 
 const labelStyle = {

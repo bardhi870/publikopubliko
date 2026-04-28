@@ -1,10 +1,13 @@
 import React from "react";
+import ReactQuill from "react-quill";
+import "react-quill/dist/quill.snow.css";
 
 const sectionCard = {
   border: "1px solid #e2e8f0",
-  borderRadius: "18px",
-  padding: "16px",
-  background: "#fcfdff"
+  borderRadius: "22px",
+  padding: "18px",
+  background: "linear-gradient(180deg,#ffffff 0%,#f8fbff 100%)",
+  boxShadow: "0 10px 28px rgba(15,23,42,0.04)"
 };
 
 const sectionTitle = {
@@ -14,12 +17,19 @@ const sectionTitle = {
   fontWeight: "900"
 };
 
+const sectionText = {
+  margin: "-6px 0 16px",
+  color: "#64748b",
+  fontSize: "13px",
+  lineHeight: "1.6"
+};
+
 const labelStyle = {
   display: "block",
   marginBottom: "8px",
   color: "#334155",
-  fontWeight: "700",
-  fontSize: "14px"
+  fontWeight: "800",
+  fontSize: "13px"
 };
 
 const inputStyle = {
@@ -34,14 +44,14 @@ const inputStyle = {
 };
 
 const primaryActionBtn = {
-  padding: "13px 18px",
+  padding: "14px 20px",
   border: "none",
   borderRadius: "14px",
   cursor: "pointer",
-  background: "linear-gradient(135deg, #2563eb, #60a5fa)",
+  background: "linear-gradient(135deg,#0f172a,#2563eb)",
   color: "#fff",
-  fontWeight: "800",
-  boxShadow: "0 14px 28px rgba(37,99,235,0.22)"
+  fontWeight: "900",
+  boxShadow: "0 16px 34px rgba(37,99,235,0.25)"
 };
 
 const secondaryActionBtn = {
@@ -51,28 +61,28 @@ const secondaryActionBtn = {
   cursor: "pointer",
   background: "#fff",
   color: "#0f172a",
-  fontWeight: "700"
+  fontWeight: "800"
 };
 
 const ghostActionBtn = {
-  padding: "13px 18px",
+  padding: "14px 20px",
   border: "1px solid #dbeafe",
   borderRadius: "14px",
   cursor: "pointer",
   background: "#fff",
   color: "#0f172a",
-  fontWeight: "800"
+  fontWeight: "900"
 };
 
 const addOptionBtn = {
   marginTop: "10px",
-  padding: "10px 14px",
+  padding: "11px 15px",
   borderRadius: "12px",
   border: "1px solid #bfdbfe",
   background: "#eff6ff",
   color: "#1d4ed8",
   cursor: "pointer",
-  fontWeight: "700"
+  fontWeight: "800"
 };
 
 const removeOptionBtn = {
@@ -82,7 +92,7 @@ const removeOptionBtn = {
   background: "#fef2f2",
   color: "#dc2626",
   cursor: "pointer",
-  fontWeight: "700"
+  fontWeight: "800"
 };
 
 const checkboxWrapStyle = {
@@ -99,13 +109,13 @@ const checkboxWrapStyle = {
 
 const uploadInfoBoxStyle = {
   marginTop: "10px",
-  padding: "12px 14px",
-  borderRadius: "14px",
+  padding: "13px 15px",
+  borderRadius: "16px",
   background: "#f8fafc",
   border: "1px solid #e2e8f0",
   fontSize: "13px",
   color: "#475569",
-  lineHeight: "1.65"
+  lineHeight: "1.7"
 };
 
 const previewCardBtn = {
@@ -115,7 +125,7 @@ const previewCardBtn = {
   background: "#2563eb",
   color: "#fff",
   cursor: "pointer",
-  fontWeight: "700",
+  fontWeight: "800",
   fontSize: "13px"
 };
 
@@ -126,7 +136,7 @@ const previewDarkBtn = {
   background: "#0f172a",
   color: "#fff",
   cursor: "pointer",
-  fontWeight: "700",
+  fontWeight: "800",
   fontSize: "13px"
 };
 
@@ -137,7 +147,7 @@ const previewDangerBtn = {
   background: "#fff5f5",
   color: "#dc2626",
   cursor: "pointer",
-  fontWeight: "700",
+  fontWeight: "800",
   fontSize: "13px"
 };
 
@@ -147,10 +157,42 @@ const editorialToggleCard = {
   gap: "12px",
   padding: "14px 16px",
   borderRadius: "16px",
-  background: "linear-gradient(135deg, #ffffff, #f8fbff)",
-  border: "1px solid rgba(37,99,235,0.12)",
-  minHeight: "60px",
+  background: "#fff",
+  border: "1px solid rgba(37,99,235,0.14)",
+  minHeight: "62px",
   boxSizing: "border-box"
+};
+
+const quillModules = {
+  toolbar: [
+    [{ header: [1, 2, 3, false] }],
+    ["bold", "italic", "underline"],
+    [{ list: "ordered" }, { list: "bullet" }],
+    [{ align: [] }],
+    ["link", "image", "video"],
+    ["clean"]
+  ]
+};
+
+const quillFormats = [
+  "header",
+  "bold",
+  "italic",
+  "underline",
+  "list",
+  "bullet",
+  "align",
+  "link",
+  "image",
+  "video"
+];
+
+
+const normalizeUrl = (url = "") => {
+  const clean = url.trim();
+  if (!clean) return "";
+  if (clean.startsWith("http://") || clean.startsWith("https://")) return clean;
+  return `https://${clean}`;
 };
 
 export default function AdminPostForm({
@@ -177,37 +219,57 @@ export default function AdminPostForm({
   addOfferFeature,
   removeOfferFeature,
   handleOfferFeatureChange
+  
 }) {
   const isJobPost = formData.category === "konkurse-pune";
   const isNewsCategory = ["vendi", "rajoni", "bota"].includes(formData.category);
 
+  
   return (
     <div
       style={{
         background: "#fff",
         border: "1px solid #e2e8f0",
-        borderRadius: "26px",
-        padding: "22px",
-        boxShadow: "0 18px 45px rgba(15,23,42,0.06)"
+        borderRadius: "30px",
+        padding: "24px",
+        boxShadow: "0 20px 55px rgba(15,23,42,0.07)"
       }}
     >
       <div
         style={{
           display: "flex",
           justifyContent: "space-between",
-          gap: "12px",
+          gap: "14px",
           flexWrap: "wrap",
           alignItems: "center",
-          marginBottom: "18px"
+          marginBottom: "20px",
+          paddingBottom: "18px",
+          borderBottom: "1px solid #e2e8f0"
         }}
       >
         <div>
+          <div
+            style={{
+              display: "inline-flex",
+              padding: "7px 11px",
+              borderRadius: "999px",
+              background: "#eff6ff",
+              color: "#1d4ed8",
+              fontSize: "12px",
+              fontWeight: "900",
+              marginBottom: "10px"
+            }}
+          >
+            {editingId ? "MODIFIKIM" : "PUBLIKIM I RI"}
+          </div>
+
           <h2
             style={{
               margin: 0,
               color: "#0f172a",
-              fontSize: "22px",
-              fontWeight: "900"
+              fontSize: "24px",
+              fontWeight: "950",
+              letterSpacing: "-0.03em"
             }}
           >
             {editingId ? "Edito postimin" : "Shto postim të ri"}
@@ -215,13 +277,13 @@ export default function AdminPostForm({
 
           <p
             style={{
-              margin: "6px 0 0",
+              margin: "7px 0 0",
               color: "#64748b",
               fontSize: "14px",
               lineHeight: "1.6"
             }}
           >
-            Plotëso të dhënat dhe ruaje publikimin.
+            Plotëso të dhënat, zgjidh median dhe publiko postimin në platformë.
           </p>
         </div>
 
@@ -242,12 +304,13 @@ export default function AdminPostForm({
       >
         <div style={sectionCard}>
           <h3 style={sectionTitle}>Të dhënat kryesore</h3>
+          <p style={sectionText}>Titulli, përshkrimi dhe kategoria e postimit.</p>
 
           <div
             className="admin-form-grid"
             style={{
               display: "grid",
-              gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
+              gridTemplateColumns: "repeat(2,minmax(0,1fr))",
               gap: "14px"
             }}
           >
@@ -257,7 +320,7 @@ export default function AdminPostForm({
                 type="text"
                 name="title"
                 placeholder="Shkruaj titullin"
-                value={formData.title}
+                value={formData.title || ""}
                 onChange={handleChange}
                 required
                 style={inputStyle}
@@ -265,22 +328,29 @@ export default function AdminPostForm({
             </div>
 
             <div style={{ gridColumn: "1 / -1" }}>
-              <label style={labelStyle}>Përshkrimi</label>
-              <textarea
-                name="description"
-                placeholder="Shkruaj përshkrimin"
-                value={formData.description}
-                onChange={handleChange}
-                rows="5"
-                style={{ ...inputStyle, resize: "vertical", minHeight: "120px" }}
-              />
+              <label style={labelStyle}>Përshkrimi / Teksti</label>
+
+              <div className="quill-premium-wrap">
+                <ReactQuill
+                  theme="snow"
+                  value={formData.description || ""}
+                  onChange={(value) =>
+                    handleChange({
+                      target: { name: "description", value }
+                    })
+                  }
+                  modules={quillModules}
+                  formats={quillFormats}
+                  placeholder="Shkruaj tekstin këtu..."
+                />
+              </div>
             </div>
 
             <div>
               <label style={labelStyle}>Kategoria</label>
               <select
                 name="category"
-                value={formData.category}
+                value={formData.category || ""}
                 onChange={handleChange}
                 required
                 style={inputStyle}
@@ -301,7 +371,7 @@ export default function AdminPostForm({
                   type="number"
                   name="price"
                   placeholder="Shkruaj çmimin"
-                  value={formData.price}
+                  value={formData.price || ""}
                   onChange={handleChange}
                   style={inputStyle}
                 />
@@ -314,17 +384,17 @@ export default function AdminPostForm({
                   style={{
                     marginTop: "4px",
                     padding: "16px",
-                    borderRadius: "18px",
-                    border: "1px solid rgba(37,99,235,0.12)",
+                    borderRadius: "20px",
+                    border: "1px solid rgba(37,99,235,0.14)",
                     background:
-                      "linear-gradient(135deg, rgba(239,246,255,0.95), rgba(248,250,252,0.98))"
+                      "linear-gradient(135deg,rgba(239,246,255,0.95),rgba(248,250,252,0.98))"
                   }}
                 >
                   <div
                     style={{
-                      marginBottom: "10px",
+                      marginBottom: "6px",
                       color: "#0f172a",
-                      fontWeight: "900",
+                      fontWeight: "950",
                       fontSize: "15px"
                     }}
                   >
@@ -339,14 +409,14 @@ export default function AdminPostForm({
                       marginBottom: "14px"
                     }}
                   >
-                    Zgjedh nëse ky lajm duhet të shfaqet në hero ose në breaking ticker.
+                    Kontrollo ku shfaqet lajmi: hero kryesor ose breaking ticker.
                   </div>
 
                   <div
                     className="editorial-grid"
                     style={{
                       display: "grid",
-                      gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
+                      gridTemplateColumns: "repeat(2,minmax(0,1fr))",
                       gap: "12px"
                     }}
                   >
@@ -358,13 +428,7 @@ export default function AdminPostForm({
                         onChange={handleChange}
                       />
                       <div>
-                        <div
-                          style={{
-                            color: "#0f172a",
-                            fontWeight: "800",
-                            fontSize: "14px"
-                          }}
-                        >
+                        <div style={{ color: "#0f172a", fontWeight: "900" }}>
                           Featured në hero
                         </div>
                         <div
@@ -388,13 +452,7 @@ export default function AdminPostForm({
                         onChange={handleChange}
                       />
                       <div>
-                        <div
-                          style={{
-                            color: "#0f172a",
-                            fontWeight: "800",
-                            fontSize: "14px"
-                          }}
-                        >
+                        <div style={{ color: "#0f172a", fontWeight: "900" }}>
                           Breaking ticker
                         </div>
                         <div
@@ -405,7 +463,7 @@ export default function AdminPostForm({
                             lineHeight: "1.55"
                           }}
                         >
-                          Shfaqet në shiritin horizontal sipër faqes.
+                          Shfaqet në shiritin horizontal.
                         </div>
                       </div>
                     </label>
@@ -419,12 +477,15 @@ export default function AdminPostForm({
         {isRealEstate && (
           <div style={sectionCard}>
             <h3 style={sectionTitle}>Detajet e patundshmërisë</h3>
+            <p style={sectionText}>
+              Të dhëna shtesë për banesa, shtëpi, lokale dhe prona.
+            </p>
 
             <div
               className="admin-form-grid"
               style={{
                 display: "grid",
-                gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
+                gridTemplateColumns: "repeat(2,minmax(0,1fr))",
                 gap: "14px"
               }}
             >
@@ -432,7 +493,7 @@ export default function AdminPostForm({
                 <label style={labelStyle}>Lloji i pronës</label>
                 <select
                   name="propertyType"
-                  value={formData.propertyType}
+                  value={formData.propertyType || ""}
                   onChange={handleChange}
                   style={inputStyle}
                 >
@@ -450,7 +511,7 @@ export default function AdminPostForm({
                 <label style={labelStyle}>Lloji i shpalljes</label>
                 <select
                   name="listingType"
-                  value={formData.listingType}
+                  value={formData.listingType || ""}
                   onChange={handleChange}
                   style={inputStyle}
                 >
@@ -464,7 +525,7 @@ export default function AdminPostForm({
                 <label style={labelStyle}>Lloji i çmimit</label>
                 <select
                   name="priceType"
-                  value={formData.priceType}
+                  value={formData.priceType || ""}
                   onChange={handleChange}
                   style={inputStyle}
                 >
@@ -481,19 +542,19 @@ export default function AdminPostForm({
                   type="text"
                   name="city"
                   placeholder="p.sh. Prishtinë"
-                  value={formData.city}
+                  value={formData.city || ""}
                   onChange={handleChange}
                   style={inputStyle}
                 />
               </div>
 
               <div>
-                <label style={labelStyle}>Sipërfaqja (m²)</label>
+                <label style={labelStyle}>Sipërfaqja m²</label>
                 <input
                   type="text"
                   name="area"
                   placeholder="p.sh. 85"
-                  value={formData.area}
+                  value={formData.area || ""}
                   onChange={handleChange}
                   style={inputStyle}
                 />
@@ -505,7 +566,7 @@ export default function AdminPostForm({
                   type="number"
                   name="rooms"
                   placeholder="p.sh. 3"
-                  value={formData.rooms}
+                  value={formData.rooms || ""}
                   onChange={handleChange}
                   style={inputStyle}
                 />
@@ -517,7 +578,7 @@ export default function AdminPostForm({
                   type="number"
                   name="bathrooms"
                   placeholder="p.sh. 2"
-                  value={formData.bathrooms}
+                  value={formData.bathrooms || ""}
                   onChange={handleChange}
                   style={inputStyle}
                 />
@@ -525,108 +586,164 @@ export default function AdminPostForm({
             </div>
           </div>
         )}
+        {formData.category === "automjete" && (
+  <div style={sectionCard}>
+    <h3 style={sectionTitle}>Detajet e automjetit</h3>
+    <p style={sectionText}>
+      Plotëso të dhënat kryesore të veturës që shfaqen në faqe.
+    </p>
+
+    <div
+      style={{
+        display: "grid",
+        gridTemplateColumns: "repeat(2,minmax(0,1fr))",
+        gap: "14px"
+      }}
+    >
+      <input name="mileage" placeholder="Kilometrazh (p.sh. 198000)" value={formData.mileage || ""} onChange={handleChange} style={inputStyle}/>
+      <input name="power" placeholder="Fuqia (hp)" value={formData.power || ""} onChange={handleChange} style={inputStyle}/>
+      <input name="transmission" placeholder="Transmetimi (Automatic / Manual)" value={formData.transmission || ""} onChange={handleChange} style={inputStyle}/>
+      <input name="drive_type" placeholder="Sistemi (FWD / AWD / 4x4)" value={formData.drive_type || ""} onChange={handleChange} style={inputStyle}/>
+      <input name="fuel_type" placeholder="Karburanti (Diesel / Benzin)" value={formData.fuel_type || ""} onChange={handleChange} style={inputStyle}/>
+      <input name="vehicle_year" placeholder="Viti" value={formData.vehicle_year || ""} onChange={handleChange} style={inputStyle}/>
+
+      <input name="body_type" placeholder="Lloji i automjetit (SUV, Sedan)" value={formData.body_type || ""} onChange={handleChange} style={inputStyle}/>
+      <input name="series" placeholder="Seria" value={formData.series || ""} onChange={handleChange} style={inputStyle}/>
+      <input name="doors" placeholder="Dyert" value={formData.doors || ""} onChange={handleChange} style={inputStyle}/>
+      <input name="seats" placeholder="Ulëset" value={formData.seats || ""} onChange={handleChange} style={inputStyle}/>
+      <input name="exterior_color" placeholder="Ngjyra e jashtme" value={formData.exterior_color || ""} onChange={handleChange} style={inputStyle}/>
+      <input name="interior_color" placeholder="Ngjyra e brendshme" value={formData.interior_color || ""} onChange={handleChange} style={inputStyle}/>
+      <input name="weight" placeholder="Pesha (kg)" value={formData.weight || ""} onChange={handleChange} style={inputStyle}/>
+      <input name="engine_capacity" placeholder="Motorri (p.sh. 2993)" value={formData.engine_capacity || ""} onChange={handleChange} style={inputStyle}/>
+      <input name="vehicle_condition" placeholder="Kushti (I ri / I përdorur)" value={formData.vehicle_condition || ""} onChange={handleChange} style={inputStyle}/>
+      
+      <input name="location" placeholder="Lokacioni (p.sh. Prishtinë)" value={formData.location || ""} onChange={handleChange} style={inputStyle}/>
+    </div>
+  </div>
+)}
 
         {isJobPost && (
-          <div style={sectionCard}>
-            <h3 style={sectionTitle}>Detajet e konkursit</h3>
+  <div style={sectionCard}>
+    <h3 style={sectionTitle}>Detajet e konkursit</h3>
+    <p style={sectionText}>
+      Informata kryesore që shfaqen në kartelë dhe në detaje.
+    </p>
 
-            <div
-              className="admin-form-grid"
-              style={{
-                display: "grid",
-                gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
-                gap: "14px"
-              }}
-            >
-              <div>
-                <label style={labelStyle}>Kategoria e punës</label>
-                <select
-                  name="job_category"
-                  value={formData.job_category || ""}
-                  onChange={handleChange}
-                  style={inputStyle}
-                >
-                  <option value="">Zgjedh kategorinë</option>
-                  <option value="Software">Software</option>
-                  <option value="Marketing">Marketing</option>
-                  <option value="Mjekësi">Mjekësi</option>
-                  <option value="Infermieri">Infermieri</option>
-                  <option value="Arsim&Edukim">Arsim & Edukim</option>
-                  <option value="Financa">Financa</option>
-                  <option value="Shitje">Shitje</option>
-                  <option value="Administratë">Administratë</option>
-                  <option value="IT KARRIERA">IT KARRIERA</option>
-                  <option value="Remote">Remote</option>
-                </select>
-              </div>
+    <div
+      style={{
+        display: "grid",
+        gridTemplateColumns: "repeat(2,minmax(0,1fr))",
+        gap: "14px"
+      }}
+    >
 
-              <div>
-                <label style={labelStyle}>Qyteti</label>
-                <input
-                  type="text"
-                  name="city"
-                  placeholder="p.sh. Prishtinë"
-                  value={formData.city || ""}
-                  onChange={handleChange}
-                  style={inputStyle}
-                />
-              </div>
+      {/* KOMPANIA */}
+      <div>
+        <label style={labelStyle}>Kompania</label>
+        <input
+          type="text"
+          name="company_name"
+          placeholder="p.sh. Dent Line"
+          value={formData.company_name || ""}
+          onChange={handleChange}
+          style={inputStyle}
+        />
+      </div>
 
-              <div>
-                <label style={labelStyle}>Përvoja</label>
-                <select
-                  name="experience"
-                  value={formData.experience || ""}
-                  onChange={handleChange}
-                  style={inputStyle}
-                >
-                  <option value="">Zgjedh përvojën</option>
-                  <option value="No Experience">No Experience</option>
-                  <option value="1-2 Experience">1-2 Experience</option>
-                  <option value="3-5 Experience">3-5 Experience</option>
-                  <option value="5+ Experience">5+ Experience</option>
-                </select>
-              </div>
+      {/* KATEGORIA */}
+      <div>
+        <label style={labelStyle}>Kategoritë</label>
+        <select
+          name="job_category"
+          value={formData.job_category || ""}
+          onChange={handleChange}
+          style={inputStyle}
+        >
+          <option value="">Zgjedh kategorinë</option>
+          <option value="Mjekësi">Mjekësi</option>
+          <option value="IT">IT</option>
+          <option value="Marketing">Marketing</option>
+          <option value="Shitje">Shitje</option>
+          <option value="Administratë">Administratë</option>
+          <option value="Ndërtimtari">Ndërtimtari</option>
+          <option value="Prodhimtari">Prodhimtari</option>
+        </select>
+      </div>
 
-              <div>
-                <label style={labelStyle}>Orët e punës</label>
-                <select
-                  name="work_hours"
-                  value={formData.work_hours || ""}
-                  onChange={handleChange}
-                  style={inputStyle}
-                >
-                  <option value="">Zgjedh</option>
-                  <option value="Full Time">Full Time</option>
-                  <option value="Part Time">Part Time</option>
-                  <option value="Unordered">Unordered</option>
-                </select>
-              </div>
+      {/* VENDI I PUNËS */}
+      <div>
+        <label style={labelStyle}>Vendi i punës</label>
+        <input
+          type="text"
+          name="job_location"
+          placeholder="p.sh. Prishtinë"
+          value={formData.job_location || ""}
+          onChange={handleChange}
+          style={inputStyle}
+        />
+      </div>
 
-              <div style={{ gridColumn: "1 / -1" }}>
-                <label style={labelStyle}>Gjuhët</label>
-                <input
-                  type="text"
-                  name="languages"
-                  placeholder="p.sh. Albanian, English"
-                  value={formData.languages || ""}
-                  onChange={handleChange}
-                  style={inputStyle}
-                />
-              </div>
-            </div>
-          </div>
-        )}
+      {/* NUMRI I POZITAVE */}
+      <div>
+        <label style={labelStyle}>Numri i pozitave</label>
+        <input
+          type="number"
+          name="positions_count"
+          placeholder="p.sh. 5"
+          value={formData.positions_count || ""}
+          onChange={handleChange}
+          style={inputStyle}
+        />
+      </div>
+
+      {/* EXPERIENCA */}
+      <div>
+        <label style={labelStyle}>Përvoja</label>
+        <select
+          name="experience"
+          value={formData.experience || ""}
+          onChange={handleChange}
+          style={inputStyle}
+        >
+          <option value="">Zgjedh përvojën</option>
+          <option value="No Experience">No Experience</option>
+          <option value="1-2 Experience">1-2 Experience</option>
+          <option value="3-5 Experience">3-5 Experience</option>
+          <option value="5+ Experience">5+ Experience</option>
+        </select>
+      </div>
+
+      {/* ORARI */}
+      <div>
+        <label style={labelStyle}>Orët e punës</label>
+        <select
+          name="work_hours"
+          value={formData.work_hours || ""}
+          onChange={handleChange}
+          style={inputStyle}
+        >
+          <option value="">Zgjedh</option>
+          <option value="Full Time">Full Time</option>
+          <option value="Part Time">Part Time</option>
+        </select>
+      </div>
+
+    </div>
+  </div>
+)}
 
         {showContactFields && (
           <div style={sectionCard}>
             <h3 style={sectionTitle}>Kontakti</h3>
+            <p style={sectionText}>
+              Këto të dhëna shfaqen në kartelat publike dhe te detajet.
+            </p>
 
             <div
               className="admin-form-grid"
               style={{
                 display: "grid",
-                gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
+                gridTemplateColumns: "repeat(2,minmax(0,1fr))",
                 gap: "14px"
               }}
             >
@@ -636,7 +753,7 @@ export default function AdminPostForm({
                   type="text"
                   name="phone"
                   placeholder="p.sh. 044000000"
-                  value={formData.phone}
+                  value={formData.phone || ""}
                   onChange={handleChange}
                   style={inputStyle}
                 />
@@ -648,7 +765,7 @@ export default function AdminPostForm({
                   type="text"
                   name="whatsapp"
                   placeholder="p.sh. 044000000"
-                  value={formData.whatsapp}
+                  value={formData.whatsapp || ""}
                   onChange={handleChange}
                   style={inputStyle}
                 />
@@ -658,13 +775,110 @@ export default function AdminPostForm({
         )}
 
         <div style={sectionCard}>
+          <h3 style={sectionTitle}>Link ekstra</h3>
+          <p style={sectionText}>
+            Vendos link opsional për burim lajmi, aplikim, website, Facebook,
+            Instagram, lokacion ose dokument.
+          </p>
+
+          <div
+            className="admin-form-grid"
+            style={{
+              display: "grid",
+              gridTemplateColumns: "repeat(2,minmax(0,1fr))",
+              gap: "14px"
+            }}
+          >
+            <input
+  type="text"
+  name="link_text"
+  placeholder="p.sh. Apliko këtu"
+  value={formData.link_text || ""}
+  onChange={handleChange}
+  style={inputStyle}
+/>
+
+<input
+  type="url"
+  name="link_url"
+  placeholder="https://example.com"
+  value={formData.link_url || ""}
+  onChange={handleChange}
+  onBlur={() => {
+    const fixed = normalizeUrl(formData.link_url || "");
+    handleChange({
+      target: { name: "link_url", value: fixed }
+    });
+  }}
+  style={inputStyle}
+/>
+          </div>
+
+          {formData.link_url && (
+            <div
+              style={{
+                marginTop: "14px",
+                padding: "13px 14px",
+                borderRadius: "16px",
+                border: "1px solid #bfdbfe",
+                background: "#eff6ff",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                gap: "12px",
+                flexWrap: "wrap"
+              }}
+            >
+              <div>
+                <div
+                  style={{
+                    color: "#0f172a",
+                    fontWeight: "900",
+                    fontSize: "13px"
+                  }}
+                >
+                  Preview linku
+                </div>
+                <div
+                  style={{
+                    marginTop: "4px",
+                    color: "#64748b",
+                    fontSize: "12px",
+                    wordBreak: "break-all"
+                  }}
+                >
+                  {formData.link_url}
+                </div>
+              </div>
+
+              <a
+                href={normalizeUrl(formData.link_url)}
+                target="_blank"
+                rel="noreferrer"
+                style={{
+                  padding: "10px 13px",
+                  borderRadius: "12px",
+                  background: "#2563eb",
+                  color: "#fff",
+                  textDecoration: "none",
+                  fontWeight: "900",
+                  fontSize: "13px"
+                }}
+              >
+                {formData.link_text || "Hap linkun"}
+              </a>
+            </div>
+          )}
+        </div>
+
+        <div style={sectionCard}>
           <h3 style={sectionTitle}>Afati dhe statusi</h3>
 
           <div
             className="admin-form-grid"
             style={{
               display: "grid",
-              gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
+              gridTemplateColumns: "repeat(2,minmax(0,1fr))",
               gap: "14px"
             }}
           >
@@ -701,17 +915,17 @@ export default function AdminPostForm({
                 <input
                   type="checkbox"
                   name="is_unlimited"
-                  checked={formData.is_unlimited || false}
+                  checked={!!formData.is_unlimited}
                   onChange={handleChange}
                 />
-                <span style={{ color: "#0f172a", fontWeight: "700" }}>
-                  Pa afat (Unlimited)
+                <span style={{ color: "#0f172a", fontWeight: "800" }}>
+                  Pa afat
                 </span>
               </label>
             </div>
 
             <div>
-              <label style={labelStyle}>Statusi i postimit</label>
+              <label style={labelStyle}>Statusi</label>
               <label style={checkboxWrapStyle}>
                 <input
                   type="checkbox"
@@ -719,7 +933,7 @@ export default function AdminPostForm({
                   checked={formData.is_active !== false}
                   onChange={handleChange}
                 />
-                <span style={{ color: "#0f172a", fontWeight: "700" }}>
+                <span style={{ color: "#0f172a", fontWeight: "800" }}>
                   Aktiv
                 </span>
               </label>
@@ -732,7 +946,7 @@ export default function AdminPostForm({
             <h3 style={sectionTitle}>Opsionet e ofertës</h3>
 
             <div style={{ marginBottom: "14px" }}>
-              <label style={labelStyle}>Badge (opsionale)</label>
+              <label style={labelStyle}>Badge</label>
               <input
                 type="text"
                 name="offerBadge"
@@ -741,17 +955,6 @@ export default function AdminPostForm({
                 onChange={handleChange}
                 style={inputStyle}
               />
-            </div>
-
-            <div
-              style={{
-                marginBottom: "10px",
-                color: "#475569",
-                fontWeight: "700",
-                fontSize: "14px"
-              }}
-            >
-              Pikat e ofertës
             </div>
 
             {(formData.offerFeatures || []).map((feature, index) => (
@@ -801,11 +1004,7 @@ export default function AdminPostForm({
               </div>
             ))}
 
-            <button
-              type="button"
-              onClick={addOfferFeature}
-              style={addOptionBtn}
-            >
+            <button type="button" onClick={addOfferFeature} style={addOptionBtn}>
               + Shto opsion
             </button>
           </div>
@@ -813,34 +1012,33 @@ export default function AdminPostForm({
 
         <div style={sectionCard}>
           <h3 style={sectionTitle}>Media</h3>
+          <p style={sectionText}>
+            Zgjedh fotot, cakto kopertinën dhe renditjen sipas dëshirës.
+          </p>
 
-          <div style={{ marginBottom: "14px" }}>
-            <label style={labelStyle}>Foto (max 10) + 1 Video</label>
+          <label style={labelStyle}>Foto max 10 + 1 Video</label>
+          <input
+            type="file"
+            multiple
+            accept="image/*,video/mp4,video/quicktime,video/webm"
+            onChange={handleFileChange}
+            style={inputStyle}
+          />
 
-            <input
-              type="file"
-              multiple
-              accept="image/*,video/mp4,video/quicktime,video/webm"
-              onChange={handleFileChange}
-              style={inputStyle}
-            />
-
-            <div style={uploadInfoBoxStyle}>
-              • Deri 10 foto
-              <br />
-              • Deri 1 video (1080p max)
-              <br />
-              • Fotot kompresohen automatikisht (1600px, rreth 300–400KB)
-              <br />
-              • Videot kompresohen automatikisht nëse kanë nevojë
-            </div>
+          <div style={uploadInfoBoxStyle}>
+            • Deri 10 foto
+            <br />
+            • Deri 1 video
+            <br />
+            • Mund ta zgjedhësh vet kopertinën
+            <br />• Mund ta ndryshosh renditjen e fotove
           </div>
 
           {selectedImages?.length > 0 && (
             <div style={{ marginTop: "20px" }}>
               <div
                 style={{
-                  fontWeight: "800",
+                  fontWeight: "900",
                   marginBottom: "12px",
                   color: "#0f172a"
                 }}
@@ -852,7 +1050,7 @@ export default function AdminPostForm({
                 className="media-grid"
                 style={{
                   display: "grid",
-                  gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))",
+                  gridTemplateColumns: "repeat(auto-fit,minmax(180px,1fr))",
                   gap: "16px"
                 }}
               >
@@ -863,12 +1061,12 @@ export default function AdminPostForm({
                       border: img.isCover
                         ? "3px solid #2563eb"
                         : "1px solid #dbe3ee",
-                      borderRadius: "18px",
+                      borderRadius: "20px",
                       padding: "12px",
                       background: "#fff",
                       boxShadow: img.isCover
-                        ? "0 12px 26px rgba(37,99,235,0.12)"
-                        : "0 8px 20px rgba(15,23,42,0.04)"
+                        ? "0 14px 30px rgba(37,99,235,0.14)"
+                        : "0 8px 22px rgba(15,23,42,0.05)"
                     }}
                   >
                     <img
@@ -876,9 +1074,9 @@ export default function AdminPostForm({
                       alt={`Preview ${index + 1}`}
                       style={{
                         width: "100%",
-                        height: "160px",
+                        height: "165px",
                         objectFit: "cover",
-                        borderRadius: "14px",
+                        borderRadius: "15px",
                         display: "block"
                       }}
                     />
@@ -888,29 +1086,22 @@ export default function AdminPostForm({
                         marginTop: "10px",
                         display: "flex",
                         justifyContent: "space-between",
-                        alignItems: "center",
                         gap: "10px",
                         flexWrap: "wrap"
                       }}
                     >
-                      <div
+                      <strong
                         style={{
                           fontSize: "13px",
-                          fontWeight: "700",
-                          color: img.isCover ? "#2563eb" : "#64748b"
+                          color: img.isCover ? "#2563eb" : "#475569"
                         }}
                       >
                         {img.isCover ? "✓ Kopertina" : `Foto ${index + 1}`}
-                      </div>
+                      </strong>
 
-                      <div
-                        style={{
-                          fontSize: "12px",
-                          color: "#64748b"
-                        }}
-                      >
+                      <span style={{ fontSize: "12px", color: "#64748b" }}>
                         Renditja: {img.sortOrder || index + 1}
-                      </div>
+                      </span>
                     </div>
 
                     <div
@@ -927,7 +1118,7 @@ export default function AdminPostForm({
                           onClick={() => setCoverImage(index)}
                           style={previewCardBtn}
                         >
-                          Vendos si kopertinë
+                          Kopertinë
                         </button>
                       )}
 
@@ -936,7 +1127,7 @@ export default function AdminPostForm({
                         onClick={() => moveSelectedImageLeft(index)}
                         style={previewDarkBtn}
                       >
-                        ← Majtas
+                        ←
                       </button>
 
                       <button
@@ -944,7 +1135,7 @@ export default function AdminPostForm({
                         onClick={() => moveSelectedImageRight(index)}
                         style={previewDarkBtn}
                       >
-                        Djathtas →
+                        →
                       </button>
 
                       <button
@@ -965,7 +1156,7 @@ export default function AdminPostForm({
             <div style={{ marginTop: "22px" }}>
               <div
                 style={{
-                  fontWeight: "800",
+                  fontWeight: "900",
                   marginBottom: "10px",
                   color: "#0f172a"
                 }}
@@ -978,10 +1169,10 @@ export default function AdminPostForm({
                   border: videoIsCover
                     ? "3px solid #2563eb"
                     : "1px solid #dbe3ee",
-                  borderRadius: "18px",
+                  borderRadius: "20px",
                   padding: "14px",
                   background: "#fff",
-                  boxShadow: "0 8px 20px rgba(15,23,42,0.04)"
+                  boxShadow: "0 8px 22px rgba(15,23,42,0.05)"
                 }}
               >
                 <video
@@ -990,7 +1181,7 @@ export default function AdminPostForm({
                   style={{
                     width: "100%",
                     maxHeight: "360px",
-                    borderRadius: "14px",
+                    borderRadius: "15px",
                     display: "block",
                     background: "#000"
                   }}
@@ -1006,17 +1197,14 @@ export default function AdminPostForm({
                     flexWrap: "wrap"
                   }}
                 >
-                  <div
+                  <strong
                     style={{
                       fontSize: "13px",
-                      fontWeight: "700",
                       color: videoIsCover ? "#2563eb" : "#0f172a"
                     }}
                   >
-                    {videoIsCover
-                      ? "✓ Kopertina (Video)"
-                      : "1 video e zgjedhur"}
-                  </div>
+                    {videoIsCover ? "✓ Kopertina Video" : "Video e zgjedhur"}
+                  </strong>
 
                   <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
                     {!videoIsCover && (
@@ -1047,7 +1235,8 @@ export default function AdminPostForm({
           style={{
             display: "flex",
             gap: "12px",
-            flexWrap: "wrap"
+            flexWrap: "wrap",
+            paddingTop: "4px"
           }}
         >
           <button type="submit" style={primaryActionBtn}>
@@ -1061,19 +1250,40 @@ export default function AdminPostForm({
       </form>
 
       <style>{`
+        .quill-premium-wrap {
+          background: #fff;
+          border: 1px solid #cbd5e1;
+          border-radius: 16px;
+          overflow: hidden;
+        }
+
+        .quill-premium-wrap .ql-toolbar {
+          border: none;
+          border-bottom: 1px solid #e2e8f0;
+          background: #f8fafc;
+        }
+
+        .quill-premium-wrap .ql-container {
+          border: none;
+          min-height: 190px;
+          font-size: 15px;
+        }
+
+        .quill-premium-wrap .ql-editor {
+          min-height: 190px;
+          line-height: 1.75;
+          color: #0f172a;
+        }
+
+        .quill-premium-wrap .ql-editor.ql-blank::before {
+          color: #94a3b8;
+          font-style: normal;
+        }
+
         @media (max-width: 768px) {
-          .admin-form-grid {
-            grid-template-columns: 1fr !important;
-          }
-
-          .offer-feature-grid {
-            grid-template-columns: 1fr !important;
-          }
-
-          .media-grid {
-            grid-template-columns: 1fr !important;
-          }
-
+          .admin-form-grid,
+          .offer-feature-grid,
+          .media-grid,
           .editorial-grid {
             grid-template-columns: 1fr !important;
           }

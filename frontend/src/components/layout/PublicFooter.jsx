@@ -1,391 +1,729 @@
-import React, { useEffect, useState } from "react";
+import React from "react";
 import { Link } from "react-router-dom";
 
-const accentSoft = "#93c5fd";
-
 const logoUrl =
-  "https://res.cloudinary.com/dbz7fjuty/image/upload/v1776285534/ChatGPT_Image_Apr_15_2026_10_38_27_PM_bf2mf9.png";
+  "https://res.cloudinary.com/dbz7fjuty/image/upload/v1776969027/PUBLIKO_LOGO_pomulk.png";
 
-const footerBgUrl =
-  "https://res.cloudinary.com/dbz7fjuty/image/upload/v1776272072/pexels-aubin-kirch-280714467-18098706_typ0ey_nawh9b.jpg";
+const poweredLogoUrl =
+  "https://res.cloudinary.com/dbz7fjuty/image/upload/v1776283100/ChatGPT_Image_Apr_15_2026_09_58_09_PM_vsc72w.png";
+
+const footerVideoUrl =
+  "https://res.cloudinary.com/dbz7fjuty/video/upload/v1777172527/7020027_Abstract_Nebula_3840x2160_ehdkq2.mp4";
 
 export default function PublicFooter() {
-  const [screenWidth, setScreenWidth] = useState(
-    typeof window !== "undefined" ? window.innerWidth : 1200
-  );
-
-  useEffect(() => {
-    const onResize = () => setScreenWidth(window.innerWidth);
-    window.addEventListener("resize", onResize);
-    return () => window.removeEventListener("resize", onResize);
-  }, []);
-
-  const isMobile = screenWidth <= 640;
-  const isTablet = screenWidth > 640 && screenWidth <= 1024;
-
   return (
-    <footer
-      style={{
-        marginTop: isMobile ? "56px" : "84px",
-        color: "#fff",
-        position: "relative",
-        overflow: "hidden",
-        backgroundColor: "#071120"
-      }}
-    >
-      <div
-        style={{
-          position: "absolute",
-          inset: 0,
-          backgroundImage: `url(${footerBgUrl})`,
-          backgroundSize: "cover",
-          backgroundPosition: "center",
-          opacity: isMobile ? 0.16 : 0.28,
-          transform: "scale(1.04)"
-        }}
-      />
+    <footer className="public-footer">
+      <div className="footer-wave">
+        <svg viewBox="0 0 1440 220" preserveAspectRatio="none">
+          <path d="M0,150 C220,75 430,80 650,125 C850,165 1020,125 1165,82 C1300,42 1400,95 1440,68 L1440,220 L0,220 Z" />
+        </svg>
+      </div>
 
-      <div
-        style={{
-          position: "absolute",
-          inset: 0,
-          background:
-            "linear-gradient(135deg, rgba(7,17,32,0.98) 0%, rgba(15,23,42,0.94) 38%, rgba(29,78,216,0.74) 100%)"
-        }}
-      />
+      <video className="footer-bg-video" autoPlay muted loop playsInline>
+        <source src={footerVideoUrl} type="video/mp4" />
+      </video>
 
-      <div
-        style={{
-          position: "absolute",
-          top: "-120px",
-          right: "-60px",
-          width: isMobile ? "180px" : "320px",
-          height: isMobile ? "180px" : "320px",
-          borderRadius: "999px",
-          background: "rgba(59,130,246,0.16)",
-          filter: "blur(28px)",
-          pointerEvents: "none"
-        }}
-      />
+      <div className="footer-overlay" />
+      <div className="footer-grid-lines" />
+      <div className="footer-orb footer-orb-one" />
+      <div className="footer-orb footer-orb-two" />
 
-      <div
-        style={{
-          position: "absolute",
-          bottom: "-140px",
-          left: "-70px",
-          width: isMobile ? "220px" : "360px",
-          height: isMobile ? "220px" : "360px",
-          borderRadius: "999px",
-          background: "rgba(96,165,250,0.12)",
-          filter: "blur(32px)",
-          pointerEvents: "none"
-        }}
-      />
-
-      <div
-        style={{
-          maxWidth: "1280px",
-          margin: "0 auto",
-          padding: isMobile ? "26px 14px 18px" : "38px 20px 22px",
-          position: "relative",
-          zIndex: 2
-        }}
-      >
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: isMobile
-              ? "1fr"
-              : isTablet
-                ? "1fr"
-                : "1.15fr 1fr 1fr",
-            gap: isMobile ? "12px" : "16px",
-            alignItems: "stretch"
-          }}
-        >
-          <div className="footer-card-hover" style={brandCard(isMobile)}>
-            <div
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: "12px",
-                marginBottom: "14px"
-              }}
-            >
-              <div style={logoBox(isMobile)}>
-                <img
-                  src={logoUrl}
-                  alt="Publiko Logo"
-                  style={{
-                    width: "78%",
-                    height: "78%",
-                    objectFit: "contain"
-                  }}
-                />
+      <div className="footer-container">
+        <div className="footer-grid">
+          <div className="footer-card footer-brand-card">
+            <div className="footer-brand-head">
+              <div className="footer-logo-box">
+                <img src={logoUrl} alt="Publiko Logo" />
               </div>
 
-              <div style={{ minWidth: 0 }}>
-                <div
-                  style={{
-                    fontSize: isMobile ? "24px" : "26px",
-                    fontWeight: "900",
-                    letterSpacing: "-0.03em",
-                    lineHeight: 1.05
-                  }}
-                >
-                  Publiko
+              <div>
+                <div className="footer-brand-title">
+                  Publiko<span>.biz</span>
                 </div>
-
-                <div
-                  style={{
-                    color: "#bfdbfe",
-                    fontSize: isMobile ? "11px" : "12px",
-                    marginTop: "4px",
-                    lineHeight: 1.4
-                  }}
-                >
+                <div className="footer-brand-subtitle">
                   Portal informativ & shpallje
                 </div>
               </div>
             </div>
 
-            <p
-              style={{
-                color: "#dbeafe",
-                lineHeight: 1.75,
-                margin: 0,
-                fontSize: isMobile ? "13px" : "14px"
-              }}
-            >
-              Publiko është platformë moderne për lajme, patundshmëri,
-              automjete dhe konkurse pune, me prezencë vizuale serioze dhe
-              strukturë profesionale.
+            <p className="footer-description">
+              Platformë moderne për lajme, patundshmëri, automjete dhe konkurse
+              pune — e ndërtuar për prezencë serioze, navigim të qartë dhe
+              publikime profesionale.
             </p>
 
-            <div
-              style={{
-                display: "flex",
-                gap: "10px",
-                flexWrap: "wrap",
-                marginTop: "18px"
-              }}
-            >
-              <a href="tel:044000000" style={contactChip()}>
-                📞 044 000 000
-              </a>
-
-              <a href="mailto:ihgkosova@gmail.com" style={contactChip()}>
-                ✉️ ihgkosova@gmail.com
-              </a>
+            <div className="footer-contact-chips">
+              <a href="tel:044000000">📞 044 000 000</a>
+              <a href="mailto:ihgkosova@gmail.com">✉️ ihgkosova@gmail.com</a>
             </div>
           </div>
 
-          <div className="footer-card-hover" style={columnCard(isMobile)}>
-            <h4
-              style={{
-                marginTop: 0,
-                marginBottom: "14px",
-                fontSize: isMobile ? "15px" : "16px",
-                color: "#ffffff",
-                lineHeight: 1.3,
-                letterSpacing: "-0.01em"
-              }}
-            >
-              Navigimi & Kategoritë
-            </h4>
+          <div className="footer-card">
+            <h4>Navigimi & Kategoritë</h4>
 
-            <div
-              style={{
-                display: "grid",
-                gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr",
-                gap: "4px 18px"
-              }}
-            >
+            <div className="footer-links-grid">
               <FooterLink to="/">Ballina</FooterLink>
-              <FooterLink to="/kategori/vendi">Vendi</FooterLink>
-
               <FooterLink to="/kategori/lajme">Lajme</FooterLink>
-              <FooterLink to="/kategori/rajoni">Rajoni</FooterLink>
-
               <FooterLink to="/kategori/patundshmeri">Patundshmëri</FooterLink>
-              <FooterLink to="/kategori/bota">Bota</FooterLink>
-
               <FooterLink to="/kategori/automjete">Automjete</FooterLink>
-              <FooterLink to="/kategori/oferta">Oferta</FooterLink>
-
               <FooterLink to="/kategori/konkurse-pune">Konkurse Pune</FooterLink>
+              <FooterLink to="/kategori/oferta">Oferta</FooterLink>
+              <FooterLink to="/kategori/vendi">Vendi</FooterLink>
+              <FooterLink to="/kategori/rajoni">Rajoni</FooterLink>
+              <FooterLink to="/kategori/bota">Bota</FooterLink>
               <FooterLink to="/reklamo-me-ne">Reklamo më ne</FooterLink>
-
               <FooterLink to="/kontakti">Kontakti</FooterLink>
+
+              <div className="footer-legal-block">
+                <h4>Politikat</h4>
+                <FooterLink to="/privacy-policy">Politika e Privatësisë</FooterLink>
+              </div>
             </div>
           </div>
 
-          <div className="footer-card-hover" style={columnCard(isMobile)}>
-            <h4
-              style={{
-                marginTop: 0,
-                marginBottom: "14px",
-                fontSize: isMobile ? "15px" : "16px",
-                color: "#ffffff",
-                lineHeight: 1.3,
-                letterSpacing: "-0.01em"
-              }}
-            >
-              Na kontaktoni
-            </h4>
+          <div className="footer-card">
+            <h4>Na kontaktoni</h4>
 
-            <div
-              style={{
-                display: "grid",
-                gap: "10px"
-              }}
-            >
-              <a
-                href="https://facebook.com"
-                target="_blank"
-                rel="noreferrer"
-                style={socialRow()}
-                className="footer-social-row"
-              >
-                <span style={socialIcon()}>f</span>
-                <span>Facebook</span>
+            <div className="footer-social-list">
+              <a href="https://facebook.com" target="_blank" rel="noreferrer">
+                <span>f</span>
+                <b>Facebook</b>
               </a>
 
-              <a
-                href="https://instagram.com"
-                target="_blank"
-                rel="noreferrer"
-                style={socialRow()}
-                className="footer-social-row"
-              >
-                <span style={socialIcon()}>◎</span>
-                <span>Instagram</span>
+              <a href="https://instagram.com" target="_blank" rel="noreferrer">
+                <span>◎</span>
+                <b>Instagram</b>
               </a>
 
-              <a
-                href="mailto:ihgkosova@gmail.com"
-                style={socialRow()}
-                className="footer-social-row"
-              >
-                <span style={socialIcon()}>✉</span>
-                <span>ihgkosova@gmail.com</span>
+              <a href="mailto:ihgkosova@gmail.com">
+                <span>✉</span>
+                <b>ihgkosova@gmail.com</b>
               </a>
             </div>
 
-            <div
-              style={{
-                marginTop: "16px",
-                padding: "14px",
-                borderRadius: "16px",
-                background: "rgba(255,255,255,0.06)",
-                border: "1px solid rgba(255,255,255,0.10)"
-              }}
-            >
-              <div
-                style={{
-                  color: "#ffffff",
-                  fontWeight: "800",
-                  marginBottom: "6px",
-                  fontSize: "14px"
-                }}
-              >
-                Lokacioni
-              </div>
-
-              <div
-                style={{
-                  color: "#dbeafe",
-                  fontSize: "13px",
-                  lineHeight: 1.7
-                }}
-              >
-                Prishtinë, Kosovë
-              </div>
+            <div className="footer-location-box">
+              <strong>Lokacioni</strong>
+              <small>Prishtinë, Kosovë</small>
             </div>
           </div>
         </div>
 
-        <div
-          style={{
-            marginTop: isMobile ? "16px" : "22px",
-            padding: isMobile ? "14px 0 0" : "16px 0 0",
-            borderTop: "1px solid rgba(255,255,255,0.12)",
-            display: "flex",
-            flexDirection: isMobile ? "column" : "row",
-            justifyContent: "space-between",
-            alignItems: isMobile ? "flex-start" : "center",
-            gap: "8px",
-            color: "#bfdbfe",
-            fontSize: isMobile ? "12px" : "13px",
-            lineHeight: 1.6
-          }}
-        >
-          <div>© 2026 Publiko. Të gjitha të drejtat e rezervuara.</div>
+        <div className="footer-bottom">
+          <div>© 2026 Publiko.biz. Të gjitha të drejtat e rezervuara.</div>
 
-          <div
-            style={{
-              color: accentSoft,
-              fontWeight: "700"
-            }}
-          >
-            Dizajn premium • Informim i qartë • Prezencë serioze
+          <div className="footer-powered">
+            <span className="powered-label">POWERED BY</span>
+
+            <img src={poweredLogoUrl} alt="Powered by" />
+
+            <span className="powered-name">Made by Bardh Dajaku</span>
           </div>
         </div>
       </div>
 
       <style>{`
-        .footer-link-premium {
-          position: relative;
-          transition: all .25s ease;
+        .public-footer{
+          margin-top:150px;
+          padding-top:128px;
+          padding-bottom:0;
+          color:#fff;
+          position:relative;
+          overflow:hidden;
+          background:#030712;
+          isolation:isolate;
         }
 
-        .footer-link-premium:hover {
-          color: #ffffff !important;
-          transform: translateX(4px);
+        .footer-wave{
+          position:absolute;
+          top:-1px;
+          left:0;
+          width:100%;
+          height:155px;
+          z-index:3;
+          pointer-events:none;
+          transform:translateY(-99%);
         }
 
-        .footer-link-premium::after {
-          content: "";
-          position: absolute;
-          left: 0;
-          bottom: -2px;
-          width: 0;
-          height: 1px;
-          background: rgba(255,255,255,0.72);
-          transition: width .25s ease;
+        .footer-wave svg{
+          width:100%;
+          height:100%;
+          display:block;
         }
 
-        .footer-link-premium:hover::after {
-          width: 28px;
+        .footer-wave path{
+          fill:#030712;
+          filter:
+            drop-shadow(0 -18px 38px rgba(0,0,0,.50))
+            drop-shadow(0 -6px 18px rgba(14,165,233,.20));
         }
 
-        .footer-card-hover {
-          transition: transform .28s ease, box-shadow .28s ease, border-color .28s ease;
+        .footer-bg-video{
+          position:absolute;
+          inset:0;
+          width:100%;
+          height:100%;
+          object-fit:cover;
+          z-index:-6;
+          opacity:.25;
+          pointer-events:none;
+          transform:scale(1.05);
         }
 
-        .footer-card-hover:hover {
-          transform: translateY(-4px);
-          box-shadow: 0 24px 50px rgba(0,0,0,0.18);
-          border-color: rgba(255,255,255,0.18);
+        .footer-overlay{
+          position:absolute;
+          inset:0;
+          z-index:-5;
+          background:
+            linear-gradient(180deg, rgba(2,6,23,.96) 0%, rgba(2,6,23,.88) 46%, rgba(2,6,23,.99) 100%),
+            radial-gradient(circle at 78% 18%, rgba(14,165,233,.30), transparent 34%),
+            radial-gradient(circle at 10% 90%, rgba(37,99,235,.24), transparent 38%);
         }
 
-        .footer-social-row:hover {
-          background: rgba(255,255,255,0.12) !important;
-          border-color: rgba(255,255,255,0.18) !important;
-          transform: translateY(-2px);
+        .footer-grid-lines{
+          position:absolute;
+          inset:0;
+          opacity:.16;
+          background:
+            linear-gradient(120deg, rgba(147,197,253,.10) 1px, transparent 1px),
+            linear-gradient(300deg, rgba(56,189,248,.075) 1px, transparent 1px);
+          background-size:58px 58px;
+          z-index:-4;
         }
 
-        @media (max-width: 640px) {
-          .footer-link-premium:hover {
-            transform: none;
+        .footer-orb{
+          position:absolute;
+          border-radius:999px;
+          pointer-events:none;
+          filter:blur(30px);
+          z-index:-2;
+        }
+
+        .footer-orb-one{
+          width:340px;
+          height:340px;
+          top:-135px;
+          right:-80px;
+          background:rgba(59,130,246,.22);
+        }
+
+        .footer-orb-two{
+          width:390px;
+          height:390px;
+          bottom:-170px;
+          left:-110px;
+          background:rgba(14,165,233,.16);
+        }
+
+        .footer-container{
+          max-width:1320px;
+          margin:0 auto;
+          padding:36px 20px 28px;
+          position:relative;
+          z-index:4;
+        }
+
+        .footer-grid{
+          display:grid;
+          grid-template-columns:1.15fr 1fr 1fr;
+          gap:18px;
+          align-items:stretch;
+        }
+
+        .footer-card{
+          position:relative;
+          overflow:hidden;
+          padding:20px;
+          min-height:265px;
+          border-radius:24px;
+          background:linear-gradient(180deg, rgba(255,255,255,.10), rgba(255,255,255,.04));
+          border:1px solid rgba(255,255,255,.14);
+          box-shadow:0 24px 60px rgba(0,0,0,.22);
+          backdrop-filter:blur(14px);
+          -webkit-backdrop-filter:blur(14px);
+          box-sizing:border-box;
+          transition:transform .22s ease, box-shadow .22s ease, border-color .22s ease;
+        }
+
+        .footer-card::before{
+          content:"";
+          position:absolute;
+          inset:0;
+          background:radial-gradient(circle at 15% 0%, rgba(255,255,255,.13), transparent 32%);
+          pointer-events:none;
+        }
+
+        .footer-card:hover{
+          transform:translateY(-4px);
+          border-color:rgba(147,197,253,.34);
+          box-shadow:0 30px 78px rgba(0,0,0,.28);
+        }
+
+        .footer-brand-head{
+          display:flex;
+          align-items:center;
+          gap:14px;
+          margin-bottom:15px;
+          position:relative;
+          z-index:2;
+        }
+
+        .footer-logo-box{
+          width:62px;
+          height:62px;
+          border-radius:20px;
+          display:flex;
+          align-items:center;
+          justify-content:center;
+          overflow:hidden;
+          flex-shrink:0;
+          position:relative;
+          background:linear-gradient(135deg, rgba(255,255,255,.18), rgba(14,165,233,.18));
+          border:1px solid rgba(255,255,255,.20);
+          box-shadow:0 18px 42px rgba(37,99,235,.34);
+          animation:footerLogoFloat 6s ease-in-out infinite;
+        }
+
+        .footer-logo-box::after{
+          content:"";
+          position:absolute;
+          inset:-8px;
+          border-radius:inherit;
+          background:radial-gradient(circle, rgba(14,165,233,.46), transparent 70%);
+          opacity:.36;
+          z-index:-1;
+          animation:footerGlow 3.6s ease-in-out infinite;
+        }
+
+        .footer-logo-box::before{
+          content:"";
+          position:absolute;
+          top:0;
+          left:-120%;
+          width:70%;
+          height:100%;
+          background:linear-gradient(120deg, transparent, rgba(255,255,255,.42), transparent);
+          animation:footerShine 5.2s ease-in-out infinite;
+        }
+
+        .footer-logo-box img{
+          width:82%;
+          height:82%;
+          object-fit:contain;
+          position:relative;
+          z-index:2;
+          transition:transform .35s cubic-bezier(.22,1,.36,1);
+        }
+
+        .footer-logo-box:hover img{
+          transform:scale(1.08) rotate(2deg);
+        }
+
+        .footer-brand-title{
+          font-size:28px;
+          font-weight:950;
+          letter-spacing:-.055em;
+          line-height:1;
+        }
+
+        .footer-brand-title span{
+          color:#7dd3fc;
+        }
+
+        .footer-brand-subtitle{
+          margin-top:5px;
+          color:#bfdbfe;
+          font-size:12px;
+          font-weight:800;
+        }
+
+        .footer-description{
+          position:relative;
+          z-index:2;
+          margin:0;
+          color:#dbeafe;
+          line-height:1.8;
+          font-size:14px;
+          font-weight:600;
+        }
+
+        .footer-contact-chips{
+          position:relative;
+          z-index:2;
+          display:flex;
+          flex-wrap:wrap;
+          gap:10px;
+          margin-top:18px;
+        }
+
+        .footer-contact-chips a{
+          display:inline-flex;
+          align-items:center;
+          justify-content:center;
+          gap:8px;
+          padding:10px 14px;
+          border-radius:999px;
+          background:rgba(255,255,255,.08);
+          border:1px solid rgba(255,255,255,.13);
+          color:#fff;
+          text-decoration:none;
+          font-size:13px;
+          font-weight:850;
+          box-shadow:0 12px 24px rgba(0,0,0,.12);
+          transition:.2s ease;
+        }
+
+        .footer-contact-chips a:hover{
+          background:rgba(14,165,233,.16);
+          border-color:rgba(147,197,253,.32);
+          transform:translateY(-2px);
+        }
+
+        .footer-card h4{
+          position:relative;
+          z-index:2;
+          margin:0 0 16px;
+          color:#fff;
+          font-size:16px;
+          line-height:1.3;
+          font-weight:950;
+          letter-spacing:-.02em;
+        }
+
+        .footer-links-grid{
+          position:relative;
+          z-index:2;
+          display:grid;
+          grid-template-columns:1fr 1fr;
+          gap:2px 18px;
+        }
+
+        .footer-legal-block{
+          grid-column:1 / -1;
+          margin-top:12px;
+          padding-top:14px;
+          border-top:1px solid rgba(255,255,255,.12);
+        }
+
+        .footer-legal-block h4{
+          margin:0 0 10px;
+          font-size:13px;
+          color:#93c5fd;
+          text-transform:uppercase;
+          letter-spacing:.08em;
+        }
+
+        .footer-link-premium{
+          position:relative;
+          display:block;
+          color:#dbeafe;
+          text-decoration:none;
+          margin-bottom:10px;
+          font-size:14px;
+          line-height:1.5;
+          font-weight:750;
+          word-break:break-word;
+          transition:.22s ease;
+          padding-left:13px;
+        }
+
+        .footer-link-premium::before{
+          content:"›";
+          position:absolute;
+          left:0;
+          top:0;
+          color:#38bdf8;
+          font-size:18px;
+          line-height:1.2;
+          font-weight:950;
+        }
+
+        .footer-link-premium:hover{
+          color:#fff;
+          transform:translateX(5px);
+        }
+
+        .footer-link-premium::after{
+          content:"";
+          position:absolute;
+          left:13px;
+          bottom:-2px;
+          width:0;
+          height:1px;
+          background:linear-gradient(90deg,#38bdf8,transparent);
+          transition:width .22s ease;
+        }
+
+        .footer-link-premium:hover::after{
+          width:34px;
+        }
+
+        .footer-social-list{
+          position:relative;
+          z-index:2;
+          display:grid;
+          gap:10px;
+        }
+
+        .footer-social-list a{
+          display:flex;
+          align-items:center;
+          gap:12px;
+          padding:12px 14px;
+          border-radius:16px;
+          background:rgba(255,255,255,.065);
+          border:1px solid rgba(255,255,255,.11);
+          color:#fff;
+          text-decoration:none;
+          font-size:14px;
+          transition:.22s ease;
+        }
+
+        .footer-social-list a:hover{
+          background:rgba(255,255,255,.11);
+          border-color:rgba(147,197,253,.30);
+          transform:translateY(-2px);
+        }
+
+        .footer-social-list span{
+          width:38px;
+          height:38px;
+          min-width:38px;
+          border-radius:999px;
+          display:inline-flex;
+          align-items:center;
+          justify-content:center;
+          background:linear-gradient(135deg, rgba(14,165,233,.28), rgba(37,99,235,.24));
+          border:1px solid rgba(255,255,255,.16);
+          color:#fff;
+          font-size:15px;
+          font-weight:950;
+          box-shadow:0 12px 28px rgba(14,165,233,.22);
+        }
+
+        .footer-social-list b{
+          font-weight:850;
+          min-width:0;
+          overflow:hidden;
+          text-overflow:ellipsis;
+        }
+
+        .footer-location-box{
+          position:relative;
+          z-index:2;
+          margin-top:16px;
+          padding:15px;
+          border-radius:18px;
+          background:rgba(255,255,255,.065);
+          border:1px solid rgba(255,255,255,.11);
+        }
+
+        .footer-location-box strong{
+          display:block;
+          color:#fff;
+          font-size:14px;
+          font-weight:950;
+          margin-bottom:7px;
+        }
+
+        .footer-location-box small{
+          color:#dbeafe;
+          font-size:13px;
+          line-height:1.6;
+          font-weight:700;
+        }
+
+        .footer-bottom{
+          margin-top:22px;
+          padding-top:17px;
+          border-top:1px solid rgba(255,255,255,.13);
+          display:flex;
+          align-items:center;
+          justify-content:space-between;
+          gap:14px;
+          color:#bfdbfe;
+          font-size:13px;
+          line-height:1.6;
+        }
+
+        .footer-powered{
+          display:flex;
+          flex-direction:column;
+          align-items:flex-end;
+          gap:6px;
+        }
+
+        .powered-label{
+          font-size:10px;
+          letter-spacing:.18em;
+          color:rgba(203,213,225,.45);
+          font-weight:800;
+        }
+
+        .footer-powered img{
+          width:52px;
+          height:52px;
+          object-fit:contain;
+          opacity:.96;
+          transition:all .35s ease;
+          filter:drop-shadow(0 10px 22px rgba(14,165,233,.18));
+        }
+
+        .footer-powered img:hover{
+          transform:scale(1.14);
+          opacity:1;
+        }
+
+        .powered-name{
+          font-size:11px;
+          color:rgba(203,213,225,.36);
+          font-weight:700;
+          letter-spacing:.02em;
+          transition:.25s ease;
+        }
+
+        .footer-powered:hover .powered-name{
+          color:rgba(203,213,225,.76);
+        }
+
+        @keyframes footerLogoFloat{
+          0%,100%{transform:translateY(0) scale(1);}
+          50%{transform:translateY(-6px) scale(1.03);}
+        }
+
+        @keyframes footerGlow{
+          0%,100%{opacity:.24; transform:scale(1);}
+          50%{opacity:.62; transform:scale(1.08);}
+        }
+
+        @keyframes footerShine{
+          0%{left:-120%;}
+          50%,100%{left:140%;}
+        }
+
+        @media(max-width:1024px){
+          .public-footer{
+            margin-top:125px;
+            padding-top:88px;
           }
 
-          .footer-card-hover:hover {
-            transform: none;
+          .footer-wave{
+            height:118px;
           }
 
-          .footer-social-row:hover {
-            transform: none;
+          .footer-grid{
+            grid-template-columns:1fr;
+          }
+
+          .footer-card{
+            min-height:auto;
+          }
+
+          .footer-container{
+            padding:34px 16px 22px;
+          }
+        }
+
+        @media(max-width:640px){
+          .public-footer{
+            margin-top:95px;
+            padding-top:68px;
+          }
+
+          .footer-wave{
+            height:88px;
+          }
+
+          .footer-bg-video{
+            opacity:.18;
+          }
+
+          .footer-container{
+            padding:28px 14px 19px;
+          }
+
+          .footer-grid{
+            gap:12px;
+          }
+
+          .footer-card{
+            border-radius:20px;
+            padding:16px;
+            min-height:auto;
+          }
+
+          .footer-card:hover,
+          .footer-social-list a:hover,
+          .footer-contact-chips a:hover,
+          .footer-link-premium:hover{
+            transform:none;
+          }
+
+          .footer-logo-box{
+            width:52px;
+            height:52px;
+            border-radius:16px;
+          }
+
+          .footer-brand-title{
+            font-size:24px;
+          }
+
+          .footer-description{
+            font-size:13px;
+          }
+
+          .footer-links-grid{
+            grid-template-columns:1fr 1fr;
+            gap:0 12px;
+          }
+
+          .footer-link-premium{
+            font-size:13px;
+            margin-bottom:9px;
+          }
+
+          .footer-social-list a{
+            padding:11px 12px;
+          }
+
+          .footer-bottom{
+            flex-direction:column;
+            align-items:flex-start;
+            font-size:12px;
+          }
+
+          .footer-powered{
+            align-items:flex-start;
+          }
+
+          .footer-powered img{
+            width:46px;
+            height:46px;
+          }
+
+          .footer-orb-one{
+            width:220px;
+            height:220px;
+            top:-90px;
+            right:-70px;
+          }
+
+          .footer-orb-two{
+            width:260px;
+            height:260px;
+            bottom:-120px;
+            left:-80px;
+          }
+        }
+
+        @media(max-width:420px){
+          .footer-links-grid{
+            grid-template-columns:1fr;
+          }
+
+          .footer-contact-chips a{
+            width:100%;
+            justify-content:flex-start;
           }
         }
       `}</style>
@@ -395,115 +733,8 @@ export default function PublicFooter() {
 
 function FooterLink({ to, children }) {
   return (
-    <Link
-      to={to}
-      className="footer-link-premium"
-      style={{
-        display: "block",
-        color: "#dbeafe",
-        textDecoration: "none",
-        marginBottom: "10px",
-        fontSize: "14px",
-        lineHeight: 1.5,
-        wordBreak: "break-word"
-      }}
-    >
+    <Link to={to} className="footer-link-premium">
       {children}
     </Link>
   );
-}
-
-function columnCard(isMobile) {
-  return {
-    background: "rgba(255,255,255,0.06)",
-    border: "1px solid rgba(255,255,255,0.10)",
-    borderRadius: isMobile ? "16px" : "18px",
-    padding: isMobile ? "16px" : "18px",
-    minHeight: "100%",
-    boxSizing: "border-box",
-    backdropFilter: "blur(7px)",
-    WebkitBackdropFilter: "blur(7px)",
-    boxShadow: "0 16px 40px rgba(0,0,0,0.14)"
-  };
-}
-
-function brandCard(isMobile) {
-  return {
-    background: "rgba(255,255,255,0.07)",
-    border: "1px solid rgba(255,255,255,0.11)",
-    borderRadius: isMobile ? "16px" : "18px",
-    padding: isMobile ? "16px" : "18px",
-    boxShadow: "0 18px 40px rgba(0,0,0,0.14)",
-    boxSizing: "border-box",
-    backdropFilter: "blur(8px)",
-    WebkitBackdropFilter: "blur(8px)"
-  };
-}
-
-function logoBox(isMobile) {
-  return {
-    width: isMobile ? "50px" : "54px",
-    height: isMobile ? "50px" : "54px",
-    borderRadius: isMobile ? "13px" : "15px",
-    background: "rgba(255,255,255,0.12)",
-    border: "1px solid rgba(255,255,255,0.14)",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    overflow: "hidden",
-    boxShadow: "0 12px 26px rgba(37,99,235,0.28)",
-    flexShrink: 0
-  };
-}
-
-function contactChip() {
-  return {
-    display: "inline-flex",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: "8px",
-    padding: "10px 14px",
-    borderRadius: "999px",
-    background: "rgba(255,255,255,0.08)",
-    border: "1px solid rgba(255,255,255,0.12)",
-    color: "#ffffff",
-    fontWeight: "700",
-    fontSize: "13px",
-    textDecoration: "none",
-    boxShadow: "0 10px 22px rgba(0,0,0,0.10)"
-  };
-}
-
-function socialRow() {
-  return {
-    display: "flex",
-    alignItems: "center",
-    gap: "12px",
-    padding: "12px 14px",
-    borderRadius: "14px",
-    background: "rgba(255,255,255,0.06)",
-    border: "1px solid rgba(255,255,255,0.10)",
-    color: "#ffffff",
-    textDecoration: "none",
-    fontWeight: "700",
-    fontSize: "14px",
-    transition: "all .25s ease"
-  };
-}
-
-function socialIcon() {
-  return {
-    width: "34px",
-    height: "34px",
-    minWidth: "34px",
-    borderRadius: "999px",
-    background: "rgba(255,255,255,0.12)",
-    border: "1px solid rgba(255,255,255,0.12)",
-    display: "inline-flex",
-    alignItems: "center",
-    justifyContent: "center",
-    color: "#ffffff",
-    fontWeight: "900",
-    fontSize: "14px"
-  };
 }

@@ -1,63 +1,92 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
+import { trackEvent } from "../../utils/analytics";
 
 const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:5000";
 
-function getRotationDelay(placement, isInlinePlacement, isMobile) {
-  if (placement === "sidebar_top" || placement === "sidebar_middle") {
-    return 11000;
-  }
+const INLINE = [
+  "news_inline_1",
+  "realestate_inline",
+  "automotive_inline",
+  "jobs_inline",
+  "home_in_feed_1",
+  "home_in_feed_2"
+];
 
-  if (isInlinePlacement) {
-    return isMobile ? 10000 : 14000;
-  }
+const TOP = [
+  "home_header_banner",
+  "news_top_banner",
+  "realestate_top_banner",
+  "automotive_top_banner",
+  "jobs_top_banner",
+  "offers_top_banner"
+];
 
-  return isMobile ? 9000 : 8000;
+const SIDEBAR = ["sidebar_top", "sidebar_middle"];
+const STICKY = ["mobile_sticky_bottom"];
+const CARD = ["offers_sponsored_card"];
+
+function getType(placement) {
+  if (TOP.includes(placement)) return "top";
+  if (INLINE.includes(placement)) return "inline";
+  if (SIDEBAR.includes(placement)) return "sidebar";
+  if (STICKY.includes(placement)) return "sticky";
+  if (CARD.includes(placement)) return "card";
+  return "default";
+}
+
+function normalizeAds(data) {
+  if (Array.isArray(data)) return data.filter(Boolean);
+  return data ? [data] : [];
 }
 
 function getWeightedAds(list) {
-  const normalized = Array.isArray(list) ? list.filter(Boolean) : [];
-
-  if (normalized.length <= 1) return normalized;
+  const ads = Array.isArray(list) ? list.filter(Boolean) : [];
+  if (ads.length <= 1) return ads;
 
   const weighted = [];
 
-  normalized.forEach((item) => {
-    const priority = Number(item?.priority ?? 0);
+  ads.forEach((ad) => {
+    const priority = Number(ad?.priority || 0);
+    const weight =
+      priority >= 10 ? 4 : priority >= 7 ? 3 : priority >= 4 ? 2 : 1;
 
-    let weight = 1;
-    if (priority >= 10) weight = 4;
-    else if (priority >= 7) weight = 3;
-    else if (priority >= 4) weight = 2;
-
-    for (let i = 0; i < weight; i += 1) {
-      weighted.push(item);
-    }
+    for (let i = 0; i < weight; i += 1) weighted.push(ad);
   });
 
-  return weighted.length ? weighted : normalized;
+  return weighted.length ? weighted : ads;
 }
 
-function getNextWeightedIndex(currentIndex, weightedAds, currentAd) {
+function getNextIndex(current, weightedAds, currentAd) {
   if (weightedAds.length <= 1) return 0;
 
-  let nextIndex = (currentIndex + 1) % weightedAds.length;
+  let next = (current + 1) % weightedAds.length;
 
-  if (
-    currentAd &&
-    weightedAds.length > 1 &&
-    weightedAds[nextIndex]?.creative_id === currentAd?.creative_id
-  ) {
-    const differentIndex = weightedAds.findIndex(
+  if (weightedAds[next]?.creative_id === currentAd?.creative_id) {
+    const different = weightedAds.findIndex(
       (item, idx) =>
-        idx !== currentIndex && item?.creative_id !== currentAd?.creative_id
+        idx !== current && item?.creative_id !== currentAd?.creative_id
     );
 
-    if (differentIndex !== -1) {
-      nextIndex = differentIndex;
-    }
+    if (different !== -1) next = different;
   }
 
-  return nextIndex;
+  return next;
+}
+
+function getStyles(type, isMobile) {
+  const mediaHeight = (() => {
+    if (type === "sticky") return "58px";
+    if (type === "sidebar") return isMobile ? "110px" : "180px";
+    if (type === "inline") return isMobile ? "130px" : "180px";
+    if (type === "card") return isMobile ? "130px" : "180px";
+    if (type === "top") return isMobile ? "150px" : "220px";
+    return isMobile ? "120px" : "170px";
+  })();
+
+  return {
+    mediaHeight,
+    buttonFontSize: isMobile ? "11px" : "13px"
+  };
 }
 
 export default function AdSlot({ placement, device }) {
@@ -67,8 +96,9 @@ export default function AdSlot({ placement, device }) {
   const [loading, setLoading] = useState(true);
   const [isVisible, setIsVisible] = useState(true);
 
-  const rotateTimeoutRef = useRef(null);
-  const fadeTimeoutRef = useRef(null);
+  const rotateRef = useRef(null);
+  const fadeRef = useRef(null);
+  const impressionRef = useRef(new Set());
 
   const resolvedDevice = useMemo(() => {
     if (device) return device;
@@ -81,26 +111,16 @@ export default function AdSlot({ placement, device }) {
   }, [device]);
 
   const isMobile = resolvedDevice === "mobile";
-
-  const isInlinePlacement =
-    placement === "news_inline_1" ||
-    placement === "realestate_inline" ||
-    placement === "automotive_inline" ||
-    placement === "jobs_inline";
-
+  const type = getType(placement);
   const weightedAds = useMemo(() => getWeightedAds(ads), [ads]);
-
-  const rotationDelay = useMemo(
-    () => getRotationDelay(placement, isInlinePlacement, isMobile),
-    [placement, isInlinePlacement, isMobile]
-  );
+  const styles = getStyles(type, isMobile);
 
   useEffect(() => {
     if (!placement) return;
 
-    let isMounted = true;
+    let mounted = true;
 
-    const fetchAds = async () => {
+    async function fetchAds() {
       try {
         setLoading(true);
 
@@ -109,41 +129,30 @@ export default function AdSlot({ placement, device }) {
         );
 
         const data = await res.json();
+        if (!mounted) return;
 
-        if (!isMounted) return;
+        const list = normalizeAds(data);
 
-        let normalizedAds = [];
-
-        if (Array.isArray(data)) {
-          normalizedAds = data.filter(Boolean);
-        } else if (data) {
-          normalizedAds = [data];
-        }
-
-        setAds(normalizedAds);
+        setAds(list);
         setActiveIndex(0);
-        setDisplayAd(normalizedAds[0] || null);
+        setDisplayAd(list[0] || null);
         setIsVisible(true);
       } catch (err) {
         console.error("Gabim gjatë marrjes së reklamës:", err);
 
-        if (isMounted) {
+        if (mounted) {
           setAds([]);
-          setActiveIndex(0);
           setDisplayAd(null);
-          setIsVisible(true);
         }
       } finally {
-        if (isMounted) {
-          setLoading(false);
-        }
+        if (mounted) setLoading(false);
       }
-    };
+    }
 
     fetchAds();
 
     return () => {
-      isMounted = false;
+      mounted = false;
     };
   }, [placement, resolvedDevice]);
 
@@ -153,382 +162,270 @@ export default function AdSlot({ placement, device }) {
       return;
     }
 
-    setDisplayAd(weightedAds[activeIndex] || weightedAds[0] || null);
+    setDisplayAd(weightedAds[activeIndex] || weightedAds[0]);
   }, [weightedAds, activeIndex]);
 
   useEffect(() => {
     if (weightedAds.length <= 1) return;
 
-    const clearTimers = () => {
-      if (rotateTimeoutRef.current) clearTimeout(rotateTimeoutRef.current);
-      if (fadeTimeoutRef.current) clearTimeout(fadeTimeoutRef.current);
-    };
+    const delay =
+      type === "sidebar"
+        ? 11000
+        : type === "inline"
+          ? 13000
+          : type === "sticky"
+            ? 12000
+            : 10000;
 
-    clearTimers();
+    if (rotateRef.current) clearTimeout(rotateRef.current);
+    if (fadeRef.current) clearTimeout(fadeRef.current);
 
-    rotateTimeoutRef.current = setTimeout(() => {
+    rotateRef.current = setTimeout(() => {
       setIsVisible(false);
 
-      fadeTimeoutRef.current = setTimeout(() => {
+      fadeRef.current = setTimeout(() => {
         setActiveIndex((prev) =>
-          getNextWeightedIndex(prev, weightedAds, weightedAds[prev])
+          getNextIndex(prev, weightedAds, weightedAds[prev])
         );
         setIsVisible(true);
-      }, 320);
-    }, rotationDelay);
+      }, 180);
+    }, delay);
 
-    return clearTimers;
-  }, [weightedAds, activeIndex, rotationDelay]);
+    return () => {
+      if (rotateRef.current) clearTimeout(rotateRef.current);
+      if (fadeRef.current) clearTimeout(fadeRef.current);
+    };
+  }, [weightedAds, activeIndex, type]);
+
+  useEffect(() => {
+    const ad = displayAd;
+    if (!ad) return;
+
+    const key = `${placement}-${resolvedDevice}-${ad.creative_id}-${activeIndex}`;
+    if (impressionRef.current.has(key)) return;
+
+    trackEvent({
+      event_type: "ad_impression",
+      page_url: window.location.pathname,
+      ad_id: ad.creative_id || ad.ad_id || null,
+      element_name: placement,
+      metadata: {
+        placement,
+        placement_name: ad.placement_name || placement,
+        creative_id: ad.creative_id || null,
+        campaign_id: ad.campaign_id || null,
+        device: resolvedDevice
+      }
+    });
+
+    impressionRef.current.add(key);
+  }, [displayAd, placement, resolvedDevice, activeIndex]);
 
   const ad = displayAd;
 
   if (loading || !ad) return null;
+  if (type === "sticky" && !isMobile) return null;
 
-  const href = ad.button_link || ad.target_url || "#";
+  const href = ad.button_link || ad.target_url || "";
   const isImage = ad.creative_type === "image" && ad.image_url;
   const isVideo = ad.creative_type === "video" && ad.video_url;
   const isHtml = ad.creative_type === "html" && ad.html_code;
-  const hasMedia = isImage || isVideo;
+  const buttonText = type === "sticky" ? "Hape" : ad.button_text || "Shiko";
 
-  const title = ad.headline || ad.creative_title || "Sponsoruar";
-  const description = ad.creative_description || ad.campaign_description || "";
-  const buttonText = ad.button_text || "Shiko më shumë";
+  const handleClick = (e) => {
+    if (!href) {
+      e.preventDefault();
+      return;
+    }
 
-  const mediaHeight = isInlinePlacement
-    ? isMobile
-      ? "160px"
-      : "190px"
-    : isMobile
-      ? "220px"
-      : "340px";
-
-  const titleFontSize = isInlinePlacement
-    ? isMobile
-      ? "18px"
-      : "22px"
-    : isMobile
-      ? "20px"
-      : "30px";
-
-  const contentPadding = isInlinePlacement
-    ? isMobile
-      ? "12px"
-      : "16px"
-    : isMobile
-      ? "14px"
-      : "22px";
-
-  const contentMaxWidth = isInlinePlacement
-    ? "100%"
-    : isMobile
-      ? "100%"
-      : "76%";
-
-  const uniqueAdsCount = ads.length;
+    trackEvent({
+      event_type: "ad_click",
+      page_url: window.location.pathname,
+      ad_id: ad.creative_id || ad.ad_id || null,
+      element_name: placement,
+      metadata: {
+        placement,
+        placement_name: ad.placement_name || placement,
+        creative_id: ad.creative_id || null,
+        campaign_id: ad.campaign_id || null,
+        target_url: href,
+        device: resolvedDevice
+      }
+    });
+  };
 
   return (
-    <a
-      href={href}
-      target={ad.open_in_new_tab ? "_blank" : "_self"}
-      rel="noreferrer"
+    <div
+      className={`ad-slot ad-slot-${type}`}
       style={{
-        display: "block",
         width: "100%",
-        textDecoration: "none",
-        color: "inherit"
+        margin:
+          type === "sticky"
+            ? "0"
+            : type === "sidebar"
+              ? "0 0 14px"
+              : "18px 0"
       }}
     >
-      <div
+      <a
+        href={href || undefined}
+        target={href && ad.open_in_new_tab ? "_blank" : "_self"}
+        rel="noreferrer"
+        onClick={handleClick}
         style={{
-          position: "relative",
-          overflow: "hidden",
-          borderRadius: "0px",
-          background:
-            "linear-gradient(180deg, rgba(255,255,255,0.98) 0%, rgba(248,250,252,0.98) 100%)",
-          border: "1px solid rgba(15,23,42,0.08)",
-          boxShadow: isInlinePlacement
-            ? "0 10px 24px rgba(15,23,42,0.06), inset 0 1px 0 rgba(255,255,255,0.7)"
-            : isMobile
-              ? "0 12px 30px rgba(15,23,42,0.08), inset 0 1px 0 rgba(255,255,255,0.7)"
-              : "0 18px 48px rgba(15,23,42,0.10), inset 0 1px 0 rgba(255,255,255,0.7)",
-          opacity: isVisible ? 1 : 0,
-          transform: isVisible ? "translateY(0)" : "translateY(4px)",
-          transition: "opacity .45s ease, transform .45s ease"
+          display: "block",
+          width: "100%",
+          color: "inherit",
+          textDecoration: "none",
+          cursor: href ? "pointer" : "default"
         }}
       >
-        <div
+        <article
           style={{
-            position: "absolute",
-            inset: 0,
-            pointerEvents: "none",
-            background:
-              "radial-gradient(circle at top right, rgba(59,130,246,0.10), transparent 28%), radial-gradient(circle at bottom left, rgba(99,102,241,0.08), transparent 22%)"
-          }}
-        />
-
-        {uniqueAdsCount > 1 && (
-          <div
-            style={{
-              position: "absolute",
-              top: "14px",
-              right: "14px",
-              zIndex: 4,
-              display: "inline-flex",
-              alignItems: "center",
-              justifyContent: "center",
-              minWidth: "44px",
-              height: "28px",
-              padding: "0 10px",
-              borderRadius: "999px",
-              background: "rgba(15,23,42,0.72)",
-              color: "#fff",
-              fontSize: "11px",
-              fontWeight: 800,
-              letterSpacing: "0.04em",
-              backdropFilter: "blur(10px)"
-            }}
-          >
-            {(ads.findIndex((item) => item?.creative_id === ad?.creative_id) || 0) + 1}/
-            {uniqueAdsCount}
-          </div>
-        )}
-
-        {isImage && (
-          <div
-            style={{
-              position: "relative",
-              width: "100%",
-              background: "#e2e8f0"
-            }}
-          >
-            <img
-              src={ad.image_url}
-              alt={title}
-              style={{
-                display: "block",
-                width: "100%",
-                height: mediaHeight,
-                objectFit: "cover"
-              }}
-            />
-
-            <div
-              style={{
-                position: "absolute",
-                inset: 0,
-                background: isInlinePlacement
-                  ? "linear-gradient(180deg, rgba(15,23,42,0.02) 0%, rgba(15,23,42,0.12) 38%, rgba(15,23,42,0.70) 100%)"
-                  : isMobile
-                    ? "linear-gradient(180deg, rgba(15,23,42,0.03) 0%, rgba(15,23,42,0.20) 45%, rgba(15,23,42,0.82) 100%)"
-                    : "linear-gradient(180deg, rgba(15,23,42,0.03) 0%, rgba(15,23,42,0.10) 42%, rgba(15,23,42,0.66) 100%)"
-              }}
-            />
-          </div>
-        )}
-
-        {isVideo && (
-          <div
-            style={{
-              position: "relative",
-              width: "100%",
-              background: "#0f172a"
-            }}
-          >
-            <video
-              src={ad.video_url}
-              autoPlay
-              muted
-              loop
-              playsInline
-              style={{
-                display: "block",
-                width: "100%",
-                height: mediaHeight,
-                objectFit: "cover"
-              }}
-            />
-
-            <div
-              style={{
-                position: "absolute",
-                inset: 0,
-                background: isInlinePlacement
-                  ? "linear-gradient(180deg, rgba(15,23,42,0.04) 0%, rgba(15,23,42,0.72) 100%)"
-                  : isMobile
-                    ? "linear-gradient(180deg, rgba(15,23,42,0.05) 0%, rgba(15,23,42,0.82) 100%)"
-                    : "linear-gradient(180deg, rgba(15,23,42,0.05) 0%, rgba(15,23,42,0.66) 100%)"
-              }}
-            />
-          </div>
-        )}
-
-        {isHtml && (
-          <div
-            style={{
-              position: "relative",
-              zIndex: 2,
-              padding: isMobile ? "16px" : "22px"
-            }}
-            dangerouslySetInnerHTML={{ __html: ad.html_code }}
-          />
-        )}
-
-        <div
-          style={{
-            position: hasMedia ? "absolute" : "relative",
-            left: 0,
-            right: 0,
-            bottom: 0,
-            zIndex: 2,
-            padding: contentPadding
+            position: "relative",
+            overflow: "hidden",
+            borderRadius: "0px",
+            background: "#ffffff",
+            border: "none",
+            boxShadow:
+              type === "sticky"
+                ? "0 -8px 20px rgba(15,23,42,.16)"
+                : "0 12px 30px rgba(15,23,42,.10)",
+            opacity: isVisible ? 1 : 0,
+            transform: isVisible ? "translateY(0)" : "translateY(2px)",
+            transition: "opacity .22s ease, transform .22s ease"
           }}
         >
-          <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "space-between",
-              gap: "8px",
-              flexWrap: "wrap",
-              marginBottom: isInlinePlacement
-                ? "8px"
-                : isMobile
-                  ? "10px"
-                  : "12px"
-            }}
-          >
-            <span
+          {ads.length > 1 && (
+            <div
               style={{
+                position: "absolute",
+                top: "10px",
+                right: "10px",
+                zIndex: 6,
+                height: "22px",
+                minWidth: "36px",
+                padding: "0 8px",
+                borderRadius: "999px",
+                background: "rgba(15,23,42,.68)",
+                color: "#fff",
                 display: "inline-flex",
                 alignItems: "center",
                 justifyContent: "center",
-                padding: isMobile ? "6px 10px" : "7px 12px",
-                borderRadius: "999px",
-                background: hasMedia ? "rgba(255,255,255,0.94)" : "#ffffff",
-                color: "#475569",
-                border: "1px solid rgba(15,23,42,0.08)",
-                fontSize: isMobile ? "10px" : "11px",
-                fontWeight: 900,
-                letterSpacing: "0.08em",
-                textTransform: "uppercase",
-                backdropFilter: "blur(10px)"
+                fontSize: "10px",
+                fontWeight: 900
               }}
             >
-              Sponsoruar
-            </span>
+              {(ads.findIndex((item) => item?.creative_id === ad?.creative_id) || 0) + 1}/
+              {ads.length}
+            </div>
+          )}
 
-            {ad.campaign_title && (
-              <span
-                style={{
-                  color: hasMedia ? "rgba(255,255,255,0.88)" : "#94a3b8",
-                  fontSize: isMobile ? "10px" : "11px",
-                  fontWeight: 800,
-                  letterSpacing: "0.05em",
-                  textTransform: "uppercase"
-                }}
-              >
-                {ad.campaign_title}
-              </span>
-            )}
-          </div>
-
-          <div
-            style={{
-              maxWidth: contentMaxWidth
-            }}
-          >
-            <h3
-              style={{
-                margin: "0 0 8px",
-                color: hasMedia ? "#ffffff" : "#0f172a",
-                fontSize: titleFontSize,
-                lineHeight: isInlinePlacement
-                  ? 1.15
-                  : isMobile
-                    ? 1.12
-                    : 1.08,
-                fontWeight: 900,
-                letterSpacing: "-0.03em",
-                textShadow: hasMedia
-                  ? "0 3px 14px rgba(0,0,0,0.28)"
-                  : "none"
-              }}
-            >
-              {title}
-            </h3>
-
-            {description && (
-              <p
-                style={{
-                  margin: "0 0 14px",
-                  color: hasMedia ? "rgba(255,255,255,0.94)" : "#475569",
-                  fontSize: isInlinePlacement
-                    ? isMobile
-                      ? "12px"
-                      : "14px"
-                    : isMobile
-                      ? "13px"
-                      : "15px",
-                  lineHeight: isInlinePlacement ? 1.55 : isMobile ? 1.55 : 1.7,
-                  maxWidth: "760px",
-                  textShadow: hasMedia
-                    ? "0 2px 12px rgba(0,0,0,0.22)"
-                    : "none"
-                }}
-              >
-                {description}
-              </p>
-            )}
-
+          {(isImage || isVideo) && (
             <div
               style={{
-                display: "flex",
-                alignItems: isMobile ? "stretch" : "center",
-                gap: "10px",
-                flexWrap: "wrap",
-                flexDirection: isMobile ? "column" : "row"
+                position: "relative",
+                width: "100%",
+                height: styles.mediaHeight,
+                background: "#e2e8f0",
+                overflow: "hidden"
+              }}
+            >
+              {isImage && (
+                <img
+                  src={ad.image_url}
+                  alt=""
+                  loading="lazy"
+                  decoding="async"
+                  style={{
+                    display: "block",
+                    width: "100%",
+                    height: "100%",
+                    objectFit: "cover",
+                    objectPosition: "center",
+                    transition: "transform .45s ease"
+                  }}
+                  onMouseOver={(e) => {
+                    e.currentTarget.style.transform = "scale(1.045)";
+                  }}
+                  onMouseOut={(e) => {
+                    e.currentTarget.style.transform = "scale(1)";
+                  }}
+                />
+              )}
+
+              {isVideo && (
+                <video
+                  src={ad.video_url}
+                  autoPlay
+                  muted
+                  loop
+                  playsInline
+                  preload="metadata"
+                  style={{
+                    display: "block",
+                    width: "100%",
+                    height: "100%",
+                    objectFit: "cover",
+                    objectPosition: "center"
+                  }}
+                />
+              )}
+
+              {type !== "sticky" && (
+                <div
+                  style={{
+                    position: "absolute",
+                    inset: 0,
+                    background:
+                      "linear-gradient(180deg, rgba(0,0,0,0.02), rgba(0,0,0,0.18))",
+                    pointerEvents: "none"
+                  }}
+                />
+              )}
+            </div>
+          )}
+
+          {isHtml && (
+            <div dangerouslySetInnerHTML={{ __html: ad.html_code }} />
+          )}
+
+          {(type !== "sticky" || isMobile) && (
+            <div
+              style={{
+                position: "absolute",
+                left: type === "sticky" ? "auto" : "14px",
+                right: type === "sticky" ? "10px" : "auto",
+                bottom: type === "sticky" ? "50%" : "14px",
+                transform: type === "sticky" ? "translateY(50%)" : "none",
+                zIndex: 7
               }}
             >
               <span
                 style={{
+                  minWidth: type === "sticky" ? "62px" : "auto",
+                  height: type === "sticky" ? "30px" : "34px",
+                  padding: type === "sticky" ? "0 12px" : "0 15px",
+                  borderRadius: "999px",
+                  background: "#ffffff",
+                  color: "#0f172a",
                   display: "inline-flex",
                   alignItems: "center",
                   justifyContent: "center",
-                  minHeight: isMobile ? "42px" : "44px",
-                  width: isMobile ? "100%" : "auto",
-                  padding: isMobile ? "0 14px" : "0 16px",
-                  borderRadius: "14px",
-                  background: hasMedia
-                    ? "#ffffff"
-                    : "linear-gradient(135deg, #0f172a, #1e293b)",
-                  color: hasMedia ? "#0f172a" : "#ffffff",
-                  fontSize: isMobile ? "13px" : "14px",
-                  fontWeight: 800,
-                  boxShadow: hasMedia
-                    ? "0 8px 25px rgba(255,255,255,0.20)"
-                    : "0 10px 24px rgba(15,23,42,0.18)"
+                  fontSize: styles.buttonFontSize,
+                  fontWeight: 950,
+                  boxShadow:
+                    type === "sticky"
+                      ? "0 8px 18px rgba(15,23,42,.18)"
+                      : "0 12px 28px rgba(0,0,0,.22)"
                 }}
               >
                 {buttonText}
               </span>
-
-              <span
-                style={{
-                  fontSize: isMobile ? "12px" : "13px",
-                  fontWeight: 700,
-                  color: hasMedia
-                    ? "rgba(255,255,255,0.88)"
-                    : "#64748b",
-                  textAlign: isMobile ? "center" : "left",
-                  width: isMobile ? "100%" : "auto"
-                }}
-              >
-                Placement: {ad.placement_name}
-              </span>
             </div>
-          </div>
-        </div>
-      </div>
-    </a>
+          )}
+        </article>
+      </a>
+    </div>
   );
 }
