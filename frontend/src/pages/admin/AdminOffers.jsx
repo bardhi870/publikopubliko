@@ -26,6 +26,31 @@ const initialForm = {
   offerFeatures: [{ ...emptyFeature }]
 };
 
+function getAdminToken() {
+  return (
+    localStorage.getItem("adminToken") ||
+    localStorage.getItem("token") ||
+    localStorage.getItem("authToken")
+  );
+}
+
+function getAuthHeaders() {
+  const token = getAdminToken();
+
+  return {
+    "Content-Type": "application/json",
+    Authorization: `Bearer ${token}`
+  };
+}
+
+async function safeJson(res) {
+  try {
+    return await res.json();
+  } catch {
+    return null;
+  }
+}
+
 function parseOfferFeatures(value) {
   if (!value) return [];
   if (Array.isArray(value)) return value;
@@ -55,17 +80,38 @@ export default function AdminOffers() {
       setLoading(true);
       setError("");
 
-      const res = await fetch(`${API}/api/packages`);
+      const token = getAdminToken();
 
-      if (!res.ok) {
-        throw new Error("Gabim gjatë marrjes së ofertave.");
+      if (!token) {
+        throw new Error("NO_TOKEN");
       }
 
-      const data = await res.json();
-      setOffers(Array.isArray(data) ? data : []);
+      const res = await fetch(`${API}/api/packages`, {
+        headers: getAuthHeaders()
+      });
+
+      const data = await safeJson(res);
+
+      if (res.status === 401 || res.status === 403) {
+        throw new Error("AUTH_ERROR");
+      }
+
+      if (!res.ok) {
+        throw new Error(data?.message || "Gabim gjatë marrjes së ofertave.");
+      }
+
+      setOffers(Array.isArray(data) ? data : Array.isArray(data?.data) ? data.data : []);
     } catch (err) {
-      console.error(err);
-      setError("Nuk u ngarkuan ofertat.");
+      console.error("AdminOffers load error:", err);
+
+      if (err.message === "NO_TOKEN") {
+        setError("Nuk ka token. Ju lutem bëni login përsëri si admin.");
+      } else if (err.message === "AUTH_ERROR") {
+        setError("Sesioni ka skaduar ose token-i nuk është valid. Ju lutem bëni login përsëri.");
+      } else {
+        setError("Nuk u ngarkuan ofertat.");
+      }
+
       setOffers([]);
     } finally {
       setLoading(false);
@@ -126,6 +172,7 @@ export default function AdminOffers() {
   const handleFeatureChange = (index, field, value) => {
     setFormData((prev) => {
       const updatedFeatures = [...prev.offerFeatures];
+
       updatedFeatures[index] = {
         ...updatedFeatures[index],
         [field]: value
@@ -170,12 +217,19 @@ export default function AdminOffers() {
     e.preventDefault();
 
     if (!formData.title.trim() || !formData.description.trim()) {
+      setError("Titulli dhe përshkrimi janë të detyrueshme.");
       return;
     }
 
     try {
       setSubmitting(true);
       setError("");
+
+      const token = getAdminToken();
+
+      if (!token) {
+        throw new Error("NO_TOKEN");
+      }
 
       const cleanedFeatures = formData.offerFeatures
         .map((feature) => ({
@@ -210,21 +264,32 @@ export default function AdminOffers() {
 
       const res = await fetch(url, {
         method,
-        headers: {
-          "Content-Type": "application/json"
-        },
+        headers: getAuthHeaders(),
         body: JSON.stringify(payload)
       });
 
+      const data = await safeJson(res);
+
+      if (res.status === 401 || res.status === 403) {
+        throw new Error("AUTH_ERROR");
+      }
+
       if (!res.ok) {
-        throw new Error("Gabim gjatë ruajtjes së ofertës.");
+        throw new Error(data?.message || "Gabim gjatë ruajtjes së ofertës.");
       }
 
       await loadOffers();
       resetForm();
     } catch (err) {
-      console.error(err);
-      setError("Ruajtja e ofertës dështoi.");
+      console.error("AdminOffers save error:", err);
+
+      if (err.message === "NO_TOKEN") {
+        setError("Nuk ka token. Ju lutem bëni login përsëri si admin.");
+      } else if (err.message === "AUTH_ERROR") {
+        setError("Sesioni ka skaduar ose token-i nuk është valid. Ju lutem bëni login përsëri.");
+      } else {
+        setError("Ruajtja e ofertës dështoi.");
+      }
     } finally {
       setSubmitting(false);
     }
@@ -243,6 +308,7 @@ export default function AdminOffers() {
     );
 
     setEditingId(offer.id);
+
     setFormData({
       title: offer.title || "",
       description: offer.description || "",
@@ -262,9 +328,7 @@ export default function AdminOffers() {
         ? normalizedFeatures.map((feature) => ({
             text: feature.text || "",
             included:
-              typeof feature.included !== "undefined"
-                ? !!feature.included
-                : true,
+              typeof feature.included !== "undefined" ? !!feature.included : true,
             note: feature.note || ""
           }))
         : [{ ...emptyFeature }]
@@ -280,17 +344,31 @@ export default function AdminOffers() {
     const confirmed = window.confirm(
       "A je i sigurt që don me e fshi këtë ofertë?"
     );
+
     if (!confirmed) return;
 
     try {
       setError("");
 
+      const token = getAdminToken();
+
+      if (!token) {
+        throw new Error("NO_TOKEN");
+      }
+
       const res = await fetch(`${API}/api/packages/${id}`, {
-        method: "DELETE"
+        method: "DELETE",
+        headers: getAuthHeaders()
       });
 
+      const data = await safeJson(res);
+
+      if (res.status === 401 || res.status === 403) {
+        throw new Error("AUTH_ERROR");
+      }
+
       if (!res.ok) {
-        throw new Error("Gabim gjatë fshirjes së ofertës.");
+        throw new Error(data?.message || "Gabim gjatë fshirjes së ofertës.");
       }
 
       await loadOffers();
@@ -299,8 +377,15 @@ export default function AdminOffers() {
         resetForm();
       }
     } catch (err) {
-      console.error(err);
-      setError("Fshirja e ofertës dështoi.");
+      console.error("AdminOffers delete error:", err);
+
+      if (err.message === "NO_TOKEN") {
+        setError("Nuk ka token. Ju lutem bëni login përsëri si admin.");
+      } else if (err.message === "AUTH_ERROR") {
+        setError("Sesioni ka skaduar ose token-i nuk është valid. Ju lutem bëni login përsëri.");
+      } else {
+        setError("Fshirja e ofertës dështoi.");
+      }
     }
   };
 
@@ -334,11 +419,7 @@ export default function AdminOffers() {
           </div>
         </section>
 
-        {error ? (
-          <div style={styles.errorBox}>
-            {error}
-          </div>
-        ) : null}
+        {error ? <div style={styles.errorBox}>{error}</div> : null}
 
         <section style={styles.formSectionCard}>
           <div style={styles.sectionTopRow}>
@@ -602,20 +683,12 @@ export default function AdminOffers() {
                 ))}
               </div>
 
-              <button
-                type="button"
-                onClick={addFeatureRow}
-                style={addRowBtnStyle}
-              >
+              <button type="button" onClick={addFeatureRow} style={addRowBtnStyle}>
                 + Shto pikë
               </button>
 
               <div style={styles.formActions}>
-                <button
-                  type="submit"
-                  style={primaryBtnStyle}
-                  disabled={submitting}
-                >
+                <button type="submit" style={primaryBtnStyle} disabled={submitting}>
                   {submitting
                     ? "Duke ruajtur..."
                     : editingId
@@ -623,11 +696,7 @@ export default function AdminOffers() {
                     : "Shto ofertën"}
                 </button>
 
-                <button
-                  type="button"
-                  onClick={resetForm}
-                  style={secondaryBtnStyle}
-                >
+                <button type="button" onClick={resetForm} style={secondaryBtnStyle}>
                   Pastro
                 </button>
               </div>
@@ -746,12 +815,8 @@ export default function AdminOffers() {
                       }}
                     >
                       {offer.phone ? <InfoTag label="Tel" value={offer.phone} /> : null}
-                      {offer.whatsapp ? (
-                        <InfoTag label="WhatsApp" value={offer.whatsapp} />
-                      ) : null}
-                      {offer.messenger ? (
-                        <InfoTag label="Messenger" value="Link aktiv" />
-                      ) : null}
+                      {offer.whatsapp ? <InfoTag label="WhatsApp" value={offer.whatsapp} /> : null}
+                      {offer.messenger ? <InfoTag label="Messenger" value="Link aktiv" /> : null}
                     </div>
                   )}
 
@@ -834,24 +899,12 @@ export default function AdminOffers() {
                     )}
                   </div>
 
-                  <div
-                    style={{
-                      display: "flex",
-                      gap: "10px",
-                      flexWrap: "wrap"
-                    }}
-                  >
-                    <button
-                      onClick={() => handleEdit(offer)}
-                      style={secondaryBtnStyle}
-                    >
+                  <div style={{ display: "flex", gap: "10px", flexWrap: "wrap" }}>
+                    <button onClick={() => handleEdit(offer)} style={secondaryBtnStyle}>
                       Ndrysho
                     </button>
 
-                    <button
-                      onClick={() => handleDelete(offer.id)}
-                      style={dangerBtnStyle}
-                    >
+                    <button onClick={() => handleDelete(offer.id)} style={dangerBtnStyle}>
                       Fshij
                     </button>
                   </div>
@@ -892,6 +945,13 @@ export default function AdminOffers() {
             @media (max-width: 768px) {
               .admin-offers-hero-stats {
                 grid-template-columns: 1fr !important;
+              }
+
+              input,
+              select,
+              textarea,
+              button {
+                font-size: 16px !important;
               }
             }
           `}</style>
@@ -942,6 +1002,7 @@ function StatCard({ label, value, dark = false }) {
       >
         {label}
       </div>
+
       <div
         style={{
           fontSize: "30px",
@@ -975,6 +1036,7 @@ function InfoTag({ label, value }) {
       >
         {label}
       </div>
+
       <div
         style={{
           color: "#0f172a",

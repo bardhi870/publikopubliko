@@ -9,6 +9,23 @@ const API_BASE =
   import.meta.env.VITE_API_BASE_URL ||
   "http://localhost:5000";
 
+const buildMediaUrl = (url = "") => {
+  if (!url) return "";
+  if (/^https?:\/\//i.test(url)) return url;
+
+  const cleanUrl = String(url).startsWith("/") ? url : `/${url}`;
+  return `${API_BASE}${cleanUrl}`;
+};
+
+const makeSlug = (text = "") =>
+  String(text)
+    .toLowerCase()
+    .trim()
+    .replace(/[ë]/g, "e")
+    .replace(/[ç]/g, "c")
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+
 const normalizeGalleryImages = (galleryImages) => {
   if (!galleryImages) return [];
   if (Array.isArray(galleryImages)) return galleryImages.filter(Boolean);
@@ -56,10 +73,14 @@ const getDetailLink = (post) => {
   const category = normalizeCategory(post?.category);
 
   if (category.includes("patundshmeri")) return `/patundshmeri/${post.id}`;
+
   if (category.includes("konkurse") || category.includes("pune")) {
-    return `/konkurse-pune/${post.id}`;
+    return `/konkurse-pune/${makeSlug(post?.title || "konkurs-pune")}-${post.id}`;
   }
-  if (category.includes("automjete")) return `/automjete/${post.id}`;
+
+  if (category.includes("automjete")) {
+    return `/automjete/${makeSlug(post?.title || "automjet")}-${post.id}`;
+  }
 
   return `/kategori/${post?.category || ""}`;
 };
@@ -68,11 +89,12 @@ const getPostImage = (post) => {
   const gallery = normalizeGalleryImages(post?.gallery_images);
   const firstImage = gallery.find((item) => !isVideoUrl(item));
 
-  return (
+  const image =
     post?.image_url ||
     firstImage ||
-    "https://placehold.co/700x460/eaf6ff/07142d?text=Automjet"
-  );
+    "https://placehold.co/700x460/eaf6ff/07142d?text=Automjet";
+
+  return buildMediaUrl(image);
 };
 
 const getRotatedPosts = (items, rotateIndex) => {
@@ -93,7 +115,7 @@ const FeaturedBox = ({ title, label, posts }) => (
     {posts.length > 0 ? (
       posts.map((item) => (
         <Link to={getDetailLink(item)} className="featured-card" key={item.id}>
-          <img src={getPostImage(item)} alt={item.title} loading="lazy" />
+          <img src={getPostImage(item)} alt={item.title || "Shpallje"} loading="lazy" />
           <div>
             <small>{label}</small>
             <strong>{item.title}</strong>
@@ -173,8 +195,43 @@ const PhoneIcon = () => (
   </svg>
 );
 
+function trackAnalyticsEvent(payload = {}) {
+  try {
+    const finalPayload = {
+      page_url: window.location.pathname,
+      referrer: document.referrer || null,
+      ...payload
+    };
+
+    const jsonBody = JSON.stringify(finalPayload);
+
+    if (navigator.sendBeacon) {
+      const blob = new Blob([jsonBody], { type: "application/json" });
+      navigator.sendBeacon(`${API_BASE}/api/analytics/track`, blob);
+      return;
+    }
+
+    fetch(`${API_BASE}/api/analytics/track`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: jsonBody,
+      keepalive: true
+    }).catch(() => {});
+  } catch (error) {
+    console.error("Analytics tracking error:", error);
+  }
+}
+
 export default function VehicleDetailsPage() {
-  const { id } = useParams();
+  const params = useParams();
+
+  const id = useMemo(() => {
+    const raw = params.slug || params.id || "";
+    const match = String(raw).match(/(\d+)$/);
+    return match ? String(match[1]) : String(raw);
+  }, [params.slug, params.id]);
 
   const [post, setPost] = useState(null);
   const [propertySidePosts, setPropertySidePosts] = useState([]);
@@ -184,35 +241,66 @@ export default function VehicleDetailsPage() {
   const [activeMediaIndex, setActiveMediaIndex] = useState(0);
   const [rotateIndex, setRotateIndex] = useState(0);
   const [similarIndex, setSimilarIndex] = useState(0);
+  const [itemsPerPage, setItemsPerPage] = useState(3);
   const [lightboxOpen, setLightboxOpen] = useState(false);
 
   useEffect(() => {
+    if (!id) return;
+
+    let ignore = false;
+
     const loadPost = async () => {
       try {
         setLoading(true);
         const data = await getPostById(id);
-        setPost(data);
+        if (!ignore) setPost(data);
       } catch (error) {
         console.error("Gabim gjatë marrjes së automjetit:", error);
+        if (!ignore) setPost(null);
       } finally {
-        setLoading(false);
+        if (!ignore) setLoading(false);
       }
     };
 
     loadPost();
+
+    return () => {
+      ignore = true;
+    };
   }, [id]);
 
   useEffect(() => {
+    const startTime = Date.now();
+
+    return () => {
+      const duration = Math.floor((Date.now() - startTime) / 1000);
+
+      trackAnalyticsEvent({
+        event_type: "time_on_page",
+        post_id: post?.id || id,
+        category: post?.category || "automjete",
+        duration_seconds: duration
+      });
+    };
+  }, [id, post?.id, post?.category]);
+
+  useEffect(() => {
+    let ignore = false;
+
     const loadRelatedPosts = async () => {
       try {
         const res = await fetch(`${API_BASE}/api/posts`);
         const data = await res.json();
+        if (ignore) return;
+
         const posts = Array.isArray(data) ? data : data?.posts || [];
 
         const otherPosts = posts
-          .filter((item) => Number(item.id) !== Number(id))
+          .filter((item) => String(item.id) !== String(id))
           .sort(
-            (a, b) => new Date(b.created_at || 0) - new Date(a.created_at || 0)
+            (a, b) =>
+              new Date(b.created_at || 0).getTime() -
+              new Date(a.created_at || 0).getTime()
           );
 
         const featuredPosts = otherPosts.filter(
@@ -246,20 +334,35 @@ export default function VehicleDetailsPage() {
     };
 
     loadRelatedPosts();
+
+    return () => {
+      ignore = true;
+    };
   }, [id]);
 
   useEffect(() => {
     const maxLength = Math.max(propertySidePosts.length, jobSidePosts.length);
     if (maxLength <= 3) return;
 
-    const timer = setInterval(() => {
+    const timer = window.setInterval(() => {
       setRotateIndex((prev) => (prev + 1) % maxLength);
     }, 4500);
 
-    return () => clearInterval(timer);
+    return () => window.clearInterval(timer);
   }, [propertySidePosts.length, jobSidePosts.length]);
 
+  useEffect(() => {
+    if (typeof window === "undefined") return;
 
+    const handleResize = () => {
+      setItemsPerPage(window.innerWidth <= 900 ? 2 : 3);
+    };
+
+    handleResize();
+    window.addEventListener("resize", handleResize);
+
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
 
   useEffect(() => {
     setActiveMediaIndex(0);
@@ -270,6 +373,7 @@ export default function VehicleDetailsPage() {
 
   useEffect(() => {
     document.body.style.overflow = lightboxOpen ? "hidden" : "";
+
     return () => {
       document.body.style.overflow = "";
     };
@@ -307,11 +411,14 @@ export default function VehicleDetailsPage() {
 
   const mediaItems = useMemo(() => {
     const extra = normalizeGalleryImages(post?.gallery_images);
-    const all = [post?.image_url, post?.video_url, ...extra].filter(Boolean);
+    const all = [post?.image_url, post?.video_url, ...extra]
+      .filter(Boolean)
+      .map(buildMediaUrl);
+
     return [...new Set(all)];
   }, [post]);
 
-  const activeMedia = mediaItems[activeMediaIndex] || post?.image_url || null;
+  const activeMedia = mediaItems[activeMediaIndex] || null;
 
   const rotatedPropertyPosts = useMemo(
     () => getRotatedPosts(propertySidePosts, rotateIndex),
@@ -323,31 +430,78 @@ export default function VehicleDetailsPage() {
     [jobSidePosts, rotateIndex]
   );
 
-const similarPages = useMemo(() => {
-  if (!similarVehiclePosts.length) return [];
-  const pages = [];
-  for (let index = 0; index < similarVehiclePosts.length; index += 3) {
-    pages.push(similarVehiclePosts.slice(index, index + 3));
-  }
-  return pages;
-}, [similarVehiclePosts]);
+  const similarPages = useMemo(() => {
+    if (!similarVehiclePosts.length) return [];
 
-const safeSimilarIndex =
-  similarPages.length > 0 ? similarIndex % similarPages.length : 0;
+    const pages = [];
 
-useEffect(() => {
-  if (similarPages.length <= 1) return;
+    for (let index = 0; index < similarVehiclePosts.length; index += itemsPerPage) {
+      pages.push(similarVehiclePosts.slice(index, index + itemsPerPage));
+    }
 
-  const timer = setInterval(() => {
-    setSimilarIndex((prev) => (prev + 1) % similarPages.length);
-  }, 3000);
+    return pages;
+  }, [similarVehiclePosts, itemsPerPage]);
 
-  return () => clearInterval(timer);
-}, [similarPages.length]);
+  const safeSimilarIndex =
+    similarPages.length > 0 ? similarIndex % similarPages.length : 0;
+
+  useEffect(() => {
+    if (similarPages.length <= 1) {
+      setSimilarIndex(0);
+      return;
+    }
+
+    const timer = window.setInterval(() => {
+      setSimilarIndex((prev) => {
+        const next = prev + 1;
+        return next >= similarPages.length ? 0 : next;
+      });
+    }, 2500);
+
+    return () => window.clearInterval(timer);
+  }, [similarPages.length]);
+
+  useEffect(() => {
+    if (similarIndex >= similarPages.length) {
+      setSimilarIndex(0);
+    }
+  }, [similarIndex, similarPages.length]);
+
+  const handlePhoneClick = () => {
+    trackAnalyticsEvent({
+      event_type: "phone_click",
+      post_id: post?.id || id,
+      category: post?.category || "automjete"
+    });
+  };
+
+  const handleWhatsAppClick = () => {
+    trackAnalyticsEvent({
+      event_type: "whatsapp_click",
+      post_id: post?.id || id,
+      category: post?.category || "automjete"
+    });
+  };
+
+  const handleEmailClick = () => {
+    trackAnalyticsEvent({
+      event_type: "email_click",
+      post_id: post?.id || id,
+      category: post?.category || "automjete"
+    });
+  };
 
   const specCards = [
-    { icon: <SpeedIcon />, label: "Kilometrazh", value: mileage !== "N/A" ? `${mileage} km` : "N/A" },
-    { icon: <CarIcon />, label: "Fuqia", value: power !== "N/A" ? `${power} hp` : "N/A" },
+    {
+      icon: <SpeedIcon />,
+      label: "Kilometrazh",
+      value: mileage !== "N/A" ? `${mileage} km` : "N/A"
+    },
+    {
+      icon: <CarIcon />,
+      label: "Fuqia",
+      value: power !== "N/A" ? `${power} hp` : "N/A"
+    },
     { icon: <GearIcon />, label: "Transmetimi", value: transmission },
     { icon: <WheelIcon />, label: "Sistemi", value: driveType },
     { icon: <FuelIcon />, label: "Karburanti", value: fuelType },
@@ -371,12 +525,12 @@ useEffect(() => {
   ];
 
   const goPrev = () => {
-    setActiveMediaIndex((prev) =>
-      prev === 0 ? mediaItems.length - 1 : prev - 1
-    );
+    if (!mediaItems.length) return;
+    setActiveMediaIndex((prev) => (prev === 0 ? mediaItems.length - 1 : prev - 1));
   };
 
   const goNext = () => {
+    if (!mediaItems.length) return;
     setActiveMediaIndex((prev) =>
       prev === mediaItems.length - 1 ? 0 : prev + 1
     );
@@ -418,7 +572,14 @@ useEffect(() => {
                   isVideoUrl(activeMedia) ? (
                     <video src={activeMedia} controls playsInline className="vehicle-media" />
                   ) : (
-                    <img src={activeMedia} alt={post.title} className="vehicle-media" />
+                    <img
+                      src={activeMedia}
+                      alt={post.title || "Automjet"}
+                      className="vehicle-media"
+                      loading="eager"
+                      decoding="async"
+                      fetchPriority="high"
+                    />
                   )
                 ) : (
                   <div className="vehicle-empty">Automjet</div>
@@ -455,7 +616,7 @@ useEffect(() => {
                       {isVideoUrl(item) ? (
                         <video src={item} muted playsInline />
                       ) : (
-                        <img src={item} alt={`Foto ${index + 1}`} />
+                        <img src={item} alt={`Foto ${index + 1}`} loading="lazy" />
                       )}
                     </button>
                   ))}
@@ -473,16 +634,28 @@ useEffect(() => {
 
                   <div className="vehicle-actions">
                     {phoneLink && (
-                      <a href={phoneLink}>
+                      <a href={phoneLink} onClick={handlePhoneClick}>
                         <PhoneIcon /> Telefono
                       </a>
                     )}
+
                     {whatsappLink && (
-                      <a href={whatsappLink} target="_blank" rel="noreferrer" className="wa">
+                      <a
+                        href={whatsappLink}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="wa"
+                        onClick={handleWhatsAppClick}
+                      >
                         <PhoneIcon /> WhatsApp
                       </a>
                     )}
-                    {emailLink && <a href={emailLink}>Email</a>}
+
+                    {emailLink && (
+                      <a href={emailLink} onClick={handleEmailClick}>
+                        Email
+                      </a>
+                    )}
                   </div>
                 </div>
 
@@ -500,7 +673,9 @@ useEffect(() => {
 
                 <div className="vehicle-info-box">
                   <div className="section-title">
-                    <span><CarIcon /></span>
+                    <span>
+                      <CarIcon />
+                    </span>
                     <h2>Informacioni i Veturës</h2>
                   </div>
 
@@ -530,13 +705,17 @@ useEffect(() => {
 
                 <div className="vehicle-map-box">
                   <div className="section-title">
-                    <span><MapIcon /></span>
+                    <span>
+                      <MapIcon />
+                    </span>
                     <h2>Lokacioni</h2>
                   </div>
 
                   <iframe
                     title="Lokacioni i automjetit"
-                    src={`https://www.google.com/maps?q=${encodeURIComponent(city || "Pristina")}&output=embed`}
+                    src={`https://www.google.com/maps?q=${encodeURIComponent(
+                      city || "Pristina"
+                    )}&output=embed`}
                     loading="lazy"
                     referrerPolicy="no-referrer-when-downgrade"
                   />
@@ -553,13 +732,26 @@ useEffect(() => {
                   {email !== "N/A" && <p>{email}</p>}
 
                   <div className="contact-buttons">
-                    {phoneLink && <a href={phoneLink}>Tel</a>}
+                    {phoneLink && (
+                      <a href={phoneLink} onClick={handlePhoneClick}>
+                        Tel
+                      </a>
+                    )}
                     {whatsappLink && (
-                      <a href={whatsappLink} target="_blank" rel="noreferrer">
+                      <a
+                        href={whatsappLink}
+                        target="_blank"
+                        rel="noreferrer"
+                        onClick={handleWhatsAppClick}
+                      >
                         WA
                       </a>
                     )}
-                    {emailLink && <a href={emailLink}>Mail</a>}
+                    {emailLink && (
+                      <a href={emailLink} onClick={handleEmailClick}>
+                        Mail
+                      </a>
+                    )}
                   </div>
                 </div>
 
@@ -668,9 +860,7 @@ useEffect(() => {
                   )}
                 </>
               ) : (
-                <div className="similar-empty">
-                  Nuk ka automjete tjera për momentin.
-                </div>
+                <div className="similar-empty">Nuk ka automjete tjera për momentin.</div>
               )}
             </section>
           </>
@@ -718,173 +908,1321 @@ useEffect(() => {
       <PublicFooter />
 
       <style>{`
-        .vehicle-page{min-height:100vh;background:#fff;color:#07142d;}
-        .vehicle-wrap{width:min(100%,2000px);margin:0 auto;padding:96px 16px 70px;}
-        .vehicle-state{background:#fff;border:1px solid #e2e8f0;padding:24px;border-radius:22px;color:#475569;font-weight:800;}
-
-        .vehicle-hero{display:grid;grid-template-columns:1fr;gap:10px;background:#fff;border:1px solid rgba(226,232,240,.95);border-radius:24px;padding:10px;overflow:hidden;}
-        .vehicle-main-media{position:relative;height:560px;border-radius:18px;overflow:hidden;background:#eaf0f8;cursor:zoom-in;}
-        .vehicle-media{width:100%;height:100%;object-fit:cover;display:block;transition:transform .55s ease;}
-        .vehicle-main-media:hover .vehicle-media{transform:scale(1.035);}
-        .vehicle-empty{width:100%;height:100%;display:grid;place-items:center;font-size:34px;font-weight:950;background:#eef4ff;}
-        .vehicle-overlay{position:absolute;inset:0;pointer-events:none;background:linear-gradient(to top,rgba(0,0,0,.18),transparent 54%);}
-        .zoom-hint{position:absolute;right:16px;bottom:16px;z-index:4;padding:9px 13px;border-radius:999px;background:rgba(255,255,255,.92);color:#07142d;font-size:12px;font-weight:950;}
-        .vehicle-badges{position:absolute;z-index:3;top:18px;left:18px;right:18px;display:flex;gap:8px;flex-wrap:wrap;pointer-events:none;}
-        .vehicle-badges span{min-height:34px;padding:0 14px;display:inline-flex;align-items:center;border-radius:999px;background:rgba(255,255,255,.92);color:#07142d;font-size:12px;font-weight:900;}
-        .vehicle-title-box{position:absolute;z-index:3;left:24px;right:24px;bottom:24px;color:#fff;pointer-events:none;}
-        .vehicle-title-box p{margin:0 0 8px;font-weight:900;opacity:.92;}
-        .vehicle-title-box h1{margin:0;max-width:820px;font-size:50px;line-height:.98;letter-spacing:-.052em;font-weight:950;}
-        .vehicle-title-box strong{display:block;margin-top:12px;font-size:32px;font-weight:950;color:#fff;}
-
-        .vehicle-thumbs{display:grid;grid-template-columns:repeat(8,minmax(0,1fr));gap:8px;padding:2px;}
-        .vehicle-thumbs button{width:100%;height:74px;border:1px solid #e2e8f0;padding:0;border-radius:10px;overflow:hidden;background:#fff;cursor:pointer;transition:transform .2s ease,border-color .2s ease;}
-        .vehicle-thumbs button:hover{transform:scale(1.03);}
-        .vehicle-thumbs button.active{border:2px solid #00e4f4;}
-        .vehicle-thumbs img,.vehicle-thumbs video{width:100%;height:100%;object-fit:cover;display:block;}
-
-        .vehicle-layout{margin-top:20px;display:grid;grid-template-columns:minmax(0,1fr) 350px;gap:20px;align-items:start;}
-        .vehicle-content{display:grid;gap:20px;}
-        .vehicle-price-card,.vehicle-description,.vehicle-info-box,.vehicle-map-box,.contact-box,.featured-box{background:#fff;border:1px solid #e1e7ef;border-radius:20px;}
-        .vehicle-price-card{padding:24px;display:flex;justify-content:space-between;gap:18px;align-items:center;}
-        .vehicle-price-card span,.vehicle-description>span,.contact-box span{display:block;color:#64748b;font-size:12px;font-weight:900;margin-bottom:8px;}
-        .vehicle-price-card strong{display:block;font-size:44px;line-height:1;letter-spacing:-.05em;font-weight:950;}
-        .vehicle-actions{display:flex;gap:10px;flex-wrap:wrap;justify-content:flex-end;}
-        .vehicle-actions a{height:48px;padding:0 18px;display:inline-flex;gap:8px;align-items:center;justify-content:center;border-radius:14px;background:#07142d;color:#fff;text-decoration:none;font-size:13px;font-weight:950;}
-        .vehicle-actions a svg{width:17px;height:17px;stroke:currentColor;stroke-width:1.8;}
-        .vehicle-actions a.wa{background:#16a34a;}
-
-        .vehicle-spec-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;}
-        .vehicle-spec-card{min-height:96px;display:flex;gap:14px;align-items:flex-start;padding:18px;border:1px solid #e1e7ef;border-radius:16px;background:#fff;}
-        .spec-icon{width:42px;height:42px;flex:0 0 42px;border-radius:13px;display:grid;place-items:center;background:linear-gradient(135deg,#fff8e8,#fff);color:#f4b000;border:1px solid #8af3fd;}
-        .spec-icon svg,.section-title span svg{width:22px;height:22px;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;}
-        .vehicle-spec-card span{display:block;color:#64748b;font-size:13px;font-weight:850;margin-bottom:16px;}
-        .vehicle-spec-card strong{display:block;font-size:19px;line-height:1.15;color:#020b1f;font-weight:950;}
-
-        .section-title{display:flex;align-items:center;gap:14px;margin-bottom:24px;}
-        .section-title span{width:48px;height:48px;border-radius:14px;display:grid;place-items:center;background:linear-gradient(135deg,#fff8e8,#fff);color:#f4b000;border:1px solid #8ac7fd;}
-        .section-title h2{margin:0;font-size:34px;line-height:1;letter-spacing:-.045em;font-weight:950;color:#07142d;}
-        .vehicle-info-box{padding:26px 34px 34px;}
-        .vehicle-info-grid{display:grid;grid-template-columns:1fr 1fr;column-gap:34px;}
-        .info-row{display:flex;align-items:center;justify-content:space-between;gap:18px;min-height:70px;border-bottom:1px solid #e6ebf2;padding:0 8px;}
-        .info-row span{color:#334155;font-size:17px;font-weight:500;}
-        .info-row strong{color:#020b1f;font-size:17px;font-weight:950;text-align:right;}
-
-        .vehicle-description{padding:28px 32px;}
-        .vehicle-description h2{margin:0 0 18px;font-size:30px;letter-spacing:-.04em;font-weight:950;}
-        .vehicle-description p,.vehicle-html-description p{margin:0 0 12px;color:#334155;font-size:17px;line-height:1.85;}
-        .vehicle-html-description strong{color:#07142d;font-weight:950;}
-        .vehicle-html-description{color:#334155;font-size:17px;line-height:1.85;word-break:break-word;}
-        .vehicle-html-description br{display:none;}
-        .vehicle-map-box{padding:26px 28px 32px;}
-        .vehicle-map-box iframe{width:100%;height:460px;border:0;display:block;background:#eef2f7;}
-
-        .vehicle-sidebar{position:sticky;top:100px;display:grid;gap:16px;}
-        .contact-box,.featured-box{padding:20px;}
-        .contact-box h3,.featured-head h3{margin:0 0 16px;font-size:25px;line-height:1;letter-spacing:-.04em;font-weight:950;}
-        .contact-box p{margin:0 0 8px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:14px;padding:12px;font-size:14px;font-weight:850;word-break:break-word;}
-        .contact-buttons{display:flex;gap:9px;margin-top:14px;flex-wrap:wrap;}
-        .contact-buttons a{flex:1;min-width:70px;height:44px;display:inline-flex;align-items:center;justify-content:center;border-radius:13px;background:#07142d;color:#fff;text-decoration:none;font-size:12px;font-weight:950;}
-
-        .featured-card{display:grid;grid-template-columns:86px minmax(0,1fr);gap:12px;padding:9px;border:1px solid #dbe3ee;background:#fff;text-decoration:none;color:#07142d;margin-bottom:10px;}
-        .featured-card img{width:86px;height:64px;object-fit:cover;background:#e2e8f0;}
-        .featured-card small{display:inline-flex;margin-bottom:6px;background:#eff6ff;color:#2563eb;padding:5px 8px;font-size:10px;font-weight:950;text-transform:uppercase;}
-        .featured-card strong{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;font-size:14px;line-height:1.2;font-weight:950;}
-        .no-featured{padding:16px;border-radius:16px;background:#f8fafc;border:1px solid #e2e8f0;color:#64748b;font-size:14px;line-height:1.6;font-weight:700;}
-
-        .similar-section{margin-top:28px;background:#fff;border:1px solid #e1e7ef;border-radius:24px;padding:18px 18px 14px;overflow:hidden;}
-        .similar-head{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:16px;}
-        .similar-head span{display:block;color:#64748b;font-size:12px;font-weight:950;text-transform:uppercase;letter-spacing:.08em;margin-bottom:5px;}
-        .similar-head h2{margin:0;color:#07142d;font-size:32px;line-height:1;letter-spacing:-.05em;font-weight:950;}
-        .similar-controls{display:flex;gap:9px;align-items:center;}
-        .similar-controls button{width:40px;height:40px;border-radius:999px;border:1px solid #dbe3ee;background:#fff;color:#07142d;font-size:24px;line-height:1;font-weight:950;cursor:pointer;transition:transform .2s ease,background .2s ease,color .2s ease;}
-        .similar-controls button:hover{transform:translateY(-2px);background:#07142d;color:#fff;}
-        .similar-slider{width:100%;overflow:hidden;}
-        .similar-track{display:flex;width:100%;transition:transform .65s cubic-bezier(.22,.8,.22,1);will-change:transform;}
-        .similar-slide{min-width:100%;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px;}
-        .similar-card{min-height:390px;border:1px solid #f4b400;border-radius:18px;overflow:hidden;background:#fff;text-decoration:none;color:#07142d;display:flex;flex-direction:column;transition:transform .25s ease,box-shadow .25s ease;}
-        .similar-card:hover{transform:translateY(-4px);box-shadow:0 18px 44px rgba(2,6,23,.12);}
-        .similar-media{height:190px;position:relative;background:#eaf6ff;overflow:hidden;}
-        .similar-media img{width:100%;height:100%;object-fit:cover;display:block;transition:transform .45s ease;}
-        .similar-card:hover .similar-media img{transform:scale(1.045);}
-        .similar-top{position:absolute;inset:12px 12px auto 12px;display:flex;justify-content:space-between;align-items:center;gap:8px;}
-        .similar-top span{display:inline-flex;height:30px;align-items:center;border-radius:999px;padding:0 12px;background:rgba(255,255,255,.96);color:#07142d;font-size:11px;font-weight:950;box-shadow:0 10px 22px rgba(15,23,42,.12);}
-        .similar-top b{width:34px;height:34px;border-radius:999px;display:grid;place-items:center;background:#f4b000;color:#fff;font-size:14px;box-shadow:0 12px 24px rgba(244,176,0,.28);}
-        .similar-body{padding:17px 16px 14px;display:flex;flex-direction:column;flex:1;}
-        .similar-location{color:#475569;font-size:13px;font-weight:900;margin-bottom:10px;}
-        .similar-body h3{margin:0;font-size:18px;line-height:1.2;font-weight:950;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;}
-        .similar-tags{display:flex;gap:8px;flex-wrap:wrap;margin-top:18px;}
-        .similar-tags span{height:30px;padding:0 10px;border-radius:999px;background:#f8fafc;border:1px solid #dbe3ee;display:inline-flex;align-items:center;color:#475569;font-size:11px;font-weight:900;}
-        .similar-footer{margin-top:auto;padding-top:16px;border-top:1px solid #e5eaf1;display:flex;justify-content:space-between;align-items:center;gap:12px;}
-        .similar-footer strong{color:#07142d;font-size:16px;font-weight:950;}
-        .similar-footer span{color:#07142d;font-size:13px;font-weight:950;white-space:nowrap;}
-        .similar-dots{display:flex;justify-content:center;align-items:center;gap:7px;margin-top:16px;}
-        .similar-dots button{width:8px;height:8px;padding:0;border:0;border-radius:999px;background:#cbd5e1;cursor:pointer;transition:width .2s ease,background .2s ease;}
-        .similar-dots button.active{width:22px;background:#07142d;}
-        .similar-empty{padding:18px;border-radius:18px;background:#f8fafc;border:1px solid #e2e8f0;color:#64748b;font-weight:800;}
-
-        .lightbox{position:fixed;inset:0;z-index:99999;background:rgba(2,6,23,.92);display:flex;align-items:center;justify-content:center;padding:28px;}
-        .lightbox img{max-width:96vw;max-height:92vh;object-fit:contain;border-radius:18px;}
-        .lightbox-close{position:absolute;top:18px;right:24px;width:48px;height:48px;border:0;border-radius:999px;background:#fff;color:#07142d;font-size:34px;line-height:1;cursor:pointer;font-weight:900;}
-        .lightbox-nav{position:absolute;top:50%;transform:translateY(-50%);width:56px;height:56px;border:0;border-radius:999px;background:#fff;color:#07142d;font-size:42px;line-height:1;cursor:pointer;font-weight:900;}
-        .lightbox-nav.prev{left:24px;}
-        .lightbox-nav.next{right:24px;}
-
-        @media(max-width:1100px){
-          .vehicle-layout{grid-template-columns:1fr;}
-          .vehicle-sidebar{position:relative;top:auto;}
+        .vehicle-page{
+          min-height:100vh;
+          background:
+            radial-gradient(circle at 8% 0%, rgba(37,99,235,.08), transparent 28%),
+            radial-gradient(circle at 92% 6%, rgba(20,184,166,.07), transparent 28%),
+            linear-gradient(180deg,#f8fbff 0%,#eef6ff 44%,#f8fafc 100%);
+          color:#07142d;
         }
 
-        @media(max-width:980px){
-          .vehicle-wrap{padding-top:86px;}
-          .vehicle-main-media{height:420px;}
-          .vehicle-title-box h1{font-size:38px;}
-          .vehicle-thumbs{grid-template-columns:repeat(4,1fr);}
-          .vehicle-thumbs button{height:68px;}
-          .vehicle-spec-grid,.vehicle-info-grid{grid-template-columns:1fr 1fr;}
-          .vehicle-price-card{flex-direction:column;align-items:flex-start;}
-          .vehicle-actions{justify-content:flex-start;}
-          .similar-slide{grid-template-columns:repeat(2,minmax(0,1fr));}
+        .vehicle-wrap{
+          width:min(100%,1760px);
+          margin:0 auto;
+          padding:98px 18px 64px;
+        }
+
+        .vehicle-state,
+        .vehicle-hero,
+        .vehicle-price-card,
+        .vehicle-description,
+        .vehicle-info-box,
+        .vehicle-map-box,
+        .contact-box,
+        .featured-box,
+        .similar-section{
+          background:rgba(255,255,255,.98);
+          border:1px solid rgba(219,231,245,.95);
+          box-shadow:0 14px 36px rgba(15,23,42,.05);
+        }
+
+        .vehicle-state{
+          padding:22px;
+          border-radius:20px;
+          color:#0f172a;
+          font-weight:850;
+        }
+
+        .vehicle-hero{
+          display:grid;
+          gap:9px;
+          border-radius:22px;
+          padding:10px;
+          overflow:hidden;
+        }
+
+        .vehicle-main-media{
+          position:relative;
+          width:100%;
+          height:clamp(560px,68vh,780px);
+          border-radius:17px;
+          overflow:hidden;
+          background:#eef4ff;
+          cursor:zoom-in;
+        }
+
+        .vehicle-media{
+          width:100%;
+          height:100%;
+          object-fit:cover;
+          object-position:center;
+          display:block;
+          background:#eef4ff;
+        }
+
+        .vehicle-empty{
+          width:100%;
+          height:100%;
+          display:grid;
+          place-items:center;
+          font-size:28px;
+          font-weight:950;
+          background:#eef4ff;
+        }
+
+        .vehicle-overlay{
+          position:absolute;
+          inset:0;
+          pointer-events:none;
+          background:linear-gradient(to top,rgba(2,6,23,.48),rgba(2,6,23,.12) 48%,rgba(2,6,23,.02));
+        }
+
+        .zoom-hint{
+          position:absolute;
+          right:14px;
+          bottom:14px;
+          z-index:4;
+          padding:8px 12px;
+          border-radius:999px;
+          background:rgba(255,255,255,.92);
+          color:#07142d;
+          font-size:11px;
+          font-weight:950;
+        }
+
+        .vehicle-badges{
+          position:absolute;
+          z-index:3;
+          top:16px;
+          left:16px;
+          right:16px;
+          display:flex;
+          gap:7px;
+          flex-wrap:wrap;
+          pointer-events:none;
+        }
+
+        .vehicle-badges span{
+          min-height:31px;
+          padding:0 12px;
+          display:inline-flex;
+          align-items:center;
+          border-radius:999px;
+          background:rgba(255,255,255,.94);
+          color:#07142d;
+          font-size:11px;
+          font-weight:900;
+          box-shadow:0 10px 24px rgba(15,23,42,.10);
+        }
+
+        .vehicle-title-box{
+          position:absolute;
+          z-index:3;
+          left:22px;
+          right:22px;
+          bottom:22px;
+          color:#fff;
+          pointer-events:none;
+        }
+
+        .vehicle-title-box p{
+          margin:0 0 7px;
+          font-size:13px;
+          font-weight:900;
+          opacity:.94;
+        }
+
+        .vehicle-title-box h1{
+          margin:0;
+          max-width:820px;
+          font-size:clamp(30px,4vw,46px);
+          line-height:1;
+          letter-spacing:-.05em;
+          font-weight:950;
+          text-shadow:0 10px 30px rgba(0,0,0,.35);
+        }
+
+        .vehicle-title-box strong{
+          display:block;
+          margin-top:10px;
+          font-size:clamp(23px,3vw,30px);
+          font-weight:950;
+          text-shadow:0 10px 30px rgba(0,0,0,.35);
+        }
+
+        .vehicle-thumbs{
+          display:grid;
+          grid-template-columns:repeat(8,minmax(0,1fr));
+          gap:7px;
+        }
+
+        .vehicle-thumbs button{
+          width:100%;
+          height:68px;
+          border:1px solid #dbe3ee;
+          padding:0;
+          border-radius:10px;
+          overflow:hidden;
+          background:#fff;
+          cursor:pointer;
+        }
+
+        .vehicle-thumbs button.active{
+          border:2px solid #2563eb;
+        }
+
+        .vehicle-thumbs img,
+        .vehicle-thumbs video{
+          width:100%;
+          height:100%;
+          object-fit:cover;
+          display:block;
+        }
+
+        .vehicle-layout{
+          margin-top:16px;
+          display:grid;
+          grid-template-columns:minmax(0,1fr) 330px;
+          gap:16px;
+          align-items:start;
+        }
+
+        .vehicle-content{
+          display:grid;
+          gap:16px;
+          min-width:0;
+        }
+
+        .vehicle-price-card{
+          border-radius:20px;
+          padding:20px;
+          display:flex;
+          justify-content:space-between;
+          gap:16px;
+          align-items:center;
+        }
+
+        .vehicle-price-card span,
+        .vehicle-description>span,
+        .contact-box span{
+          display:block;
+          color:#64748b;
+          font-size:11px;
+          font-weight:900;
+          margin-bottom:7px;
+          text-transform:uppercase;
+          letter-spacing:.035em;
+        }
+
+        .vehicle-price-card strong{
+          display:block;
+          font-size:38px;
+          line-height:1;
+          letter-spacing:-.05em;
+          font-weight:950;
+        }
+
+        .vehicle-actions{
+          display:flex;
+          gap:9px;
+          flex-wrap:wrap;
+          justify-content:flex-end;
+        }
+
+        .vehicle-actions a{
+          height:44px;
+          padding:0 16px;
+          display:inline-flex;
+          gap:7px;
+          align-items:center;
+          justify-content:center;
+          border-radius:13px;
+          background:#07142d;
+          color:#fff;
+          text-decoration:none;
+          font-size:12px;
+          font-weight:950;
+        }
+
+        .vehicle-actions a.wa{
+          background:#16a34a;
+        }
+
+        .vehicle-actions a svg{
+          width:16px;
+          height:16px;
+          stroke:currentColor;
+          stroke-width:1.8;
+        }
+
+        .vehicle-spec-grid{
+          display:grid;
+          grid-template-columns:repeat(3,1fr);
+          gap:11px;
+        }
+
+        .vehicle-spec-card{
+          min-height:82px;
+          display:flex;
+          gap:11px;
+          align-items:center;
+          padding:14px;
+          border:1px solid #dbe3ee;
+          border-radius:16px;
+          background:rgba(255,255,255,.98);
+          box-shadow:0 10px 24px rgba(15,23,42,.035);
+        }
+
+        .spec-icon{
+          width:38px;
+          height:38px;
+          flex:0 0 38px;
+          border-radius:13px;
+          display:grid;
+          place-items:center;
+          background:linear-gradient(135deg,#eff6ff,#dbeafe);
+          color:#2563eb;
+          border:1px solid rgba(37,99,235,.14);
+        }
+
+        .spec-icon svg,
+        .section-title span svg{
+          width:20px;
+          height:20px;
+          stroke:currentColor;
+          stroke-width:1.8;
+          stroke-linecap:round;
+          stroke-linejoin:round;
+        }
+
+        .vehicle-spec-card span{
+          display:block;
+          color:#64748b;
+          font-size:11.5px;
+          font-weight:850;
+          margin-bottom:5px;
+        }
+
+        .vehicle-spec-card strong{
+          display:block;
+          font-size:15.5px;
+          line-height:1.2;
+          color:#020b1f;
+          font-weight:950;
+          word-break:break-word;
+        }
+
+        .section-title{
+          display:flex;
+          align-items:center;
+          gap:12px;
+          margin-bottom:18px;
+        }
+
+        .section-title span{
+          width:42px;
+          height:42px;
+          border-radius:14px;
+          display:grid;
+          place-items:center;
+          background:linear-gradient(135deg,#eff6ff,#dbeafe);
+          color:#2563eb;
+          border:1px solid rgba(37,99,235,.14);
+        }
+
+        .section-title h2{
+          margin:0;
+          font-size:26px;
+          line-height:1.05;
+          letter-spacing:-.04em;
+          font-weight:950;
+          color:#07142d;
+        }
+
+        .vehicle-info-box{
+          border-radius:20px;
+          padding:22px 24px 26px;
+        }
+
+        .vehicle-info-grid{
+          display:grid;
+          grid-template-columns:1fr 1fr;
+          column-gap:24px;
+        }
+
+        .info-row{
+          display:flex;
+          align-items:center;
+          justify-content:space-between;
+          gap:14px;
+          min-height:56px;
+          border-bottom:1px solid #e6ebf2;
+          padding:0 4px;
+        }
+
+        .info-row span{
+          color:#475569;
+          font-size:13px;
+          font-weight:750;
+        }
+
+        .info-row strong{
+          color:#020b1f;
+          font-size:13px;
+          font-weight:950;
+          text-align:right;
+          word-break:break-word;
+        }
+
+        .vehicle-description{
+          border-radius:20px;
+          padding:22px 24px;
+        }
+
+        .vehicle-description h2{
+          margin:0 0 14px;
+          font-size:25px;
+          letter-spacing:-.04em;
+          font-weight:950;
+        }
+
+        .vehicle-description p,
+        .vehicle-html-description p{
+          margin:0 0 11px;
+          color:#334155;
+          font-size:14.5px;
+          line-height:1.78;
+        }
+
+        .vehicle-html-description{
+          color:#334155;
+          font-size:14.5px;
+          line-height:1.78;
+          word-break:break-word;
+        }
+
+        .vehicle-html-description strong{
+          color:#07142d;
+          font-weight:950;
+        }
+
+        .vehicle-html-description br{
+          display:none;
+        }
+
+        .vehicle-map-box{
+          border-radius:20px;
+          padding:22px 24px 26px;
+        }
+
+        .vehicle-map-box iframe{
+          width:100%;
+          height:380px;
+          border:0;
+          display:block;
+          background:#eef2f7;
+          border-radius:16px;
+        }
+
+        .vehicle-sidebar{
+          position:sticky;
+          top:98px;
+          display:grid;
+          gap:14px;
+        }
+
+        .contact-box,
+        .featured-box{
+          border-radius:20px;
+          padding:16px;
+        }
+
+        .contact-box h3,
+        .featured-head h3{
+          margin:0 0 13px;
+          font-size:19px;
+          line-height:1.08;
+          letter-spacing:-.035em;
+          font-weight:950;
+        }
+
+        .contact-box p{
+          margin:0 0 7px;
+          background:#f8fafc;
+          border:1px solid #e2e8f0;
+          border-radius:13px;
+          padding:11px;
+          font-size:12.5px;
+          font-weight:850;
+          word-break:break-word;
+        }
+
+        .contact-buttons{
+          display:flex;
+          gap:8px;
+          margin-top:12px;
+          flex-wrap:wrap;
+        }
+
+        .contact-buttons a{
+          flex:1;
+          min-width:64px;
+          height:40px;
+          display:inline-flex;
+          align-items:center;
+          justify-content:center;
+          border-radius:12px;
+          background:#07142d;
+          color:#fff;
+          text-decoration:none;
+          font-size:11px;
+          font-weight:950;
+        }
+
+        .featured-card{
+          display:grid;
+          grid-template-columns:76px minmax(0,1fr);
+          gap:10px;
+          padding:8px;
+          border:1px solid #dbe3ee;
+          border-radius:14px;
+          background:#fff;
+          text-decoration:none;
+          color:#07142d;
+          margin-bottom:9px;
+        }
+
+        .featured-card img{
+          width:76px;
+          height:58px;
+          object-fit:cover;
+          background:#eef4ff;
+          border-radius:10px;
+        }
+
+        .featured-card small{
+          display:inline-flex;
+          margin-bottom:5px;
+          background:#eff6ff;
+          color:#2563eb;
+          padding:4px 7px;
+          border-radius:999px;
+          font-size:8.5px;
+          font-weight:950;
+          text-transform:uppercase;
+        }
+
+        .featured-card strong{
+          display:-webkit-box;
+          -webkit-line-clamp:2;
+          -webkit-box-orient:vertical;
+          overflow:hidden;
+          font-size:12px;
+          line-height:1.22;
+          font-weight:950;
+        }
+
+        .no-featured{
+          padding:14px;
+          border-radius:15px;
+          background:#f8fafc;
+          border:1px solid #e2e8f0;
+          color:#64748b;
+          font-size:12px;
+          line-height:1.55;
+          font-weight:750;
+        }
+
+        .similar-section{
+          margin-top:22px;
+          border-radius:22px;
+          padding:16px;
+          overflow:hidden;
+        }
+
+        .similar-head{
+          display:flex;
+          align-items:center;
+          justify-content:space-between;
+          gap:14px;
+          margin-bottom:14px;
+        }
+
+        .similar-head span{
+          display:block;
+          color:#64748b;
+          font-size:10px;
+          font-weight:950;
+          text-transform:uppercase;
+          letter-spacing:.08em;
+          margin-bottom:5px;
+        }
+
+        .similar-head h2{
+          margin:0;
+          color:#07142d;
+          font-size:24px;
+          line-height:1.05;
+          letter-spacing:-.045em;
+          font-weight:950;
+        }
+
+        .similar-controls{
+          display:flex;
+          gap:8px;
+          align-items:center;
+        }
+
+        .similar-controls button{
+          width:34px;
+          height:34px;
+          border-radius:999px;
+          border:1px solid #dbe3ee;
+          background:#fff;
+          color:#07142d;
+          font-size:21px;
+          line-height:1;
+          font-weight:950;
+          cursor:pointer;
+        }
+
+        .similar-slider{
+          width:100%;
+          overflow:hidden;
+        }
+
+        .similar-track{
+          display:flex;
+          width:100%;
+          transition:transform .45s cubic-bezier(.22,.8,.22,1);
+          will-change:transform;
+        }
+
+        .similar-slide{
+          min-width:100%;
+          display:grid;
+          grid-template-columns:repeat(3,minmax(0,1fr));
+          gap:12px;
+        }
+
+        .similar-card{
+          min-height:330px;
+          border:1px solid #f4b400;
+          border-radius:17px;
+          overflow:hidden;
+          background:#fff;
+          text-decoration:none;
+          color:#07142d;
+          display:flex;
+          flex-direction:column;
+          transition:transform .22s ease, box-shadow .22s ease;
+        }
+
+        .similar-card:hover{
+          transform:translateY(-3px);
+          box-shadow:0 18px 40px rgba(15,23,42,.08);
+        }
+
+        .similar-media{
+          height:180px;
+          position:relative;
+          background:#eef4ff;
+          display:flex;
+          align-items:center;
+          justify-content:center;
+          overflow:hidden;
+        }
+
+        .similar-media img{
+          width:100%;
+          height:100%;
+          object-fit:cover;
+          object-position:center;
+          background:#eef4ff;
+          display:block;
+        }
+
+        .similar-top{
+          position:absolute;
+          inset:10px 10px auto 10px;
+          display:flex;
+          justify-content:space-between;
+          align-items:center;
+          gap:8px;
+        }
+
+        .similar-top span{
+          display:inline-flex;
+          height:28px;
+          align-items:center;
+          border-radius:999px;
+          padding:0 10px;
+          background:rgba(255,255,255,.96);
+          color:#07142d;
+          font-size:10px;
+          font-weight:950;
+          box-shadow:0 8px 18px rgba(15,23,42,.10);
+        }
+
+        .similar-top b{
+          width:30px;
+          height:30px;
+          border-radius:999px;
+          display:grid;
+          place-items:center;
+          background:#f4b000;
+          color:#fff;
+          font-size:13px;
+        }
+
+        .similar-body{
+          padding:14px;
+          display:flex;
+          flex-direction:column;
+          flex:1;
+        }
+
+        .similar-location{
+          color:#475569;
+          font-size:11.5px;
+          font-weight:900;
+          margin-bottom:8px;
+        }
+
+        .similar-body h3{
+          margin:0;
+          font-size:15px;
+          line-height:1.22;
+          font-weight:950;
+          display:-webkit-box;
+          -webkit-line-clamp:2;
+          -webkit-box-orient:vertical;
+          overflow:hidden;
+        }
+
+        .similar-tags{
+          display:flex;
+          gap:6px;
+          flex-wrap:wrap;
+          margin-top:14px;
+        }
+
+        .similar-tags span{
+          height:27px;
+          padding:0 8px;
+          border-radius:999px;
+          background:#f8fafc;
+          border:1px solid #dbe3ee;
+          display:inline-flex;
+          align-items:center;
+          color:#475569;
+          font-size:10px;
+          font-weight:900;
+        }
+
+        .similar-footer{
+          margin-top:auto;
+          padding-top:14px;
+          border-top:1px solid #e5eaf1;
+          display:flex;
+          justify-content:space-between;
+          align-items:center;
+          gap:10px;
+        }
+
+        .similar-footer strong{
+          color:#07142d;
+          font-size:14px;
+          font-weight:950;
+        }
+
+        .similar-footer span{
+          color:#07142d;
+          font-size:11.5px;
+          font-weight:950;
+          white-space:nowrap;
+        }
+
+        .similar-dots{
+          display:flex;
+          justify-content:center;
+          align-items:center;
+          gap:6px;
+          margin-top:14px;
+        }
+
+        .similar-dots button{
+          width:7px;
+          height:7px;
+          padding:0;
+          border:0;
+          border-radius:999px;
+          background:#cbd5e1;
+          cursor:pointer;
+        }
+
+        .similar-dots button.active{
+          width:20px;
+          background:#07142d;
+        }
+
+        .similar-empty{
+          padding:16px;
+          border-radius:16px;
+          background:#f8fafc;
+          border:1px solid #e2e8f0;
+          color:#64748b;
+          font-weight:800;
+          font-size:13px;
+        }
+
+        .lightbox{
+          position:fixed;
+          inset:0;
+          z-index:99999;
+          background:rgba(2,6,23,.92);
+          display:flex;
+          align-items:center;
+          justify-content:center;
+          padding:24px;
+        }
+
+        .lightbox img{
+          max-width:96vw;
+          max-height:92vh;
+          object-fit:contain;
+          border-radius:18px;
+        }
+
+        .lightbox-close{
+          position:absolute;
+          top:16px;
+          right:20px;
+          width:44px;
+          height:44px;
+          border:0;
+          border-radius:999px;
+          background:#fff;
+          color:#07142d;
+          font-size:30px;
+          line-height:1;
+          cursor:pointer;
+          font-weight:900;
+        }
+
+        .lightbox-nav{
+          position:absolute;
+          top:50%;
+          transform:translateY(-50%);
+          width:50px;
+          height:50px;
+          border:0;
+          border-radius:999px;
+          background:#fff;
+          color:#07142d;
+          font-size:36px;
+          line-height:1;
+          cursor:pointer;
+          font-weight:900;
+        }
+
+        .lightbox-nav.prev{left:20px;}
+        .lightbox-nav.next{right:20px;}
+
+        @media(max-width:1100px){
+          .vehicle-layout{
+            grid-template-columns:1fr;
+          }
+
+          .vehicle-sidebar{
+            position:relative;
+            top:auto;
+            grid-template-columns:repeat(2,minmax(0,1fr));
+          }
+
+          .contact-box{
+            grid-column:1 / -1;
+          }
+
+          .vehicle-main-media{
+            height:500px;
+          }
+        }
+
+        @media(max-width:900px){
+          .vehicle-wrap{
+            padding:84px 12px 54px;
+          }
+
+          .vehicle-main-media{
+            height:440px;
+          }
+
+          .vehicle-thumbs{
+            grid-template-columns:repeat(4,1fr);
+          }
+
+          .vehicle-thumbs button{
+            height:62px;
+          }
+
+          .vehicle-spec-grid,
+          .vehicle-info-grid{
+            grid-template-columns:1fr 1fr;
+          }
+
+          .vehicle-price-card{
+            flex-direction:column;
+            align-items:flex-start;
+          }
+
+          .vehicle-actions{
+            justify-content:flex-start;
+          }
+
+          .similar-slide{
+            grid-template-columns:repeat(2,minmax(0,1fr));
+          }
         }
 
         @media(max-width:620px){
-          .vehicle-wrap{padding:82px 10px 54px;}
-          .vehicle-hero{border-radius:20px;padding:8px;}
-          .vehicle-main-media{height:300px;border-radius:16px;}
-          .vehicle-thumbs{grid-template-columns:repeat(4,1fr);gap:6px;padding:0;}
-          .vehicle-thumbs button{height:58px;border-radius:9px;}
-          .zoom-hint{display:none;}
-          .vehicle-title-box{left:16px;right:16px;bottom:18px;}
-          .vehicle-title-box h1{font-size:29px;}
-          .vehicle-title-box strong{font-size:27px;}
-          .vehicle-price-card{padding:20px;}
-          .vehicle-price-card strong{font-size:34px;}
-          .vehicle-actions{width:100%;display:grid;grid-template-columns:1fr 1fr;}
-          .vehicle-actions a{width:100%;padding:0 10px;}
-          .vehicle-spec-grid{grid-template-columns:repeat(2,1fr);gap:10px;}
-          .vehicle-spec-card{min-height:112px;padding:14px;flex-direction:column;gap:12px;}
-          .spec-icon{width:40px;height:40px;}
-          .vehicle-spec-card span{font-size:12px;margin-bottom:8px;}
-          .vehicle-spec-card strong{font-size:16px;}
-          .vehicle-info-grid{grid-template-columns:1fr;}
-          .section-title h2{font-size:27px;}
-          .vehicle-info-box{padding:20px 14px 24px;}
-          .info-row{min-height:64px;padding:0 6px;}
-          .info-row span,.info-row strong{font-size:15px;}
-          .vehicle-description,.vehicle-map-box{padding:20px 16px 24px;}
-          .vehicle-map-box iframe{height:320px;}
-          .featured-card{grid-template-columns:78px minmax(0,1fr);}
-          .featured-card img{width:78px;height:58px;}
-          .similar-section{padding:14px;border-radius:20px;}
-          .similar-head h2{font-size:25px;}
-          .similar-slide{grid-template-columns:1fr;}
-          .similar-card{min-height:auto;}
-          .similar-media{height:215px;}
-          .similar-controls button{width:38px;height:38px;}
-          .lightbox{padding:12px;}
-          .lightbox-close{top:12px;right:12px;}
-          .lightbox-nav{width:44px;height:44px;font-size:34px;}
-          .lightbox-nav.prev{left:10px;}
-          .lightbox-nav.next{right:10px;}
+          .vehicle-wrap{
+            padding:78px 7px 46px;
+          }
+
+          .vehicle-hero{
+            border-radius:18px;
+            padding:7px;
+          }
+
+          .vehicle-main-media{
+            height:370px;
+            border-radius:16px;
+          }
+
+          .vehicle-media{
+            object-fit:cover;
+            object-position:center;
+          }
+
+          .vehicle-thumbs{
+            grid-template-columns:repeat(4,1fr);
+            gap:5px;
+          }
+
+          .vehicle-thumbs button{
+            height:52px;
+            border-radius:8px;
+          }
+
+          .zoom-hint{
+            display:none;
+          }
+
+          .vehicle-badges{
+            top:14px;
+            left:14px;
+            right:14px;
+            gap:8px;
+          }
+
+          .vehicle-badges span{
+            min-height:36px;
+            padding:0 16px;
+            font-size:12px;
+          }
+
+          .vehicle-title-box{
+            left:18px;
+            right:18px;
+            bottom:28px;
+          }
+
+          .vehicle-title-box p{
+            font-size:16px;
+            margin-bottom:7px;
+          }
+
+          .vehicle-title-box h1{
+            font-size:34px;
+            line-height:1.02;
+          }
+
+          .vehicle-title-box strong{
+            font-size:30px;
+            margin-top:10px;
+          }
+
+          .vehicle-layout{
+            margin-top:12px;
+            gap:12px;
+          }
+
+          .vehicle-content{
+            gap:12px;
+          }
+
+          .vehicle-price-card{
+            padding:15px;
+            border-radius:17px;
+          }
+
+          .vehicle-price-card strong{
+            font-size:29px;
+          }
+
+          .vehicle-actions{
+            width:100%;
+            display:grid;
+            grid-template-columns:1fr 1fr;
+            gap:7px;
+          }
+
+          .vehicle-actions a{
+            width:100%;
+            height:42px;
+            padding:0 8px;
+            font-size:11.5px;
+            border-radius:12px;
+            box-sizing:border-box;
+          }
+
+          .vehicle-spec-grid{
+            grid-template-columns:repeat(2,minmax(0,1fr));
+            gap:7px;
+          }
+
+          .vehicle-spec-card{
+            min-height:84px;
+            padding:10px;
+            border-radius:14px;
+            gap:8px;
+            align-items:flex-start;
+          }
+
+          .spec-icon{
+            width:31px;
+            height:31px;
+            flex-basis:31px;
+            border-radius:10px;
+          }
+
+          .spec-icon svg{
+            width:16px;
+            height:16px;
+          }
+
+          .vehicle-spec-card span{
+            font-size:9.8px;
+            margin-bottom:4px;
+          }
+
+          .vehicle-spec-card strong{
+            font-size:12px;
+            line-height:1.2;
+          }
+
+          .section-title{
+            gap:9px;
+            margin-bottom:14px;
+          }
+
+          .section-title span{
+            width:34px;
+            height:34px;
+            border-radius:11px;
+          }
+
+          .section-title h2{
+            font-size:20px;
+          }
+
+          .vehicle-info-box{
+            padding:16px 12px 18px;
+            border-radius:17px;
+          }
+
+          .vehicle-info-grid{
+            grid-template-columns:1fr;
+          }
+
+          .info-row{
+            min-height:48px;
+            padding:0 2px;
+            gap:10px;
+          }
+
+          .info-row span,
+          .info-row strong{
+            font-size:12px;
+            line-height:1.25;
+          }
+
+          .vehicle-description,
+          .vehicle-map-box{
+            padding:16px 12px 18px;
+            border-radius:17px;
+          }
+
+          .vehicle-description h2{
+            font-size:20px;
+            margin-bottom:12px;
+          }
+
+          .vehicle-description p,
+          .vehicle-html-description,
+          .vehicle-html-description p{
+            font-size:13px;
+            line-height:1.72;
+          }
+
+          .vehicle-map-box iframe{
+            height:260px;
+            border-radius:14px;
+          }
+
+          .vehicle-sidebar{
+            grid-template-columns:1fr;
+            gap:10px;
+          }
+
+          .contact-box,
+          .featured-box{
+            padding:12px;
+            border-radius:17px;
+          }
+
+          .contact-box h3,
+          .featured-head h3{
+            font-size:16px;
+            margin-bottom:10px;
+          }
+
+          .contact-box p{
+            font-size:11.5px;
+            padding:9px;
+            border-radius:12px;
+          }
+
+          .contact-buttons a{
+            height:38px;
+            font-size:10.5px;
+          }
+
+          .featured-card{
+            grid-template-columns:66px minmax(0,1fr);
+            gap:8px;
+            padding:7px;
+            border-radius:13px;
+            margin-bottom:8px;
+          }
+
+          .featured-card img{
+            width:66px;
+            height:52px;
+            border-radius:9px;
+          }
+
+          .featured-card small{
+            font-size:7.5px;
+            padding:3px 6px;
+          }
+
+          .featured-card strong{
+            font-size:10.8px;
+            line-height:1.2;
+          }
+
+          .similar-section{
+            margin-top:14px;
+            padding:10px;
+            border-radius:17px;
+          }
+
+          .similar-head{
+            margin-bottom:10px;
+            gap:10px;
+          }
+
+          .similar-head span{
+            font-size:8.5px;
+            margin-bottom:4px;
+          }
+
+          .similar-head h2{
+            font-size:18px;
+            line-height:1.1;
+          }
+
+          .similar-controls button{
+            width:30px;
+            height:30px;
+            font-size:18px;
+          }
+
+          .similar-slide{
+            grid-template-columns:repeat(2,minmax(0,1fr));
+            gap:8px;
+          }
+
+          .similar-card{
+            min-height:248px;
+            border-radius:14px;
+          }
+
+          .similar-media{
+            height:122px;
+          }
+
+          .similar-top{
+            inset:7px 7px auto 7px;
+          }
+
+          .similar-top span{
+            height:24px;
+            padding:0 8px;
+            font-size:8.5px;
+          }
+
+          .similar-top b{
+            width:25px;
+            height:25px;
+            font-size:11px;
+          }
+
+          .similar-body{
+            padding:10px;
+          }
+
+          .similar-location{
+            font-size:9.8px;
+            margin-bottom:6px;
+          }
+
+          .similar-body h3{
+            font-size:12px;
+            line-height:1.2;
+          }
+
+          .similar-tags{
+            gap:4px;
+            margin-top:9px;
+          }
+
+          .similar-tags span{
+            height:22px;
+            padding:0 6px;
+            font-size:8.5px;
+          }
+
+          .similar-footer{
+            padding-top:9px;
+            gap:6px;
+          }
+
+          .similar-footer strong{
+            font-size:11.5px;
+          }
+
+          .similar-footer span{
+            font-size:9.5px;
+            max-width:70px;
+            overflow:hidden;
+            text-overflow:ellipsis;
+          }
+
+          .similar-dots{
+            margin-top:10px;
+          }
+
+          .lightbox{
+            padding:10px;
+          }
+
+          .lightbox-close{
+            top:10px;
+            right:10px;
+            width:40px;
+            height:40px;
+            font-size:28px;
+          }
+
+          .lightbox-nav{
+            width:40px;
+            height:40px;
+            font-size:30px;
+          }
+
+          .lightbox-nav.prev{left:8px;}
+          .lightbox-nav.next{right:8px;}
+        }
+
+        @media(max-width:390px){
+          .vehicle-main-media{
+            height:355px;
+          }
+
+          .vehicle-title-box h1{
+            font-size:31px;
+          }
+
+          .vehicle-title-box strong{
+            font-size:27px;
+          }
+
+          .vehicle-badges span{
+            min-height:33px;
+            padding:0 13px;
+            font-size:11px;
+          }
+        }
+
+        @media(max-width:350px){
+          .vehicle-wrap{
+            padding-left:5px;
+            padding-right:5px;
+          }
+
+          .vehicle-main-media{
+            height:335px;
+          }
+
+          .vehicle-title-box h1{
+            font-size:28px;
+          }
+
+          .vehicle-title-box strong{
+            font-size:25px;
+          }
+
+          .vehicle-spec-grid,
+          .similar-slide{
+            grid-template-columns:repeat(2,minmax(0,1fr));
+          }
+
+          .similar-media{
+            height:108px;
+          }
+        }
+
+        @media(prefers-reduced-motion:reduce){
+          .similar-track,
+          .vehicle-thumbs button,
+          .similar-controls button,
+          .similar-card{
+            transition:none;
+          }
         }
       `}</style>
     </div>

@@ -2,72 +2,18 @@ import React, { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { getPostsByCategory } from "../../api/postApi";
 import RealEstatePostCard from "./RealEstatePostCard";
-import {
-  CITY_OPTIONS,
-  REAL_ESTATE_LISTING_OPTIONS,
-  REAL_ESTATE_PROPERTY_OPTIONS
-} from "../../constants/postFilterOptions";
 
-const searchWrapStyle = {
-  background: "#ffffff",
-  border: "1px solid #e2e8f0",
-  borderRadius: "24px",
-  padding: "18px",
-  boxShadow: "0 12px 30px rgba(15,23,42,0.04)",
-  marginBottom: "20px"
-};
-
-const fieldLabelStyle = {
-  display: "block",
-  fontSize: "14px",
-  fontWeight: "800",
-  color: "#475569",
-  marginBottom: "8px"
-};
-
-const inputStyle = {
-  width: "100%",
-  padding: "14px 16px",
-  borderRadius: "16px",
-  border: "1px solid #dbe3ee",
-  outline: "none",
-  fontSize: "15px",
-  background: "#fff",
-  boxSizing: "border-box"
-};
-
-const clearBtnStyle = {
-  padding: "10px 14px",
-  borderRadius: "999px",
-  border: "1px solid #cbd5e1",
-  background: "#fff",
-  color: "#0f172a",
-  fontWeight: "700",
-  cursor: "pointer"
-};
-
-const titleStyle = {
-  margin: 0,
-  fontSize: "28px",
-  fontWeight: "800",
-  color: "#0f172a"
-};
-
-const mobileFilterIconBtnStyle = {
-  width: "48px",
-  height: "48px",
-  borderRadius: "12px",
-  border: "1px solid #dbe3ee",
-  background: "#fff",
-  color: "#0f172a",
-  cursor: "pointer",
-  display: "inline-flex",
-  alignItems: "center",
-  justifyContent: "center",
-  boxShadow: "0 10px 24px rgba(15,23,42,0.04)"
-};
 
 const normalize = (value) => String(value || "").trim().toLowerCase();
+
+const makeSlug = (text = "") =>
+  String(text)
+    .toLowerCase()
+    .trim()
+    .replace(/[ë]/g, "e")
+    .replace(/[ç]/g, "c")
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
 
 const normalizeGalleryImages = (galleryImages) => {
   if (!galleryImages) return [];
@@ -83,12 +29,30 @@ const normalizeGalleryImages = (galleryImages) => {
 
 const isPostNew = (createdAt) => {
   if (!createdAt) return false;
-
   const created = new Date(createdAt);
   const now = new Date();
   const diffDays = (now - created) / (1000 * 60 * 60 * 24);
-
   return diffDays <= 3;
+};
+
+const isFeatured = (post) =>
+  post?.featured === true ||
+  post?.featured === 1 ||
+  post?.featured === "1" ||
+  post?.featured === "true" ||
+  post?.is_featured === true ||
+  post?.is_featured === 1 ||
+  post?.is_featured === "1" ||
+  post?.is_featured === "true";
+
+const formatPrice = (price) => {
+  if (!price) return "Sipas marrëveshjes";
+  return `${Number(price).toLocaleString("de-DE")} €`;
+};
+
+const getPostImage = (post) => {
+  const galleryImages = normalizeGalleryImages(post?.gallery_images);
+  return post?.image_url || post?.image || galleryImages[0] || "";
 };
 
 export default function RealEstateCategoryPosts({ title, category, variant }) {
@@ -100,56 +64,36 @@ export default function RealEstateCategoryPosts({ title, category, variant }) {
   const [selectedPropertyType, setSelectedPropertyType] = useState("");
   const [selectedListingType, setSelectedListingType] = useState("");
 
-  const [screenWidth, setScreenWidth] = useState(
-    typeof window !== "undefined" ? window.innerWidth : 1440
-  );
   const [showMobileFilters, setShowMobileFilters] = useState(false);
   const [expandedCardId, setExpandedCardId] = useState(null);
 
-  const isMobile = screenWidth <= 640;
   const isHomeVariant = variant === "home";
 
   useEffect(() => {
-    const onResize = () => setScreenWidth(window.innerWidth);
-    window.addEventListener("resize", onResize);
-    return () => window.removeEventListener("resize", onResize);
-  }, []);
+    let ignore = false;
 
-  useEffect(() => {
     const fetchPosts = async () => {
       try {
         setLoading(true);
         const data = await getPostsByCategory(category);
-        setPosts(Array.isArray(data) ? data : []);
+        if (!ignore) setPosts(Array.isArray(data) ? data : []);
       } catch (error) {
         console.error("Gabim gjatë marrjes së postimeve:", error);
-        setPosts([]);
+        if (!ignore) setPosts([]);
       } finally {
-        setLoading(false);
+        if (!ignore) setLoading(false);
       }
     };
 
     fetchPosts();
+
+    return () => {
+      ignore = true;
+    };
   }, [category]);
 
-  const filterGridColumns =
-    screenWidth > 1280
-      ? "repeat(4, minmax(0, 1fr))"
-      : screenWidth > 950
-      ? "repeat(3, minmax(0, 1fr))"
-      : screenWidth > 640
-      ? "repeat(2, minmax(0, 1fr))"
-      : "1fr";
-
-  const cardGridColumns =
-    screenWidth > 1100
-      ? "repeat(3, minmax(0, 1fr))"
-      : screenWidth > 640
-      ? "repeat(2, minmax(0, 1fr))"
-      : "1fr";
-
   const filteredPosts = useMemo(() => {
-    const filtered = [...posts].filter((post) => {
+    const filtered = posts.filter((post) => {
       if (isHomeVariant) return true;
 
       const query = normalize(realEstateSearch);
@@ -182,23 +126,15 @@ export default function RealEstateCategoryPosts({ title, category, variant }) {
           new Date(a.created_at || 0).getTime()
       );
 
-    const featured = sortNewest(filtered.filter((post) => post.featured));
-
+    const featured = sortNewest(filtered.filter(isFeatured));
     const fresh = sortNewest(
-      filtered.filter((post) => !post.featured && isPostNew(post.created_at))
+      filtered.filter((post) => !isFeatured(post) && isPostNew(post.created_at))
+    );
+    const oldNormal = sortNewest(
+      filtered.filter((post) => !isFeatured(post) && !isPostNew(post.created_at))
     );
 
-    const oldNormal = filtered.filter(
-      (post) => !post.featured && !isPostNew(post.created_at)
-    );
-
-    if (isHomeVariant) {
-      return [...featured, ...fresh, ...sortNewest(oldNormal)];
-    }
-
-    const rotatedOldNormal = [...oldNormal].sort(() => Math.random() - 0.5);
-
-    return [...featured, ...fresh, ...rotatedOldNormal];
+    return [...featured, ...fresh, ...oldNormal];
   }, [
     posts,
     realEstateSearch,
@@ -218,9 +154,22 @@ export default function RealEstateCategoryPosts({ title, category, variant }) {
 
   if (loading) {
     return (
-      <p style={{ marginTop: "14px", color: "#475569" }}>
-        Duke u ngarkuar...
-      </p>
+      <div className="realestate-loading">
+        <span>Duke u ngarkuar...</span>
+
+        <style>{`
+          .realestate-loading{
+            width:100%;
+            padding:18px;
+            border:1px solid #e2e8f0;
+            border-radius:18px;
+            background:#fff;
+            color:#64748b;
+            font-size:13px;
+            font-weight:800;
+          }
+        `}</style>
+      </div>
     );
   }
 
@@ -229,21 +178,25 @@ export default function RealEstateCategoryPosts({ title, category, variant }) {
       <>
         <div className="home-realestate-grid">
           {filteredPosts.slice(0, 6).map((post, index) => {
-            const galleryImages = normalizeGalleryImages(post.gallery_images);
-            const postImage = post?.image_url || post?.image || galleryImages[0] || "";
+            const postImage = getPostImage(post);
             const isExpanded = expandedCardId === post.id;
+            const detailUrl = `/patundshmeri/${makeSlug(
+              post?.title || "prona"
+            )}-${post.id}`;
 
             return (
               <div
                 key={post.id || index}
                 className={`home-realestate-card ${isExpanded ? "expanded" : ""}`}
               >
-                <Link to={`/post/${post.id}`} className="home-realestate-media">
+                <Link to={detailUrl} className="home-realestate-media">
                   {postImage ? (
                     <img
                       src={postImage}
                       alt={post.title || "Patundshmëri"}
                       className="home-realestate-image"
+                      loading={index < 2 ? "eager" : "lazy"}
+                      decoding="async"
                     />
                   ) : (
                     <div className="home-realestate-noimage">Patundshmëri</div>
@@ -257,7 +210,7 @@ export default function RealEstateCategoryPosts({ title, category, variant }) {
                         <span className="home-realestate-new">E RE</span>
                       ) : null}
 
-                      {post.featured ? (
+                      {isFeatured(post) ? (
                         <span className="home-realestate-featured">⭐</span>
                       ) : null}
 
@@ -312,13 +265,13 @@ export default function RealEstateCategoryPosts({ title, category, variant }) {
 
                     <div className="home-realestate-price-wrap">
                       <div>
-                        <span className="home-realestate-price-label">ÇMIMI</span>
+                        <span className="home-realestate-price-label">Çmimi</span>
                         <div className="home-realestate-price">
-                          {post.price ? `${post.price} €` : "Sipas marrëveshjes"}
+                          {formatPrice(post.price)}
                         </div>
                       </div>
 
-                      <Link to={`/post/${post.id}`} className="home-realestate-detail-link">
+                      <Link to={detailUrl} className="home-realestate-detail-link">
                         Shiko detajet
                       </Link>
                     </div>
@@ -333,25 +286,27 @@ export default function RealEstateCategoryPosts({ title, category, variant }) {
           .home-realestate-grid{
             display:grid;
             grid-template-columns:repeat(3,minmax(0,1fr));
-            gap:16px;
+            gap:14px;
             width:100%;
             align-items:start;
           }
 
           .home-realestate-card{
-            border-radius:24px;
+            border-radius:20px;
             overflow:hidden;
-            background:#ffffff;
-            box-shadow:0 16px 34px rgba(15,23,42,0.08);
-            border:1px solid rgba(226,232,240,0.9);
+            background:#fff;
+            box-shadow:0 14px 32px rgba(15,23,42,.07);
+            border:1px solid rgba(226,232,240,.95);
+            contain:layout paint;
           }
 
           .home-realestate-media{
             position:relative;
-            min-height:260px;
-            background:#cbd5e1;
+            min-height:245px;
+            background:#eaf2ff;
             display:block;
             text-decoration:none;
+            overflow:hidden;
           }
 
           .home-realestate-image,
@@ -363,22 +318,24 @@ export default function RealEstateCategoryPosts({ title, category, variant }) {
 
           .home-realestate-image{
             object-fit:cover;
-            transition:transform .45s ease;
+            transition:transform .35s ease;
           }
 
-          .home-realestate-card:hover .home-realestate-image{
-            transform:scale(1.05);
+          @media(hover:hover){
+            .home-realestate-card:hover .home-realestate-image{
+              transform:scale(1.035);
+            }
           }
 
           .home-realestate-noimage{
+            min-height:245px;
             display:flex;
             align-items:center;
             justify-content:center;
-            background:linear-gradient(135deg,#cbd5e1,#94a3b8);
+            background:linear-gradient(135deg,#dbeafe,#94a3b8);
             color:#fff;
-            font-size:18px;
-            font-weight:800;
-            min-height:260px;
+            font-size:15px;
+            font-weight:900;
           }
 
           .home-realestate-overlay{
@@ -387,21 +344,15 @@ export default function RealEstateCategoryPosts({ title, category, variant }) {
             display:flex;
             flex-direction:column;
             justify-content:space-between;
-            padding:16px;
-            background:linear-gradient(
-              to top,
-              rgba(2,6,23,0.74) 0%,
-              rgba(2,6,23,0.18) 44%,
-              rgba(2,6,23,0.02) 100%
-            );
+            padding:13px;
+            background:linear-gradient(to top,rgba(2,6,23,.72) 0%,rgba(2,6,23,.16) 45%,rgba(2,6,23,.02) 100%);
             color:#fff;
           }
 
           .home-realestate-top{
             display:flex;
             align-items:flex-start;
-            justify-content:flex-start;
-            gap:8px;
+            gap:6px;
             flex-wrap:wrap;
           }
 
@@ -413,44 +364,43 @@ export default function RealEstateCategoryPosts({ title, category, variant }) {
             align-items:center;
             justify-content:center;
             border-radius:999px;
-            font-size:11px;
-            font-weight:900;
+            font-size:9.5px;
+            font-weight:950;
             line-height:1;
-            min-height:28px;
-            padding:6px 10px;
-            border:1px solid rgba(255,255,255,0.38);
-            backdrop-filter:blur(10px);
-            -webkit-backdrop-filter:blur(10px);
+            min-height:25px;
+            padding:5px 8px;
+            border:1px solid rgba(255,255,255,.32);
+            backdrop-filter:blur(8px);
+            -webkit-backdrop-filter:blur(8px);
           }
 
           .home-realestate-badge{
-            background:rgba(255,255,255,0.70);
+            background:rgba(255,255,255,.78);
             color:#0f172a;
           }
 
           .home-realestate-city{
-            background:rgba(15,23,42,0.46);
+            background:rgba(15,23,42,.48);
             color:#fff;
           }
 
           .home-realestate-new{
-            background:rgba(6,182,212,0.70);
+            background:rgba(6,182,212,.78);
             color:#fff;
           }
 
           .home-realestate-featured{
-            background:rgba(245,158,11,0.72);
+            background:rgba(245,158,11,.78);
             color:#fff;
-            min-width:28px;
-            padding:6px 9px;
+            min-width:25px;
           }
 
           .home-realestate-bottom h3{
             margin:0;
-            font-size:18px;
-            line-height:1.25;
-            font-weight:900;
-            letter-spacing:-0.02em;
+            font-size:16px;
+            line-height:1.18;
+            font-weight:950;
+            letter-spacing:-.02em;
             display:-webkit-box;
             -webkit-line-clamp:2;
             -webkit-box-orient:vertical;
@@ -458,17 +408,17 @@ export default function RealEstateCategoryPosts({ title, category, variant }) {
           }
 
           .home-realestate-btn{
-            margin-top:12px;
+            margin-top:9px;
             display:inline-flex;
             align-items:center;
             justify-content:center;
-            padding:11px 16px;
+            padding:9px 13px;
             border-radius:999px;
-            background:rgba(255,255,255,0.14);
-            border:1px solid rgba(255,255,255,0.22);
+            background:rgba(255,255,255,.16);
+            border:1px solid rgba(255,255,255,.24);
             color:#fff;
-            font-size:13px;
-            font-weight:800;
+            font-size:11.5px;
+            font-weight:900;
             backdrop-filter:blur(8px);
             cursor:pointer;
           }
@@ -476,8 +426,8 @@ export default function RealEstateCategoryPosts({ title, category, variant }) {
           .home-realestate-expand{
             max-height:0;
             overflow:hidden;
-            transition:max-height .45s ease;
-            background:#ffffff;
+            transition:max-height .35s ease;
+            background:#fff;
           }
 
           .home-realestate-expand.show{
@@ -485,178 +435,198 @@ export default function RealEstateCategoryPosts({ title, category, variant }) {
           }
 
           .home-realestate-expand-inner{
-            padding:18px;
+            padding:15px;
             border-top:1px solid #e2e8f0;
           }
 
           .home-realestate-expand-head h4{
             margin:0;
             color:#0f172a;
-            font-size:18px;
-            font-weight:900;
-            letter-spacing:-0.02em;
+            font-size:16px;
+            font-weight:950;
+            letter-spacing:-.02em;
           }
 
           .home-realestate-expand-head p{
-            margin:8px 0 0;
+            margin:7px 0 0;
             color:#64748b;
-            font-size:14px;
-            line-height:1.6;
+            font-size:12.5px;
+            line-height:1.55;
+            display:-webkit-box;
+            -webkit-line-clamp:3;
+            -webkit-box-orient:vertical;
+            overflow:hidden;
           }
 
           .home-realestate-specs{
             display:grid;
             grid-template-columns:repeat(3,minmax(0,1fr));
-            gap:12px;
-            margin-top:18px;
+            gap:9px;
+            margin-top:14px;
           }
 
           .home-realestate-spec{
             border:1px solid #dbe3ee;
-            border-radius:16px;
-            padding:16px 12px;
+            border-radius:13px;
+            padding:11px 8px;
             text-align:center;
             background:#f8fafc;
           }
 
           .home-realestate-spec span{
             display:block;
-            font-size:12px;
-            color:#64748b;
-            font-weight:700;
-            margin-bottom:8px;
-          }
-
-          .home-realestate-spec strong{
-            display:block;
-            font-size:18px;
-            color:#0f172a;
-            font-weight:900;
-          }
-
-          .home-realestate-price-wrap{
-            margin-top:18px;
-            padding-top:16px;
-            border-top:1px solid #e2e8f0;
-            display:flex;
-            align-items:flex-end;
-            justify-content:space-between;
-            gap:14px;
-            flex-wrap:wrap;
-          }
-
-          .home-realestate-price-label{
-            display:block;
-            font-size:12px;
+            font-size:10px;
             color:#64748b;
             font-weight:800;
             margin-bottom:6px;
           }
 
-          .home-realestate-price{
-            font-size:24px;
+          .home-realestate-spec strong{
+            display:block;
+            font-size:13px;
             color:#0f172a;
+            font-weight:950;
+            overflow:hidden;
+            text-overflow:ellipsis;
+            white-space:nowrap;
+          }
+
+          .home-realestate-price-wrap{
+            margin-top:14px;
+            padding-top:13px;
+            border-top:1px solid #e2e8f0;
+            display:flex;
+            align-items:flex-end;
+            justify-content:space-between;
+            gap:10px;
+            flex-wrap:wrap;
+          }
+
+          .home-realestate-price-label{
+            display:block;
+            font-size:10px;
+            color:#64748b;
             font-weight:900;
-            letter-spacing:-0.03em;
+            margin-bottom:5px;
+            text-transform:uppercase;
+          }
+
+          .home-realestate-price{
+            font-size:20px;
+            color:#0f172a;
+            font-weight:950;
+            letter-spacing:-.03em;
           }
 
           .home-realestate-detail-link{
             display:inline-flex;
             align-items:center;
             justify-content:center;
-            min-height:48px;
-            padding:12px 18px;
-            border-radius:14px;
+            min-height:42px;
+            padding:10px 14px;
+            border-radius:12px;
             background:#16a34a;
             color:#fff;
-            font-size:14px;
-            font-weight:800;
+            font-size:12px;
+            font-weight:900;
             text-decoration:none;
             white-space:nowrap;
           }
 
-          @media (max-width:1024px){
+          @media(max-width:1024px){
             .home-realestate-grid{
               grid-template-columns:repeat(2,minmax(0,1fr));
             }
           }
 
-          @media (max-width:640px){
+          @media(max-width:640px){
             .home-realestate-grid{
-              grid-template-columns:1fr;
-              gap:12px;
+              grid-template-columns:repeat(2,minmax(0,1fr));
+              gap:9px;
+            }
+
+            .home-realestate-card{
+              border-radius:15px;
             }
 
             .home-realestate-media,
             .home-realestate-noimage{
-              min-height:180px;
-            }
-
-            .home-realestate-card{
-              border-radius:20px;
+              min-height:155px;
             }
 
             .home-realestate-overlay{
-              padding:10px;
-              background:linear-gradient(
-                to top,
-                rgba(2,6,23,0.66) 0%,
-                rgba(2,6,23,0.12) 45%,
-                rgba(2,6,23,0.01) 100%
-              );
-            }
-
-            .home-realestate-top{
-              gap:6px;
+              padding:9px;
             }
 
             .home-realestate-badge,
             .home-realestate-city,
             .home-realestate-new,
             .home-realestate-featured{
-              min-height:24px;
-              padding:5px 8px;
-              font-size:10px;
-            }
-
-            .home-realestate-featured{
-              min-width:24px;
-              padding:5px 7px;
+              min-height:22px;
+              padding:4px 6px;
+              font-size:8px;
             }
 
             .home-realestate-bottom h3{
-              font-size:14px;
+              font-size:12.5px;
             }
 
             .home-realestate-btn{
-              margin-top:8px;
-              padding:9px 12px;
-              font-size:11px;
+              margin-top:7px;
+              padding:8px 10px;
+              font-size:10px;
             }
 
             .home-realestate-expand-inner{
-              padding:14px;
+              padding:11px;
+            }
+
+            .home-realestate-expand-head h4{
+              font-size:13.5px;
+            }
+
+            .home-realestate-expand-head p{
+              font-size:11.5px;
+              -webkit-line-clamp:2;
             }
 
             .home-realestate-specs{
-              grid-template-columns:repeat(3,minmax(0,1fr));
-              gap:10px;
+              grid-template-columns:1fr;
+              gap:7px;
             }
 
             .home-realestate-spec{
-              padding:12px 8px;
+              padding:8px;
+              text-align:left;
             }
 
             .home-realestate-spec strong{
-              font-size:16px;
+              font-size:12px;
             }
 
             .home-realestate-price{
-              font-size:20px;
+              font-size:16px;
             }
 
             .home-realestate-detail-link{
               width:100%;
+              min-height:38px;
+              font-size:11px;
+            }
+          }
+
+          @media(max-width:390px){
+            .home-realestate-grid{
+              gap:8px;
+            }
+
+            .home-realestate-media,
+            .home-realestate-noimage{
+              min-height:140px;
+            }
+
+            .home-realestate-bottom h3{
+              font-size:11.5px;
             }
           }
         `}</style>
@@ -665,153 +635,428 @@ export default function RealEstateCategoryPosts({ title, category, variant }) {
   }
 
   return (
-    <section style={{ marginBottom: "40px" }}>
-      {title ? (
-        <h2
-          style={{
-            ...titleStyle,
-            fontSize: isMobile ? "22px" : "28px",
-            marginBottom: "18px"
-          }}
-        >
-          {title}
-        </h2>
-      ) : null}
+    <>
+      <section className="realestate-section">
+        {title ? (
+          <div className="realestate-head">
+            <div className="realestate-head-titlebox">
+              <span>Patundshmëri</span>
+              <h2 className="realestate-title">{title}</h2>
+            </div>
+          </div>
+        ) : null}
 
-      {!isHomeVariant && isMobile && (
-        <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: "14px" }}>
+        <div className="realestate-mobile-filter-row">
           <button
             type="button"
             onClick={() => setShowMobileFilters((prev) => !prev)}
-            style={mobileFilterIconBtnStyle}
+            className="realestate-filter-toggle"
           >
-            Filtrat
+            {showMobileFilters ? "Mbyll filtrat" : "Filtrat"}
           </button>
         </div>
-      )}
 
-      {!isHomeVariant && (!isMobile || showMobileFilters) && (
-        <div style={{ ...searchWrapStyle, padding: isMobile ? "14px" : "18px" }}>
-          <div
-            style={{
-              display: "grid",
-              gridTemplateColumns: filterGridColumns,
-              gap: isMobile ? "12px" : "16px"
-            }}
-          >
+        <div className={`realestate-filters ${showMobileFilters ? "show" : ""}`}>
+          <div className="realestate-filter-grid">
             <div>
-              <label style={fieldLabelStyle}>Kërko pronë</label>
+              <label>Kërko pronë</label>
               <input
                 type="text"
-                placeholder="Titulli, përshkrimi, qyteti..."
+                placeholder="Titulli, qyteti..."
                 value={realEstateSearch}
                 onChange={(e) => setRealEstateSearch(e.target.value)}
-                style={inputStyle}
               />
             </div>
 
             <div>
-              <label style={fieldLabelStyle}>Qyteti</label>
-              <select
+              <label>Qyteti</label>
+              <input
+                type="text"
+                placeholder="Shkruaj qytetin..."
                 value={selectedRealEstateCity}
                 onChange={(e) => setSelectedRealEstateCity(e.target.value)}
-                style={inputStyle}
-              >
-                <option value="">Të gjitha qytetet</option>
-                {CITY_OPTIONS.map((city) => (
-                  <option key={city} value={city}>
-                    {city}
-                  </option>
-                ))}
-              </select>
+              />
             </div>
 
             <div>
-              <label style={fieldLabelStyle}>Lloji i pronës</label>
-              <select
+              <label>Lloji i pronës</label>
+              <input
+                type="text"
+                placeholder="P.sh. banesë, shtëpi..."
                 value={selectedPropertyType}
                 onChange={(e) => setSelectedPropertyType(e.target.value)}
-                style={inputStyle}
-              >
-                <option value="">Të gjitha</option>
-                {REAL_ESTATE_PROPERTY_OPTIONS.map((item) => (
-                  <option key={item} value={item}>
-                    {item}
-                  </option>
-                ))}
-              </select>
+              />
             </div>
 
             <div>
-              <label style={fieldLabelStyle}>Shitje / Qira</label>
-              <select
+              <label>Shitje / Qira</label>
+              <input
+                type="text"
+                placeholder="P.sh. shitje, qira..."
                 value={selectedListingType}
                 onChange={(e) => setSelectedListingType(e.target.value)}
-                style={inputStyle}
-              >
-                <option value="">Të gjitha</option>
-                {REAL_ESTATE_LISTING_OPTIONS.map((item) => (
-                  <option key={item} value={item}>
-                    {item}
-                  </option>
-                ))}
-              </select>
+              />
             </div>
           </div>
 
-          <div
-            style={{
-              marginTop: "16px",
-              display: "flex",
-              justifyContent: "space-between",
-              gap: "12px",
-              flexWrap: "wrap"
-            }}
-          >
-            <div style={{ color: "#64748b", fontSize: "14px", fontWeight: "600" }}>
-              Gjithsej prona:{" "}
-              <span style={{ color: "#0f172a", fontWeight: "800" }}>
-                {filteredPosts.length}
-              </span>
+          <div className="realestate-filter-bottom">
+            <div>
+              Prona të gjetura: <strong>{filteredPosts.length}</strong>
             </div>
 
-            <button type="button" onClick={clearRealEstateFilters} style={clearBtnStyle}>
+            <button type="button" onClick={clearRealEstateFilters}>
               Largo filtrat
             </button>
           </div>
         </div>
-      )}
 
-      {filteredPosts.length === 0 ? (
-        <div
-          style={{
-            background: "#ffffff",
-            border: "1px solid #e2e8f0",
-            borderRadius: "20px",
-            padding: "32px 20px",
-            textAlign: "center",
-            color: "#64748b"
-          }}
-        >
-          Nuk u gjet asnjë patundshmëri.
-        </div>
-      ) : (
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: cardGridColumns,
-            gap: isMobile ? "14px" : "22px",
-            alignItems: "start",
-            width: "100%",
-            maxWidth: "1400px",
-            margin: "0 auto"
-          }}
-        >
-          {filteredPosts.map((post, index) => (
-            <RealEstatePostCard key={post.id} post={post} index={index} />
-          ))}
-        </div>
-      )}
-    </section>
+        {filteredPosts.length === 0 ? (
+          <div className="realestate-empty">
+            Nuk u gjet asnjë patundshmëri.
+          </div>
+        ) : (
+          <div className="realestate-post-grid">
+            {filteredPosts.map((post, index) => (
+              <RealEstatePostCard key={post.id || index} post={post} index={index} />
+            ))}
+          </div>
+        )}
+      </section>
+
+      <style>{`
+        .realestate-section{
+          width:100%;
+          max-width:1640px;
+          margin:0 auto 54px;
+          position:relative;
+          padding:0 4px;
+        }
+
+        .realestate-head{
+          position:relative;
+          overflow:hidden;
+          display:flex;
+          justify-content:space-between;
+          align-items:center;
+          gap:18px;
+          margin-bottom:16px;
+          padding:22px 24px;
+          border-radius:26px;
+          background:
+            radial-gradient(circle at 8% 0%, rgba(37,99,235,.16), transparent 32%),
+            radial-gradient(circle at 92% 18%, rgba(14,165,233,.12), transparent 30%),
+            linear-gradient(135deg, rgba(255,255,255,.99), rgba(248,251,255,.94));
+          border:1px solid rgba(191,219,254,.92);
+          box-shadow:
+            0 18px 44px rgba(15,23,42,.065),
+            inset 0 1px 0 rgba(255,255,255,.9);
+        }
+
+        .realestate-head::after{
+          content:"";
+          position:absolute;
+          inset:auto 18px 0 18px;
+          height:1px;
+          background:linear-gradient(90deg, transparent, rgba(37,99,235,.42), transparent);
+        }
+
+        .realestate-head-titlebox span{
+          display:inline-flex;
+          align-items:center;
+          gap:7px;
+          padding:7px 12px;
+          border-radius:999px;
+          background:linear-gradient(135deg,#eff6ff,#dbeafe);
+          color:#1d4ed8;
+          font-size:10px;
+          font-weight:950;
+          margin-bottom:9px;
+          letter-spacing:.08em;
+          text-transform:uppercase;
+          border:1px solid rgba(191,219,254,.9);
+          box-shadow:0 10px 22px rgba(37,99,235,.10);
+        }
+
+        .realestate-head-titlebox span::before{
+          content:"";
+          width:7px;
+          height:7px;
+          border-radius:999px;
+          background:#2563eb;
+          box-shadow:0 0 0 4px rgba(37,99,235,.12);
+        }
+
+        .realestate-title{
+          margin:0;
+          font-size:clamp(30px,3.4vw,48px);
+          line-height:.96;
+          font-weight:950;
+          letter-spacing:-.06em;
+          color:#07142d;
+        }
+
+        .realestate-mobile-filter-row{
+          display:none;
+          justify-content:flex-end;
+          margin-bottom:12px;
+        }
+
+        .realestate-filter-toggle{
+          height:44px;
+          padding:0 18px;
+          border-radius:999px;
+          border:1px solid rgba(191,219,254,.95);
+          background:linear-gradient(135deg,#ffffff,#eff6ff);
+          color:#1d4ed8;
+          cursor:pointer;
+          display:inline-flex;
+          align-items:center;
+          justify-content:center;
+          box-shadow:0 12px 26px rgba(37,99,235,.10);
+          font-size:13px;
+          font-weight:950;
+        }
+
+        .realestate-filters{
+          position:relative;
+          overflow:hidden;
+          background:
+            radial-gradient(circle at 7% 0%, rgba(37,99,235,.10), transparent 30%),
+            radial-gradient(circle at 96% 8%, rgba(14,165,233,.10), transparent 28%),
+            linear-gradient(180deg, rgba(255,255,255,.99), rgba(248,251,255,.95));
+          border:1px solid rgba(191,219,254,.88);
+          border-radius:26px;
+          padding:18px;
+          box-shadow:
+            0 18px 44px rgba(15,23,42,.06),
+            inset 0 1px 0 rgba(255,255,255,.85);
+          margin-bottom:18px;
+        }
+
+        .realestate-filters::before{
+          content:"";
+          position:absolute;
+          left:18px;
+          right:18px;
+          top:0;
+          height:1px;
+          background:linear-gradient(90deg, transparent, rgba(37,99,235,.35), transparent);
+        }
+
+        .realestate-filter-grid{
+          display:grid;
+          grid-template-columns:1.45fr repeat(3,minmax(0,1fr));
+          gap:12px;
+          align-items:end;
+        }
+
+        .realestate-filter-grid label{
+          display:block;
+          font-size:10.5px;
+          font-weight:950;
+          color:#334155;
+          margin-bottom:7px;
+          letter-spacing:.02em;
+        }
+
+        .realestate-filter-grid input{
+          width:100%;
+          height:44px;
+          padding:0 13px;
+          border-radius:15px;
+          border:1px solid #dbeafe;
+          outline:none;
+          font-size:13px;
+          font-weight:750;
+          background:rgba(255,255,255,.96);
+          color:#0f172a;
+          box-sizing:border-box;
+          box-shadow:0 8px 18px rgba(15,23,42,.035);
+          transition:border-color .18s ease, box-shadow .18s ease, background .18s ease;
+        }
+
+        .realestate-filter-grid input:focus{
+          border-color:#60a5fa;
+          box-shadow:0 0 0 4px rgba(37,99,235,.10);
+          background:#fff;
+        }
+
+        .realestate-filter-grid input::placeholder{
+          color:#94a3b8;
+          font-weight:750;
+        }
+
+        .realestate-filter-bottom{
+          margin-top:13px;
+          display:flex;
+          justify-content:space-between;
+          gap:10px;
+          flex-wrap:wrap;
+          align-items:center;
+          color:#64748b;
+          font-size:13px;
+          font-weight:850;
+        }
+
+        .realestate-filter-bottom strong{
+          color:#1d4ed8;
+          font-weight:950;
+        }
+
+        .realestate-filter-bottom button{
+          min-height:38px;
+          padding:0 15px;
+          border-radius:999px;
+          border:1px solid #bfdbfe;
+          background:#fff;
+          color:#1d4ed8;
+          font-size:12.5px;
+          font-weight:950;
+          cursor:pointer;
+          box-shadow:0 10px 22px rgba(37,99,235,.08);
+        }
+
+        .realestate-empty{
+          background:#fff;
+          border:1px solid #e2e8f0;
+          border-radius:20px;
+          padding:32px 20px;
+          text-align:center;
+          color:#64748b;
+          font-size:13px;
+          font-weight:850;
+        }
+
+        .realestate-post-grid{
+          display:grid;
+          grid-template-columns:repeat(3,minmax(0,1fr));
+          gap:15px;
+          align-items:start;
+          width:100%;
+          max-width:1420px;
+          margin:0 auto;
+        }
+
+        @media(max-width:1100px){
+          .realestate-filter-grid{
+            grid-template-columns:repeat(2,minmax(0,1fr));
+          }
+
+          .realestate-filter-grid > div:first-child{
+            grid-column:1 / -1;
+          }
+
+          .realestate-post-grid{
+            grid-template-columns:repeat(2,minmax(0,1fr));
+            gap:12px;
+          }
+        }
+
+        @media(max-width:640px){
+          .realestate-section{
+            margin-bottom:34px;
+            padding:0;
+          }
+
+          .realestate-head{
+            padding:18px 16px;
+            border-radius:22px;
+            margin-bottom:12px;
+          }
+
+          .realestate-head-titlebox span{
+            font-size:9px;
+            padding:6px 10px;
+            margin-bottom:8px;
+          }
+
+          .realestate-title{
+            font-size:32px;
+            line-height:.95;
+          }
+
+          .realestate-mobile-filter-row{
+            display:flex;
+          }
+
+          .realestate-filter-toggle{
+            height:42px;
+            padding:0 14px;
+            font-size:12px;
+          }
+
+          .realestate-filters{
+            display:none;
+            padding:14px;
+            border-radius:22px;
+            margin-bottom:14px;
+          }
+
+          .realestate-filters.show{
+            display:block;
+          }
+
+          .realestate-filter-grid{
+            grid-template-columns:repeat(2,minmax(0,1fr));
+            gap:10px;
+          }
+
+          .realestate-filter-grid > div:first-child{
+            grid-column:1 / -1;
+          }
+
+          .realestate-filter-grid label{
+            font-size:10.5px;
+            margin-bottom:6px;
+          }
+
+          .realestate-filter-grid input{
+            height:46px;
+            border-radius:14px;
+            font-size:13px;
+            padding:0 12px;
+          }
+
+          .realestate-filter-bottom{
+            font-size:12px;
+            margin-top:12px;
+          }
+
+          .realestate-filter-bottom button{
+            min-height:42px;
+            padding:0 15px;
+            font-size:12px;
+          }
+
+          .realestate-post-grid{
+  grid-template-columns:1fr;
+}
+  .realestate-post-grid{
+  gap:12px;
+}
+
+.realestate-section{
+  padding:0 10px;
+}
+        }
+
+        @media(max-width:360px){
+          .realestate-title{
+            font-size:29px;
+          }
+
+          .realestate-filter-grid input{
+            height:42px;
+            font-size:12.5px;
+          }
+        }
+
+        @media(max-width:330px){
+          .realestate-post-grid{
+            grid-template-columns:1fr;
+          }
+        }
+      `}</style>
+    </>
   );
 }

@@ -187,7 +187,6 @@ const quillFormats = [
   "video"
 ];
 
-
 const normalizeUrl = (url = "") => {
   const clean = url.trim();
   if (!clean) return "";
@@ -219,12 +218,10 @@ export default function AdminPostForm({
   addOfferFeature,
   removeOfferFeature,
   handleOfferFeatureChange
-  
 }) {
   const isJobPost = formData.category === "konkurse-pune";
   const isNewsCategory = ["vendi", "rajoni", "bota"].includes(formData.category);
 
-  
   return (
     <div
       style={{
@@ -492,8 +489,8 @@ export default function AdminPostForm({
               <div>
                 <label style={labelStyle}>Lloji i pronës</label>
                 <select
-                  name="propertyType"
-                  value={formData.propertyType || ""}
+                  name="property_type"
+                  value={formData.property_type || ""}
                   onChange={handleChange}
                   style={inputStyle}
                 >
@@ -510,8 +507,8 @@ export default function AdminPostForm({
               <div>
                 <label style={labelStyle}>Lloji i shpalljes</label>
                 <select
-                  name="listingType"
-                  value={formData.listingType || ""}
+                  name="purpose"
+                  value={formData.purpose || ""}
                   onChange={handleChange}
                   style={inputStyle}
                 >
@@ -561,12 +558,36 @@ export default function AdminPostForm({
               </div>
 
               <div>
+                <label style={labelStyle}>Viti i ndërtimit</label>
+                <input
+                  type="text"
+                  name="year_built"
+                  placeholder="p.sh. 2020"
+                  value={formData.year_built || ""}
+                  onChange={handleChange}
+                  style={inputStyle}
+                />
+              </div>
+
+              <div>
                 <label style={labelStyle}>Dhoma</label>
                 <input
                   type="number"
                   name="rooms"
                   placeholder="p.sh. 3"
                   value={formData.rooms || ""}
+                  onChange={handleChange}
+                  style={inputStyle}
+                />
+              </div>
+
+              <div>
+                <label style={labelStyle}>Dhoma gjumi</label>
+                <input
+                  type="number"
+                  name="bedrooms"
+                  placeholder="p.sh. 2"
+                  value={formData.bedrooms || ""}
                   onChange={handleChange}
                   style={inputStyle}
                 />
@@ -583,154 +604,313 @@ export default function AdminPostForm({
                   style={inputStyle}
                 />
               </div>
+
+              <div>
+                <label style={labelStyle}>Kati</label>
+                <input
+                  type="text"
+                  name="floor"
+                  placeholder="p.sh. 4"
+                  value={formData.floor || ""}
+                  onChange={handleChange}
+                  style={inputStyle}
+                />
+              </div>
+
+              <div>
+                <label style={labelStyle}>Orientimi</label>
+                <select
+                  name="orientation"
+                  value={formData.orientation || ""}
+                  onChange={handleChange}
+                  style={inputStyle}
+                >
+                  <option value="">Zgjedh orientimin</option>
+                  <option value="Lindje">Lindje</option>
+                  <option value="Perëndim">Perëndim</option>
+                  <option value="Veri">Veri</option>
+                  <option value="Jug">Jug</option>
+                  <option value="Jug-Lindje">Jug-Lindje</option>
+                  <option value="Jug-Perëndim">Jug-Perëndim</option>
+                  <option value="Veri-Lindje">Veri-Lindje</option>
+                  <option value="Veri-Perëndim">Veri-Perëndim</option>
+                </select>
+              </div>
+
+              <div>
+                <label style={labelStyle}>Lagjja</label>
+                <input
+                  type="text"
+                  name="neighborhood"
+                  placeholder="p.sh. Dardania"
+                  value={formData.neighborhood || ""}
+                  onChange={handleChange}
+                  style={inputStyle}
+                />
+              </div>
+
+              <div>
+                <label style={labelStyle}>Adresa</label>
+                <input
+                  type="text"
+                  name="address"
+                  placeholder="p.sh. Rr. B"
+                  value={formData.address || ""}
+                  onChange={handleChange}
+                  style={inputStyle}
+                />
+              </div>
+
+              <div>
+                <label style={labelStyle}>Parking / Garazh</label>
+                <select
+                  name="parking"
+                  value={formData.parking || ""}
+                  onChange={handleChange}
+                  style={inputStyle}
+                >
+                  <option value="">Zgjedh</option>
+                  <option value="Po">Po</option>
+                  <option value="Jo">Jo</option>
+                  <option value="Garazh">Garazh</option>
+                  <option value="Parking privat">Parking privat</option>
+                </select>
+              </div>
+
+              <div>
+                <label style={labelStyle}>Ashensor</label>
+                <select
+                  name="elevator"
+                  value={formData.elevator || ""}
+                  onChange={handleChange}
+                  style={inputStyle}
+                >
+                  <option value="">Zgjedh</option>
+                  <option value="Po">Po</option>
+                  <option value="Jo">Jo</option>
+                </select>
+              </div>
+
+              <div>
+                <label style={labelStyle}>Ballkon / Terasë</label>
+                <select
+                  name="balcony"
+                  value={formData.balcony || ""}
+                  onChange={handleChange}
+                  style={inputStyle}
+                >
+                  <option value="">Zgjedh</option>
+                  <option value="Po">Po</option>
+                  <option value="Jo">Jo</option>
+                  <option value="Ballkon">Ballkon</option>
+                  <option value="Terasë">Terasë</option>
+                  <option value="Ballkon + Terasë">Ballkon + Terasë</option>
+                </select>
+              </div>
+
+              <div>
+                <label style={labelStyle}>Ngrohja</label>
+                <input
+                  type="text"
+                  name="heating"
+                  placeholder="p.sh. Qendrore, rrymë, pelet"
+                  value={formData.heating || ""}
+                  onChange={handleChange}
+                  style={inputStyle}
+                />
+              </div>
+
+              <div>
+                <label style={labelStyle}>Mobilimi</label>
+                <select
+                  name="furnishing"
+                  value={formData.furnishing || ""}
+                  onChange={handleChange}
+                  style={inputStyle}
+                >
+                  <option value="">Zgjedh</option>
+                  <option value="E mobiluar">E mobiluar</option>
+                  <option value="Gjysmë e mobiluar">Gjysmë e mobiluar</option>
+                  <option value="E pamobiluar">E pamobiluar</option>
+                </select>
+              </div>
+
+              <div>
+                <label style={labelStyle}>Dokumentacioni</label>
+                <input
+                  type="text"
+                  name="legal_status"
+                  placeholder="p.sh. Me fletë poseduese"
+                  value={formData.legal_status || ""}
+                  onChange={handleChange}
+                  style={inputStyle}
+                />
+              </div>
+
+              <div>
+                <label style={labelStyle}>Pronësia</label>
+                <input
+                  type="text"
+                  name="ownership"
+                  placeholder="p.sh. Pronar / Agjenci"
+                  value={formData.ownership || ""}
+                  onChange={handleChange}
+                  style={inputStyle}
+                />
+              </div>
+
+              <div style={{ gridColumn: "1 / -1" }}>
+                <label style={labelStyle}>Karakteristikat</label>
+                <input
+                  type="text"
+                  name="features"
+                  placeholder="p.sh. Parking, Ashensor, Ballkon, Internet"
+                  value={formData.features || ""}
+                  onChange={handleChange}
+                  style={inputStyle}
+                />
+              </div>
             </div>
           </div>
         )}
+
         {formData.category === "automjete" && (
-  <div style={sectionCard}>
-    <h3 style={sectionTitle}>Detajet e automjetit</h3>
-    <p style={sectionText}>
-      Plotëso të dhënat kryesore të veturës që shfaqen në faqe.
-    </p>
+          <div style={sectionCard}>
+            <h3 style={sectionTitle}>Detajet e automjetit</h3>
+            <p style={sectionText}>
+              Plotëso të dhënat kryesore të veturës që shfaqen në faqe.
+            </p>
 
-    <div
-      style={{
-        display: "grid",
-        gridTemplateColumns: "repeat(2,minmax(0,1fr))",
-        gap: "14px"
-      }}
-    >
-      <input name="mileage" placeholder="Kilometrazh (p.sh. 198000)" value={formData.mileage || ""} onChange={handleChange} style={inputStyle}/>
-      <input name="power" placeholder="Fuqia (hp)" value={formData.power || ""} onChange={handleChange} style={inputStyle}/>
-      <input name="transmission" placeholder="Transmetimi (Automatic / Manual)" value={formData.transmission || ""} onChange={handleChange} style={inputStyle}/>
-      <input name="drive_type" placeholder="Sistemi (FWD / AWD / 4x4)" value={formData.drive_type || ""} onChange={handleChange} style={inputStyle}/>
-      <input name="fuel_type" placeholder="Karburanti (Diesel / Benzin)" value={formData.fuel_type || ""} onChange={handleChange} style={inputStyle}/>
-      <input name="vehicle_year" placeholder="Viti" value={formData.vehicle_year || ""} onChange={handleChange} style={inputStyle}/>
-
-      <input name="body_type" placeholder="Lloji i automjetit (SUV, Sedan)" value={formData.body_type || ""} onChange={handleChange} style={inputStyle}/>
-      <input name="series" placeholder="Seria" value={formData.series || ""} onChange={handleChange} style={inputStyle}/>
-      <input name="doors" placeholder="Dyert" value={formData.doors || ""} onChange={handleChange} style={inputStyle}/>
-      <input name="seats" placeholder="Ulëset" value={formData.seats || ""} onChange={handleChange} style={inputStyle}/>
-      <input name="exterior_color" placeholder="Ngjyra e jashtme" value={formData.exterior_color || ""} onChange={handleChange} style={inputStyle}/>
-      <input name="interior_color" placeholder="Ngjyra e brendshme" value={formData.interior_color || ""} onChange={handleChange} style={inputStyle}/>
-      <input name="weight" placeholder="Pesha (kg)" value={formData.weight || ""} onChange={handleChange} style={inputStyle}/>
-      <input name="engine_capacity" placeholder="Motorri (p.sh. 2993)" value={formData.engine_capacity || ""} onChange={handleChange} style={inputStyle}/>
-      <input name="vehicle_condition" placeholder="Kushti (I ri / I përdorur)" value={formData.vehicle_condition || ""} onChange={handleChange} style={inputStyle}/>
-      
-      <input name="location" placeholder="Lokacioni (p.sh. Prishtinë)" value={formData.location || ""} onChange={handleChange} style={inputStyle}/>
-    </div>
-  </div>
-)}
+            <div
+              className="admin-form-grid"
+              style={{
+                display: "grid",
+                gridTemplateColumns: "repeat(2,minmax(0,1fr))",
+                gap: "14px"
+              }}
+            >
+              <input name="mileage" placeholder="Kilometrazh (p.sh. 198000)" value={formData.mileage || ""} onChange={handleChange} style={inputStyle} />
+              <input name="power" placeholder="Fuqia (hp)" value={formData.power || ""} onChange={handleChange} style={inputStyle} />
+              <input name="transmission" placeholder="Transmetimi (Automatic / Manual)" value={formData.transmission || ""} onChange={handleChange} style={inputStyle} />
+              <input name="drive_type" placeholder="Sistemi (FWD / AWD / 4x4)" value={formData.drive_type || ""} onChange={handleChange} style={inputStyle} />
+              <input name="fuel_type" placeholder="Karburanti (Diesel / Benzin)" value={formData.fuel_type || ""} onChange={handleChange} style={inputStyle} />
+              <input name="vehicle_year" placeholder="Viti" value={formData.vehicle_year || ""} onChange={handleChange} style={inputStyle} />
+              <input name="body_type" placeholder="Lloji i automjetit (SUV, Sedan)" value={formData.body_type || ""} onChange={handleChange} style={inputStyle} />
+              <input name="series" placeholder="Seria" value={formData.series || ""} onChange={handleChange} style={inputStyle} />
+              <input name="doors" placeholder="Dyert" value={formData.doors || ""} onChange={handleChange} style={inputStyle} />
+              <input name="seats" placeholder="Ulëset" value={formData.seats || ""} onChange={handleChange} style={inputStyle} />
+              <input name="exterior_color" placeholder="Ngjyra e jashtme" value={formData.exterior_color || ""} onChange={handleChange} style={inputStyle} />
+              <input name="interior_color" placeholder="Ngjyra e brendshme" value={formData.interior_color || ""} onChange={handleChange} style={inputStyle} />
+              <input name="weight" placeholder="Pesha (kg)" value={formData.weight || ""} onChange={handleChange} style={inputStyle} />
+              <input name="engine_capacity" placeholder="Motorri (p.sh. 2993)" value={formData.engine_capacity || ""} onChange={handleChange} style={inputStyle} />
+              <input name="vehicle_condition" placeholder="Kushti (I ri / I përdorur)" value={formData.vehicle_condition || ""} onChange={handleChange} style={inputStyle} />
+              <input name="location" placeholder="Lokacioni (p.sh. Prishtinë)" value={formData.location || ""} onChange={handleChange} style={inputStyle} />
+            </div>
+          </div>
+        )}
 
         {isJobPost && (
-  <div style={sectionCard}>
-    <h3 style={sectionTitle}>Detajet e konkursit</h3>
-    <p style={sectionText}>
-      Informata kryesore që shfaqen në kartelë dhe në detaje.
-    </p>
+          <div style={sectionCard}>
+            <h3 style={sectionTitle}>Detajet e konkursit</h3>
+            <p style={sectionText}>
+              Informata kryesore që shfaqen në kartelë dhe në detaje.
+            </p>
 
-    <div
-      style={{
-        display: "grid",
-        gridTemplateColumns: "repeat(2,minmax(0,1fr))",
-        gap: "14px"
-      }}
-    >
+            <div
+              className="admin-form-grid"
+              style={{
+                display: "grid",
+                gridTemplateColumns: "repeat(2,minmax(0,1fr))",
+                gap: "14px"
+              }}
+            >
+              <div>
+                <label style={labelStyle}>Kompania</label>
+                <input
+                  type="text"
+                  name="company_name"
+                  placeholder="p.sh. Dent Line"
+                  value={formData.company_name || ""}
+                  onChange={handleChange}
+                  style={inputStyle}
+                />
+              </div>
 
-      {/* KOMPANIA */}
-      <div>
-        <label style={labelStyle}>Kompania</label>
-        <input
-          type="text"
-          name="company_name"
-          placeholder="p.sh. Dent Line"
-          value={formData.company_name || ""}
-          onChange={handleChange}
-          style={inputStyle}
-        />
-      </div>
+              <div>
+                <label style={labelStyle}>Kategoritë</label>
+                <select
+                  name="job_category"
+                  value={formData.job_category || ""}
+                  onChange={handleChange}
+                  style={inputStyle}
+                >
+                  <option value="">Zgjedh kategorinë</option>
+                  <option value="Mjekësi">Mjekësi</option>
+                  <option value="IT">IT</option>
+                  <option value="Marketing">Marketing</option>
+                  <option value="Shitje">Shitje</option>
+                  <option value="Administratë">Administratë</option>
+                  <option value="Ndërtimtari">Ndërtimtari</option>
+                  <option value="Prodhimtari">Prodhimtari</option>
+                </select>
+              </div>
 
-      {/* KATEGORIA */}
-      <div>
-        <label style={labelStyle}>Kategoritë</label>
-        <select
-          name="job_category"
-          value={formData.job_category || ""}
-          onChange={handleChange}
-          style={inputStyle}
-        >
-          <option value="">Zgjedh kategorinë</option>
-          <option value="Mjekësi">Mjekësi</option>
-          <option value="IT">IT</option>
-          <option value="Marketing">Marketing</option>
-          <option value="Shitje">Shitje</option>
-          <option value="Administratë">Administratë</option>
-          <option value="Ndërtimtari">Ndërtimtari</option>
-          <option value="Prodhimtari">Prodhimtari</option>
-        </select>
-      </div>
+              <div>
+                <label style={labelStyle}>Vendi i punës</label>
+                <input
+                  type="text"
+                  name="job_location"
+                  placeholder="p.sh. Prishtinë"
+                  value={formData.job_location || ""}
+                  onChange={handleChange}
+                  style={inputStyle}
+                />
+              </div>
 
-      {/* VENDI I PUNËS */}
-      <div>
-        <label style={labelStyle}>Vendi i punës</label>
-        <input
-          type="text"
-          name="job_location"
-          placeholder="p.sh. Prishtinë"
-          value={formData.job_location || ""}
-          onChange={handleChange}
-          style={inputStyle}
-        />
-      </div>
+              <div>
+                <label style={labelStyle}>Numri i pozitave</label>
+                <input
+                  type="number"
+                  name="positions_count"
+                  placeholder="p.sh. 5"
+                  value={formData.positions_count || ""}
+                  onChange={handleChange}
+                  style={inputStyle}
+                />
+              </div>
 
-      {/* NUMRI I POZITAVE */}
-      <div>
-        <label style={labelStyle}>Numri i pozitave</label>
-        <input
-          type="number"
-          name="positions_count"
-          placeholder="p.sh. 5"
-          value={formData.positions_count || ""}
-          onChange={handleChange}
-          style={inputStyle}
-        />
-      </div>
+              <div>
+                <label style={labelStyle}>Përvoja</label>
+                <select
+                  name="experience"
+                  value={formData.experience || ""}
+                  onChange={handleChange}
+                  style={inputStyle}
+                >
+                  <option value="">Zgjedh përvojën</option>
+                  <option value="No Experience">No Experience</option>
+                  <option value="1-2 Experience">1-2 Experience</option>
+                  <option value="3-5 Experience">3-5 Experience</option>
+                  <option value="5+ Experience">5+ Experience</option>
+                </select>
+              </div>
 
-      {/* EXPERIENCA */}
-      <div>
-        <label style={labelStyle}>Përvoja</label>
-        <select
-          name="experience"
-          value={formData.experience || ""}
-          onChange={handleChange}
-          style={inputStyle}
-        >
-          <option value="">Zgjedh përvojën</option>
-          <option value="No Experience">No Experience</option>
-          <option value="1-2 Experience">1-2 Experience</option>
-          <option value="3-5 Experience">3-5 Experience</option>
-          <option value="5+ Experience">5+ Experience</option>
-        </select>
-      </div>
-
-      {/* ORARI */}
-      <div>
-        <label style={labelStyle}>Orët e punës</label>
-        <select
-          name="work_hours"
-          value={formData.work_hours || ""}
-          onChange={handleChange}
-          style={inputStyle}
-        >
-          <option value="">Zgjedh</option>
-          <option value="Full Time">Full Time</option>
-          <option value="Part Time">Part Time</option>
-        </select>
-      </div>
-
-    </div>
-  </div>
-)}
+              <div>
+                <label style={labelStyle}>Orët e punës</label>
+                <select
+                  name="work_hours"
+                  value={formData.work_hours || ""}
+                  onChange={handleChange}
+                  style={inputStyle}
+                >
+                  <option value="">Zgjedh</option>
+                  <option value="Full Time">Full Time</option>
+                  <option value="Part Time">Part Time</option>
+                </select>
+              </div>
+            </div>
+          </div>
+        )}
 
         {showContactFields && (
           <div style={sectionCard}>
@@ -790,28 +970,28 @@ export default function AdminPostForm({
             }}
           >
             <input
-  type="text"
-  name="link_text"
-  placeholder="p.sh. Apliko këtu"
-  value={formData.link_text || ""}
-  onChange={handleChange}
-  style={inputStyle}
-/>
+              type="text"
+              name="link_text"
+              placeholder="p.sh. Apliko këtu"
+              value={formData.link_text || ""}
+              onChange={handleChange}
+              style={inputStyle}
+            />
 
-<input
-  type="url"
-  name="link_url"
-  placeholder="https://example.com"
-  value={formData.link_url || ""}
-  onChange={handleChange}
-  onBlur={() => {
-    const fixed = normalizeUrl(formData.link_url || "");
-    handleChange({
-      target: { name: "link_url", value: fixed }
-    });
-  }}
-  style={inputStyle}
-/>
+            <input
+              type="url"
+              name="link_url"
+              placeholder="https://example.com"
+              value={formData.link_url || ""}
+              onChange={handleChange}
+              onBlur={() => {
+                const fixed = normalizeUrl(formData.link_url || "");
+                handleChange({
+                  target: { name: "link_url", value: fixed }
+                });
+              }}
+              style={inputStyle}
+            />
           </div>
 
           {formData.link_url && (

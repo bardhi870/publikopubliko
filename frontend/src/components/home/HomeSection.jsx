@@ -1,13 +1,47 @@
 import React from "react";
 import { Link } from "react-router-dom";
 
-import CategoryPosts from "../posts/CategoryPosts";
 import VehicleCategoryPosts from "../posts/VehicleCategoryPosts";
 import RealEstateCategoryPosts from "../posts/RealEstateCategoryPosts";
 import JobCategoryPosts from "../posts/JobCategoryPosts";
 
+const META = {
+  patundshmeri: {
+    eyebrow: "Prona",
+    badge: "Premium listings",
+    letter: "P",
+    link: "/kategori/patundshmeri",
+    className: "realestate"
+  },
+  automjete: {
+    eyebrow: "Auto",
+    badge: "Të reja",
+    letter: "A",
+    link: "/kategori/automjete",
+    className: "vehicles"
+  },
+  "konkurse-pune": {
+    eyebrow: "Karrierë",
+    badge: "Pozita aktive",
+    letter: "K",
+    link: "/kategori/konkurse-pune",
+    className: "jobs"
+  }
+};
+
 export default function HomeSection({ title, category, subtitle }) {
-  const normalizedCategory = String(category || "").toLowerCase();
+  const normalizedCategory = String(category || "")
+    .trim()
+    .toLowerCase()
+    .replace(/\s+/g, "-");
+
+  const meta = META[normalizedCategory] || {
+    eyebrow: "Publikime",
+    badge: "Të fundit",
+    letter: "P",
+    link: `/kategori/${normalizedCategory}`,
+    className: "default"
+  };
 
   const renderPosts = () => {
     if (normalizedCategory === "automjete") {
@@ -16,8 +50,8 @@ export default function HomeSection({ title, category, subtitle }) {
           title=""
           category="automjete"
           variant="home"
-          initialLimit={8}
-          showMoreStep={8}
+          initialLimit={6}
+          showMoreStep={6}
         />
       );
     }
@@ -31,8 +65,8 @@ export default function HomeSection({ title, category, subtitle }) {
           title=""
           category="patundshmeri"
           variant="home"
-          initialLimit={8}
-          showMoreStep={8}
+          initialLimit={6}
+          showMoreStep={6}
         />
       );
     }
@@ -46,34 +80,33 @@ export default function HomeSection({ title, category, subtitle }) {
           title=""
           category="konkurse-pune"
           variant="home"
-          initialLimit={8}
-          showMoreStep={8}
+          initialLimit={6}
+          showMoreStep={6}
         />
       );
     }
 
-    return (
-      <CategoryPosts
-        title=""
-        category={category}
-        variant="home"
-        initialLimit={8}
-        showMoreStep={8}
-      />
-    );
+    return null;
   };
 
   return (
-    <section className="home-section">
+    <section className={`home-section home-section-${meta.className}`}>
       <div className="home-section-head">
-        <div>
-          <div className="section-eyebrow">Publikime</div>
+        <div className="home-section-heading">
+          <div className="section-eyebrow">
+            <span className="home-section-logo">{meta.letter}</span>
+            <span>{meta.eyebrow}</span>
+            <b>{meta.badge}</b>
+          </div>
+
           <h2 className="home-section-title">{title}</h2>
-          <p className="home-section-subtitle">{subtitle}</p>
+
+          {subtitle && <p className="home-section-subtitle">{subtitle}</p>}
         </div>
 
-        <Link to={`/kategori/${category}`} className="home-section-link">
+        <Link to={meta.link} className="home-section-link">
           Shiko më shumë
+          <span>→</span>
         </Link>
       </div>
 

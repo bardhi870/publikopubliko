@@ -5,6 +5,7 @@ import PublicHeader from "../../../components/layout/PublicHeader";
 import PublicFooter from "../../../components/layout/PublicFooter";
 import NewsCard from "../../../components/news/NewsCard";
 import AdSlot from "../../../components/ads/AdSlot";
+import { trackEvent } from "../../../utils/analytics";
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
 const HERO_VIDEO_URL =
@@ -132,6 +133,28 @@ export default function NewsCategoryPage() {
   const [allPosts, setAllPosts] = useState([]);
   const [posts, setPosts] = useState([]);
   const [loading, setLoading] = useState(true);
+  useEffect(() => {
+  trackEvent({
+    event_type: "page_view",
+    page_url: window.location.pathname,
+    category: category || "lajme"
+  });
+}, [category]);
+
+useEffect(() => {
+  const startTime = Date.now();
+
+  return () => {
+    const duration = Math.floor((Date.now() - startTime) / 1000);
+
+    trackEvent({
+      event_type: "time_on_page",
+      duration_seconds: duration,
+      page_url: window.location.pathname,
+      category: category || "lajme"
+    });
+  };
+}, [category]);
 
   const config = categoryConfig[category] || {
     title: "Lajme",
@@ -325,7 +348,19 @@ export default function NewsCategoryPage() {
                           <span>{section.badge}</span>
                           <h3>{section.title}</h3>
                         </div>
-
+<Link
+  to={section.link}
+  onClick={() =>
+    trackEvent({
+      event_type: "category_click",
+      category: section.category,
+      page_url: window.location.pathname,
+      element_name: "portal_extra_view_all"
+    })
+  }
+>
+  Shiko të gjitha →
+</Link>
                         <Link to={section.link}>Shiko të gjitha →</Link>
                       </div>
 

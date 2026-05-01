@@ -4,6 +4,7 @@ import PublicHeader from "../../../components/layout/PublicHeader";
 import PublicFooter from "../../../components/layout/PublicFooter";
 import NewsCard from "../../../components/news/NewsCard";
 import NewsMediaSlider from "../../../components/news/NewsMediaSlider";
+import { trackEvent } from "../../../utils/analytics";
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
 
@@ -191,6 +192,28 @@ export default function NewsArticlePage() {
   const [allPosts, setAllPosts] = useState([]);
   const [post, setPost] = useState(null);
   const [loading, setLoading] = useState(true);
+  useEffect(() => {
+  trackEvent({
+    event_type: "page_view",
+    page_url: window.location.pathname,
+    category: post?.category || "lajme"
+  });
+}, [post?.id]);
+useEffect(() => {
+  const startTime = Date.now();
+
+  return () => {
+    const duration = Math.floor((Date.now() - startTime) / 1000);
+
+    trackEvent({
+      event_type: "time_on_page",
+      duration_seconds: duration,
+      page_url: window.location.pathname,
+      category: post?.category || "lajme",
+      post_id: post?.id
+    });
+  };
+}, [post?.id]);
 
   useEffect(() => {
     fetch(`${API_URL}/api/posts`)
@@ -420,24 +443,32 @@ export default function NewsArticlePage() {
                 </h1>
 
                 {externalLink && (
-                  <a
-                    href={normalizeUrl(externalLink)}
-                    target="_blank"
-                    rel="noreferrer"
-                    style={{
-                      display: "inline-flex",
-                      marginTop: "20px",
-                      padding: "13px 18px",
-                      background: "#2563eb",
-                      color: "#fff",
-                      textDecoration: "none",
-                      fontWeight: 900,
-                      fontSize: "14px",
-                    }}
-                  >
-                    {externalLinkLabel} →
-                  </a>
-                )}
+  <a
+    href={normalizeUrl(externalLink)}
+    target="_blank"
+    rel="noreferrer"
+    onClick={() =>
+      trackEvent({
+        event_type: "post_click",
+        element_name: "external_link",
+        post_id: post?.id,
+        page_url: window.location.pathname
+      })
+    }
+    style={{
+      display: "inline-flex",
+      marginTop: "20px",
+      padding: "13px 18px",
+      background: "#2563eb",
+      color: "#fff",
+      textDecoration: "none",
+      fontWeight: 900,
+      fontSize: "14px",
+    }}
+  >
+    {externalLinkLabel} →
+  </a>
+)}
               </div>
             </section>
 

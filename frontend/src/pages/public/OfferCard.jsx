@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useMemo } from "react";
 
 function parseOfferFeatures(value) {
   if (!value) return [];
@@ -54,9 +54,7 @@ function hexToRgba(hex, alpha) {
       .join("");
   }
 
-  if (clean.length !== 6) {
-    return `rgba(15,23,42,${alpha})`;
-  }
+  if (clean.length !== 6) return `rgba(15,23,42,${alpha})`;
 
   const bigint = parseInt(clean, 16);
   const r = (bigint >> 16) & 255;
@@ -78,9 +76,7 @@ function getContrastColor(hex) {
       .join("");
   }
 
-  if (clean.length !== 6) {
-    return "#ffffff";
-  }
+  if (clean.length !== 6) return "#ffffff";
 
   const r = parseInt(clean.slice(0, 2), 16);
   const g = parseInt(clean.slice(2, 4), 16);
@@ -91,20 +87,6 @@ function getContrastColor(hex) {
 }
 
 export default function OfferCard({ offer, featured = false }) {
-  const [screenWidth, setScreenWidth] = useState(
-    typeof window !== "undefined" ? window.innerWidth : 1280
-  );
-  const [isHovered, setIsHovered] = useState(false);
-
-  useEffect(() => {
-    const onResize = () => setScreenWidth(window.innerWidth);
-    window.addEventListener("resize", onResize);
-    return () => window.removeEventListener("resize", onResize);
-  }, []);
-
-  const isMobile = screenWidth <= 768;
-  const isTablet = screenWidth > 768 && screenWidth <= 1100;
-
   const features = useMemo(() => {
     return parseOfferFeatures(
       offer?.offer_features ?? offer?.offerFeatures ?? offer?.services
@@ -125,262 +107,442 @@ export default function OfferCard({ offer, featured = false }) {
   const hasContacts = hasPhone || hasWhatsapp || hasMessenger;
   const hasFeatures = features.length > 0;
 
-  const registerHref = hasWhatsapp
-    ? `https://wa.me/${whatsapp}`
-    : hasPhone
-    ? `tel:${phone}`
-    : hasMessenger
-    ? messenger
-    : undefined;
-
-  const registerTarget = hasWhatsapp || hasMessenger ? "_blank" : undefined;
-  const registerRel = hasWhatsapp || hasMessenger ? "noreferrer" : undefined;
-
-  const wrapperTransform = isMobile
-    ? "none"
-    : isHovered
-    ? isHighlighted
-      ? "translateY(-10px) scale(1.01)"
-      : "translateY(-6px)"
-    : isHighlighted
-    ? "translateY(-4px)"
-    : "none";
-
   const title = offer?.title || "Oferta";
   const description = offer?.description || "";
   const price = formatPrice(offer?.price);
 
-  const backgroundColor =
-    offer?.background_color || offer?.backgroundColor || "#ffffff";
+  const backgroundColor = offer?.background_color || offer?.backgroundColor || "#ffffff";
   const textColor = offer?.text_color || offer?.textColor || "#0f172a";
   const buttonColor = offer?.button_color || offer?.buttonColor || "#2563eb";
   const buttonTextColor = getContrastColor(buttonColor);
 
-  const cardBorderColor = isHighlighted
-    ? hexToRgba(buttonColor, 0.45)
-    : hexToRgba(textColor, 0.12);
+  const registerHref = hasWhatsapp
+    ? `https://wa.me/${whatsapp}`
+    : hasPhone
+      ? `tel:${phone}`
+      : hasMessenger
+        ? messenger
+        : undefined;
 
-  const softTextColor = hexToRgba(textColor, 0.72);
-  const softBorderColor = hexToRgba(textColor, 0.10);
-  const softPanelColor = hexToRgba("#ffffff", 0.58);
+  const registerTarget = hasWhatsapp || hasMessenger ? "_blank" : undefined;
+  const registerRel = hasWhatsapp || hasMessenger ? "noreferrer" : undefined;
 
   return (
-    <div
+    <article
+      className={`offer-card ${isHighlighted ? "offer-card-featured" : ""}`}
       style={{
-        position: "relative",
-        borderRadius: isMobile ? "24px" : "32px",
-        padding: "1px",
-        background: isHighlighted
-          ? `linear-gradient(135deg, ${hexToRgba(buttonColor, 0.95)} 0%, ${hexToRgba(
-              backgroundColor,
-              0.95
-            )} 100%)`
-          : `linear-gradient(135deg, ${hexToRgba(textColor, 0.12)} 0%, ${hexToRgba(
-              backgroundColor,
-              0.85
-            )} 100%)`,
-        boxShadow: isHighlighted
-          ? `0 24px 70px ${hexToRgba(buttonColor, 0.20)}`
-          : "0 18px 48px rgba(15,23,42,0.08)",
-        transform: wrapperTransform,
-        transition: "all .28s ease",
-        overflow: "visible",
-        width: "100%"
-      }}
-      onMouseEnter={() => {
-        if (!isMobile) setIsHovered(true);
-      }}
-      onMouseLeave={() => {
-        if (!isMobile) setIsHovered(false);
+        "--offer-bg": backgroundColor,
+        "--offer-text": textColor,
+        "--offer-muted": hexToRgba(textColor, 0.68),
+        "--offer-soft": hexToRgba(textColor, 0.09),
+        "--offer-border": hexToRgba(textColor, 0.13),
+        "--offer-main": buttonColor,
+        "--offer-main-soft": hexToRgba(buttonColor, 0.14),
+        "--offer-main-shadow": hexToRgba(buttonColor, 0.22),
+        "--offer-btn-text": buttonTextColor
       }}
     >
+      <style>{`
+        .offer-card {
+          position: relative;
+          width: 100%;
+          height: 100%;
+          min-height: 100%;
+          border-radius: 30px;
+          padding: 1px;
+          background: linear-gradient(135deg, var(--offer-border), rgba(255,255,255,.92));
+          box-shadow: 0 18px 50px rgba(15,23,42,.075);
+          overflow: hidden;
+          transform: translateZ(0);
+          transition: transform .22s ease, box-shadow .22s ease;
+        }
+
+        .offer-card-featured {
+          background: linear-gradient(135deg, var(--offer-main), rgba(255,255,255,.96));
+          box-shadow: 0 26px 70px var(--offer-main-shadow);
+        }
+
+        .offer-card:hover {
+          transform: translateY(-6px);
+          box-shadow: 0 28px 76px rgba(15,23,42,.11);
+        }
+
+        .offer-inner {
+          position: relative;
+          height: 100%;
+          border-radius: 29px;
+          padding: 34px 24px 24px;
+          background:
+            radial-gradient(circle at 85% 8%, var(--offer-main-soft), transparent 34%),
+            linear-gradient(180deg, rgba(255,255,255,.96), rgba(255,255,255,.88)),
+            var(--offer-bg);
+          overflow: hidden;
+          display: flex;
+          flex-direction: column;
+          box-sizing: border-box;
+        }
+
+        .offer-card-featured .offer-inner {
+          padding-top: 42px;
+        }
+
+        .offer-badge {
+          position: absolute;
+          top: 14px;
+          left: 16px;
+          right: 16px;
+          z-index: 3;
+          min-height: 34px;
+          border-radius: 999px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          padding: 9px 14px;
+          background: linear-gradient(135deg, var(--offer-main), rgba(15,23,42,.92));
+          color: var(--offer-btn-text);
+          font-size: 12px;
+          font-weight: 950;
+          line-height: 1;
+          box-shadow: 0 12px 26px var(--offer-main-shadow);
+          box-sizing: border-box;
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
+        }
+
+        .offer-head {
+          position: relative;
+          z-index: 2;
+          text-align: center;
+          margin-top: 8px;
+        }
+
+        .offer-title {
+          margin: 0;
+          color: var(--offer-text);
+          font-size: clamp(28px, 3vw, 40px);
+          line-height: 1;
+          font-weight: 950;
+          letter-spacing: -.055em;
+          word-break: break-word;
+        }
+
+        .offer-description {
+          max-width: 360px;
+          margin: 12px auto 0;
+          color: var(--offer-muted);
+          font-size: 14px;
+          line-height: 1.65;
+          font-weight: 650;
+          word-break: break-word;
+        }
+
+        .offer-price {
+          position: relative;
+          z-index: 2;
+          margin: 24px 0 22px;
+          display: flex;
+          justify-content: center;
+          align-items: flex-end;
+          gap: 8px;
+          flex-wrap: wrap;
+          color: var(--offer-text);
+        }
+
+        .offer-price-number {
+          font-size: clamp(44px, 5vw, 58px);
+          line-height: .9;
+          font-weight: 950;
+          letter-spacing: -.075em;
+        }
+
+        .offer-price-euro {
+          font-size: 21px;
+          font-weight: 950;
+          margin-bottom: 6px;
+        }
+
+        .offer-price-tax {
+          font-size: 12.5px;
+          color: var(--offer-muted);
+          font-weight: 750;
+          margin-bottom: 8px;
+        }
+
+        .offer-contacts {
+          position: relative;
+          z-index: 2;
+          display: grid;
+          gap: 10px;
+          margin-bottom: 16px;
+        }
+
+        .offer-contact {
+          min-height: 48px;
+          display: flex;
+          align-items: center;
+          gap: 11px;
+          padding: 12px 13px;
+          border-radius: 16px;
+          background: rgba(255,255,255,.64);
+          border: 1px solid var(--offer-border);
+          color: var(--offer-text);
+          text-decoration: none;
+          font-size: 13.5px;
+          font-weight: 800;
+          box-shadow: 0 8px 18px rgba(15,23,42,.035);
+          box-sizing: border-box;
+          overflow: hidden;
+        }
+
+        .offer-contact-icon {
+          width: 27px;
+          height: 27px;
+          min-width: 27px;
+          border-radius: 999px;
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          font-size: 12px;
+          background: var(--offer-main-soft);
+          color: var(--offer-main);
+          font-weight: 950;
+        }
+
+        .offer-contact-text {
+          min-width: 0;
+          flex: 1;
+          text-align: left;
+          overflow: hidden;
+          text-overflow: ellipsis;
+          white-space: nowrap;
+        }
+
+        .offer-button {
+          position: relative;
+          z-index: 2;
+          width: 100%;
+          min-height: 54px;
+          padding: 16px 18px;
+          border-radius: 18px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          text-align: center;
+          text-decoration: none;
+          border: 1px solid rgba(255,255,255,.22);
+          background: linear-gradient(135deg, var(--offer-main), rgba(15,23,42,.88));
+          color: var(--offer-btn-text);
+          font-weight: 950;
+          font-size: 16px;
+          letter-spacing: .01em;
+          box-shadow: 0 16px 34px var(--offer-main-shadow);
+          margin-bottom: 20px;
+          box-sizing: border-box;
+        }
+
+        .offer-button-disabled {
+          background: rgba(255,255,255,.62);
+          color: var(--offer-muted);
+          border: 1px solid var(--offer-border);
+          box-shadow: none;
+        }
+
+        .offer-features {
+          position: relative;
+          z-index: 2;
+          border-top: 1px solid var(--offer-border);
+          padding-top: 18px;
+          display: grid;
+          gap: 13px;
+          text-align: left;
+          margin-top: auto;
+        }
+
+        .offer-feature {
+          display: flex;
+          align-items: flex-start;
+          gap: 11px;
+        }
+
+        .offer-feature-dot {
+          width: 23px;
+          height: 23px;
+          min-width: 23px;
+          border-radius: 999px;
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          font-size: 12px;
+          font-weight: 950;
+          margin-top: 1px;
+        }
+
+        .offer-feature-dot.yes {
+          background: rgba(16,185,129,.13);
+          color: #059669;
+        }
+
+        .offer-feature-dot.no {
+          background: rgba(239,68,68,.12);
+          color: #ef4444;
+        }
+
+        .offer-feature-text {
+          color: var(--offer-text);
+          font-size: 14px;
+          line-height: 1.55;
+          font-weight: 850;
+          word-break: break-word;
+        }
+
+        .offer-feature.no .offer-feature-text {
+          opacity: .62;
+        }
+
+        .offer-feature-note {
+          margin-top: 4px;
+          color: var(--offer-muted);
+          font-size: 12px;
+          line-height: 1.5;
+          font-weight: 650;
+        }
+
+        .offer-empty-features {
+          color: var(--offer-muted);
+          text-align: center;
+          font-size: 14px;
+          font-weight: 750;
+          padding: 4px 0;
+        }
+
+        @media (max-width: 768px) {
+          .offer-card {
+            border-radius: 24px;
+            box-shadow: 0 14px 34px rgba(15,23,42,.07);
+          }
+
+          .offer-card:hover {
+            transform: none;
+          }
+
+          .offer-inner {
+            border-radius: 23px;
+            padding: 28px 15px 19px;
+          }
+
+          .offer-card-featured .offer-inner {
+            padding-top: 40px;
+          }
+
+          .offer-badge {
+            top: 12px;
+            left: 12px;
+            right: 12px;
+            min-height: 32px;
+            font-size: 11px;
+            padding: 8px 12px;
+          }
+
+          .offer-title {
+            font-size: 30px;
+            letter-spacing: -.045em;
+          }
+
+          .offer-description {
+            font-size: 13px;
+            line-height: 1.6;
+            margin-top: 9px;
+          }
+
+          .offer-price {
+            margin: 20px 0 18px;
+          }
+
+          .offer-price-number {
+            font-size: 44px;
+          }
+
+          .offer-price-euro {
+            font-size: 18px;
+            margin-bottom: 5px;
+          }
+
+          .offer-contact {
+            min-height: 46px;
+            border-radius: 15px;
+            padding: 11px 12px;
+            font-size: 13px;
+          }
+
+          .offer-button {
+            min-height: 50px;
+            border-radius: 16px;
+            font-size: 15px;
+            margin-bottom: 17px;
+          }
+
+          .offer-features {
+            padding-top: 16px;
+            gap: 12px;
+          }
+
+          .offer-feature-text {
+            font-size: 13.5px;
+          }
+        }
+
+        @media (max-width: 390px) {
+          .offer-inner {
+            padding-left: 13px;
+            padding-right: 13px;
+          }
+
+          .offer-title {
+            font-size: 28px;
+          }
+
+          .offer-price-number {
+            font-size: 40px;
+          }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+          .offer-card {
+            transition: none;
+          }
+
+          .offer-card:hover {
+            transform: none;
+          }
+        }
+      `}</style>
+
       {(badgeText || featured) && (
-        <div
-          style={{
-            position: "absolute",
-            top: isMobile ? "-14px" : "-16px",
-            left: "50%",
-            transform: "translateX(-50%)",
-            zIndex: 5,
-            display: "inline-flex",
-            alignItems: "center",
-            justifyContent: "center",
-            gap: "8px",
-            padding: isMobile ? "9px 16px" : "10px 18px",
-            borderRadius: "999px",
-            background: `linear-gradient(135deg, ${buttonColor} 0%, ${hexToRgba(
-              textColor,
-              0.95
-            )} 100%)`,
-            color: buttonTextColor,
-            fontSize: isMobile ? "11px" : "12px",
-            fontWeight: "800",
-            lineHeight: 1,
-            letterSpacing: "0.01em",
-            boxShadow: `0 12px 28px ${hexToRgba(buttonColor, 0.24)}`,
-            whiteSpace: "nowrap",
-            maxWidth: "calc(100% - 28px)"
-          }}
-        >
-          {badgeText || "✨ Oferta premium"}
-        </div>
+        <div className="offer-badge">{badgeText || "MË POPULLORJA"}</div>
       )}
 
-      <div
-        style={{
-          position: "relative",
-          background: `linear-gradient(180deg, ${hexToRgba(
-            backgroundColor,
-            0.97
-          )} 0%, ${hexToRgba(backgroundColor, 0.93)} 100%)`,
-          borderRadius: isMobile ? "23px" : "31px",
-          padding: isMobile ? "30px 16px 22px" : "38px 26px 28px",
-          display: "flex",
-          flexDirection: "column",
-          textAlign: "center",
-          minHeight: isMobile ? "auto" : "100%",
-          overflow: "hidden",
-          boxSizing: "border-box"
-        }}
-      >
-        <div
-          style={{
-            position: "absolute",
-            top: "-80px",
-            right: "-70px",
-            width: isMobile ? "160px" : "220px",
-            height: isMobile ? "160px" : "220px",
-            borderRadius: "999px",
-            background: `radial-gradient(circle, ${hexToRgba(
-              buttonColor,
-              isHighlighted ? 0.18 : 0.10
-            )} 0%, rgba(255,255,255,0) 72%)`,
-            pointerEvents: "none"
-          }}
-        />
-
-        <div
-          style={{
-            position: "absolute",
-            bottom: "-90px",
-            left: "-70px",
-            width: isMobile ? "170px" : "230px",
-            height: isMobile ? "170px" : "230px",
-            borderRadius: "999px",
-            background: `radial-gradient(circle, ${hexToRgba(
-              backgroundColor,
-              0.28
-            )} 0%, rgba(255,255,255,0) 75%)`,
-            pointerEvents: "none"
-          }}
-        />
-
-        <div
-          style={{
-            position: "relative",
-            zIndex: 2,
-            marginBottom: isMobile ? "16px" : "22px"
-          }}
-        >
-          <h2
-            style={{
-              margin: "0 0 10px",
-              color: textColor,
-              fontSize: isMobile ? "29px" : isTablet ? "33px" : "38px",
-              lineHeight: 1.02,
-              fontWeight: "900",
-              letterSpacing: "-0.05em",
-              wordBreak: "break-word"
-            }}
-          >
-            {title}
-          </h2>
+      <div className="offer-inner">
+        <div className="offer-head">
+          <h2 className="offer-title">{title}</h2>
 
           {description ? (
-            <p
-              style={{
-                margin: "0 auto",
-                color: softTextColor,
-                fontSize: isMobile ? "13px" : "14px",
-                lineHeight: 1.7,
-                maxWidth: "360px",
-                wordBreak: "break-word"
-              }}
-            >
-              {description}
-            </p>
+            <p className="offer-description">{description}</p>
           ) : null}
         </div>
 
-        <div
-          style={{
-            position: "relative",
-            zIndex: 2,
-            marginBottom: isMobile ? "18px" : "22px"
-          }}
-        >
-          <div
-            style={{
-              display: "inline-flex",
-              alignItems: "flex-end",
-              justifyContent: "center",
-              gap: "7px",
-              flexWrap: "wrap",
-              color: textColor
-            }}
-          >
-            <span
-              style={{
-                fontSize: isMobile ? "42px" : "54px",
-                lineHeight: 0.95,
-                fontWeight: "900",
-                letterSpacing: "-0.06em"
-              }}
-            >
-              {price}
-            </span>
-
-            <span
-              style={{
-                fontSize: isMobile ? "17px" : "20px",
-                fontWeight: "900",
-                marginBottom: isMobile ? "5px" : "7px",
-                color: textColor
-              }}
-            >
-              €
-            </span>
-
-            <span
-              style={{
-                fontSize: isMobile ? "12px" : "13px",
-                color: softTextColor,
-                fontWeight: "600",
-                marginBottom: isMobile ? "6px" : "9px"
-              }}
-            >
-              / pa TVSH
-            </span>
-          </div>
+        <div className="offer-price">
+          <span className="offer-price-number">{price}</span>
+          <span className="offer-price-euro">€</span>
+          <span className="offer-price-tax">/ pa TVSH</span>
         </div>
 
         {hasContacts ? (
-          <div
-            style={{
-              position: "relative",
-              zIndex: 2,
-              display: "grid",
-              gap: "11px",
-              marginBottom: isMobile ? "18px" : "20px"
-            }}
-          >
+          <div className="offer-contacts">
             {hasPhone ? (
-              <a
-                href={`tel:${phone}`}
-                style={contactLinkStyle(isMobile, softPanelColor, softBorderColor, textColor)}
-              >
-                <span style={phoneIconStyle}>📞</span>
-                <span style={contactTextStyle}>{phone}</span>
+              <a href={`tel:${phone}`} className="offer-contact">
+                <span className="offer-contact-icon">☎</span>
+                <span className="offer-contact-text">{phone}</span>
               </a>
             ) : null}
 
@@ -389,10 +551,10 @@ export default function OfferCard({ offer, featured = false }) {
                 href={`https://wa.me/${whatsapp}`}
                 target="_blank"
                 rel="noreferrer"
-                style={contactLinkStyle(isMobile, softPanelColor, softBorderColor, textColor)}
+                className="offer-contact"
               >
-                <span style={whatsappIconStyle}>🟢</span>
-                <span style={contactTextStyle}>{whatsapp}</span>
+                <span className="offer-contact-icon">W</span>
+                <span className="offer-contact-text">{whatsapp}</span>
               </a>
             ) : null}
 
@@ -401,10 +563,10 @@ export default function OfferCard({ offer, featured = false }) {
                 href={messenger}
                 target="_blank"
                 rel="noreferrer"
-                style={contactLinkStyle(isMobile, softPanelColor, softBorderColor, textColor)}
+                className="offer-contact"
               >
-                <span style={messengerIconStyle}>✉</span>
-                <span style={contactTextStyle}>Messenger</span>
+                <span className="offer-contact-icon">M</span>
+                <span className="offer-contact-text">Messenger</span>
               </a>
             ) : null}
           </div>
@@ -415,64 +577,17 @@ export default function OfferCard({ offer, featured = false }) {
             href={registerHref}
             target={registerTarget}
             rel={registerRel}
-            style={{
-              position: "relative",
-              zIndex: 2,
-              width: "100%",
-              padding: isMobile ? "15px 16px" : "16px 18px",
-              borderRadius: isMobile ? "16px" : "18px",
-              display: "block",
-              textAlign: "center",
-              textDecoration: "none",
-              border: `1px solid ${hexToRgba(buttonColor, 0.24)}`,
-              background: `linear-gradient(135deg, ${buttonColor} 0%, ${hexToRgba(
-                buttonColor,
-                0.75
-              )} 100%)`,
-              color: buttonTextColor,
-              fontWeight: "900",
-              fontSize: isMobile ? "15px" : "16px",
-              letterSpacing: "0.01em",
-              boxShadow: `0 16px 34px ${hexToRgba(buttonColor, 0.22)}`,
-              marginBottom: isMobile ? "18px" : "20px",
-              boxSizing: "border-box"
-            }}
+            className="offer-button"
           >
             Regjistrohu
           </a>
         ) : (
-          <div
-            style={{
-              position: "relative",
-              zIndex: 2,
-              width: "100%",
-              padding: isMobile ? "15px 16px" : "16px 18px",
-              borderRadius: isMobile ? "16px" : "18px",
-              textAlign: "center",
-              border: `1px solid ${softBorderColor}`,
-              background: softPanelColor,
-              color: softTextColor,
-              fontWeight: "800",
-              fontSize: isMobile ? "15px" : "16px",
-              marginBottom: isMobile ? "18px" : "20px",
-              boxSizing: "border-box"
-            }}
-          >
+          <div className="offer-button offer-button-disabled">
             Nuk ka kontakt aktiv
           </div>
         )}
 
-        <div
-          style={{
-            position: "relative",
-            zIndex: 2,
-            borderTop: `1px solid ${softBorderColor}`,
-            paddingTop: isMobile ? "16px" : "20px",
-            display: "grid",
-            gap: isMobile ? "13px" : "14px",
-            textAlign: "left"
-          }}
-        >
+        <div className="offer-features">
           {hasFeatures ? (
             features.map((feature, idx) => {
               const included = Boolean(feature?.included);
@@ -480,161 +595,29 @@ export default function OfferCard({ offer, featured = false }) {
               return (
                 <div
                   key={idx}
-                  style={{
-                    display: "flex",
-                    alignItems: "flex-start",
-                    gap: "12px"
-                  }}
+                  className={`offer-feature ${included ? "yes" : "no"}`}
                 >
-                  <span
-                    style={{
-                      width: isMobile ? "22px" : "24px",
-                      height: isMobile ? "22px" : "24px",
-                      minWidth: isMobile ? "22px" : "24px",
-                      borderRadius: "999px",
-                      display: "inline-flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      background: included
-                        ? "rgba(16,185,129,0.12)"
-                        : "rgba(239,68,68,0.12)",
-                      color: included ? "#10b981" : "#ef4444",
-                      fontWeight: "900",
-                      fontSize: isMobile ? "12px" : "13px",
-                      marginTop: "1px"
-                    }}
-                  >
-                    {included ? "✓" : "✕"}
+                  <span className={`offer-feature-dot ${included ? "yes" : "no"}`}>
+                    {included ? "✓" : "×"}
                   </span>
 
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <div
-                      style={{
-                        color: textColor,
-                        fontSize: isMobile ? "13.5px" : "14px",
-                        lineHeight: 1.55,
-                        fontWeight: included ? "800" : "700",
-                        opacity: included ? 1 : 0.72,
-                        wordBreak: "break-word"
-                      }}
-                    >
-                      {feature?.text}
-                    </div>
+                  <div>
+                    <div className="offer-feature-text">{feature?.text}</div>
 
                     {feature?.note ? (
-                      <div
-                        style={{
-                          marginTop: "4px",
-                          fontSize: "12px",
-                          color: softTextColor,
-                          lineHeight: 1.55,
-                          wordBreak: "break-word"
-                        }}
-                      >
-                        {feature.note}
-                      </div>
+                      <div className="offer-feature-note">{feature.note}</div>
                     ) : null}
                   </div>
                 </div>
               );
             })
           ) : (
-            <div
-              style={{
-                color: softTextColor,
-                fontSize: isMobile ? "13px" : "14px",
-                textAlign: "center",
-                paddingTop: "4px"
-              }}
-            >
+            <div className="offer-empty-features">
               Nuk ka opsione të shtuara ende.
             </div>
           )}
         </div>
-
-        <div
-          style={{
-            position: "absolute",
-            inset: 0,
-            borderRadius: isMobile ? "23px" : "31px",
-            boxShadow: `inset 0 0 0 1px ${cardBorderColor}`,
-            pointerEvents: "none"
-          }}
-        />
       </div>
-    </div>
+    </article>
   );
 }
-
-function contactLinkStyle(isMobile, background, border, color) {
-  return {
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "flex-start",
-    gap: "12px",
-    padding: isMobile ? "13px 14px" : "14px 15px",
-    borderRadius: isMobile ? "15px" : "16px",
-    background,
-    border: `1px solid ${border}`,
-    boxShadow: "0 8px 20px rgba(15,23,42,0.04)",
-    color,
-    textDecoration: "none",
-    fontWeight: "700",
-    fontSize: isMobile ? "13px" : "14px",
-    minHeight: isMobile ? "50px" : "52px",
-    boxSizing: "border-box",
-    width: "100%",
-    overflow: "hidden",
-    backdropFilter: "blur(8px)"
-  };
-}
-
-const contactTextStyle = {
-  wordBreak: "break-word",
-  textAlign: "left",
-  minWidth: 0,
-  flex: 1
-};
-
-const phoneIconStyle = {
-  width: "26px",
-  height: "26px",
-  borderRadius: "999px",
-  background: "linear-gradient(135deg, #fce7f3 0%, #f3e8ff 100%)",
-  display: "inline-flex",
-  alignItems: "center",
-  justifyContent: "center",
-  flexShrink: 0,
-  fontSize: "13px",
-  boxShadow: "inset 0 0 0 1px rgba(226,232,240,0.7)"
-};
-
-const whatsappIconStyle = {
-  width: "26px",
-  height: "26px",
-  borderRadius: "999px",
-  background: "linear-gradient(135deg, #22c55e 0%, #4ade80 100%)",
-  color: "#fff",
-  display: "inline-flex",
-  alignItems: "center",
-  justifyContent: "center",
-  fontSize: "10px",
-  fontWeight: 900,
-  flexShrink: 0,
-  boxShadow: "0 8px 18px rgba(34,197,94,0.25)"
-};
-
-const messengerIconStyle = {
-  width: "26px",
-  height: "26px",
-  borderRadius: "999px",
-  background: "linear-gradient(135deg, #2563eb 0%, #60a5fa 100%)",
-  color: "#fff",
-  display: "inline-flex",
-  alignItems: "center",
-  justifyContent: "center",
-  fontSize: "12px",
-  fontWeight: 900,
-  flexShrink: 0,
-  boxShadow: "0 8px 18px rgba(37,99,235,0.22)"
-};

@@ -11,6 +11,7 @@ import MostReadSection from "../../../components/news/MostReadSection";
 import QuickHeadlines from "../../../components/news/QuickHeadlines";
 import EditorsPicksSection from "../../../components/news/EditorsPicksSection";
 import AdSlot from "../../../components/ads/AdSlot";
+import { trackEvent } from "../../../utils/analytics";
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
 const NEWS_VIDEO_URL =
@@ -25,6 +26,46 @@ export default function NewsHomePage() {
   const [posts, setPosts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [videoMuted] = useState(true);
+
+  useEffect(() => {
+    trackEvent({
+      event_type: "page_view",
+      page_url: window.location.pathname,
+      category: "lajme"
+    });
+  }, []);
+
+  useEffect(() => {
+    const startTime = Date.now();
+
+    return () => {
+      const duration = Math.floor((Date.now() - startTime) / 1000);
+
+      trackEvent({
+        event_type: "time_on_page",
+        duration_seconds: duration,
+        page_url: window.location.pathname,
+        category: "lajme"
+      });
+    };
+  }, []);
+
+  const handleOfferClick = () => {
+    trackEvent({
+      event_type: "category_click",
+      category: "oferta",
+      page_url: window.location.pathname,
+      element_name: "news_home_offer"
+    });
+  };
+
+  const handleAdvertiseClick = () => {
+    trackEvent({
+      event_type: "post_click",
+      page_url: window.location.pathname,
+      element_name: "reklamo_me_ne"
+    });
+  };
 
   useEffect(() => {
     fetch(`${API_URL}/api/posts`)
@@ -135,6 +176,7 @@ export default function NewsHomePage() {
                 <Link
                   to="/kategori/oferta"
                   className="news-action-btn news-action-offer"
+                  onClick={handleOfferClick}
                 >
                   Oferta
                 </Link>
@@ -142,6 +184,7 @@ export default function NewsHomePage() {
                 <Link
                   to="/reklamo-me-ne"
                   className="news-action-btn news-action-ad"
+                  onClick={handleAdvertiseClick}
                 >
                   Reklamo më ne
                 </Link>
@@ -167,7 +210,11 @@ export default function NewsHomePage() {
               </div>
 
               <div className="news-quick-cta">
-                <Link to="/kategori/oferta" className="quick-cta-card offer">
+                <Link
+                  to="/kategori/oferta"
+                  className="quick-cta-card offer"
+                  onClick={handleOfferClick}
+                >
                   <div className="cta-top">
                     <img src={LOGO_URL} alt="Publiko.biz" />
                     <span>Oferta</span>
@@ -180,7 +227,11 @@ export default function NewsHomePage() {
                   </small>
                 </Link>
 
-                <Link to="/reklamo-me-ne" className="quick-cta-card ads">
+                <Link
+                  to="/reklamo-me-ne"
+                  className="quick-cta-card ads"
+                  onClick={handleAdvertiseClick}
+                >
                   <div className="cta-top">
                     <img src={LOGO_URL} alt="Publiko.biz" />
                     <span>Reklamo</span>

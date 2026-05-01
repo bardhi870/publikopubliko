@@ -2,13 +2,8 @@ import React, { useEffect, useMemo, useState } from "react";
 import { getPostsByCategory } from "../../api/postApi";
 import JobPostCard from "./JobPostCard";
 import {
-  CITY_OPTIONS,
-  EXPERIENCE_OPTIONS,
   INITIAL_VISIBLE_JOBS,
-  JOB_CATEGORY_OPTIONS,
-  LANGUAGE_OPTIONS,
-  LOAD_MORE_STEP,
-  WORK_HOURS_OPTIONS
+  LOAD_MORE_STEP
 } from "../../constants/postFilterOptions";
 
 const normalize = (value) => String(value || "").trim().toLowerCase();
@@ -25,57 +20,6 @@ const isPostFeatured = (post) =>
   post?.featured === 1 ||
   post?.featured === "1";
 
-const softCard = {
-  background: "rgba(255,255,255,0.96)",
-  border: "1px solid rgba(203,213,225,0.75)",
-  boxShadow: "0 14px 34px rgba(15,23,42,0.055)"
-};
-
-const fieldLabelStyle = {
-  display: "block",
-  fontSize: "12px",
-  fontWeight: "600",
-  color: "#64748b",
-  marginBottom: "7px"
-};
-
-const inputStyle = {
-  width: "100%",
-  height: "44px",
-  padding: "0 12px",
-  borderRadius: "14px",
-  border: "1px solid #dbe3ee",
-  outline: "none",
-  fontSize: "14px",
-  background: "#fff",
-  boxSizing: "border-box",
-  color: "#0f172a",
-  fontWeight: "500"
-};
-
-const clearBtnStyle = {
-  height: "40px",
-  padding: "0 15px",
-  borderRadius: "999px",
-  border: "1px solid #cbd5e1",
-  background: "#fff",
-  color: "#0f172a",
-  fontWeight: "600",
-  cursor: "pointer"
-};
-
-const loadMoreBtnStyle = {
-  padding: "14px 24px",
-  borderRadius: "999px",
-  border: "1px solid #0f172a",
-  background: "#0f172a",
-  color: "#fff",
-  fontWeight: "800",
-  cursor: "pointer",
-  fontSize: "15px",
-  boxShadow: "0 14px 30px rgba(15,23,42,0.16)"
-};
-
 export default function JobCategoryPosts({ title, category, variant }) {
   const [posts, setPosts] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -87,44 +31,27 @@ export default function JobCategoryPosts({ title, category, variant }) {
   const [selectedWorkHours, setSelectedWorkHours] = useState("");
   const [selectedLanguage, setSelectedLanguage] = useState("");
   const [visibleJobs, setVisibleJobs] = useState(INITIAL_VISIBLE_JOBS);
-
-  const [screenWidth, setScreenWidth] = useState(
-    typeof window !== "undefined" ? window.innerWidth : 1440
-  );
-
   const [showMobileFilters, setShowMobileFilters] = useState(false);
 
-  const isMobile = screenWidth <= 640;
-  const isTablet = screenWidth > 640 && screenWidth <= 1024;
   const isHomeVariant = variant === "home";
-
-  useEffect(() => {
-    const onResize = () => setScreenWidth(window.innerWidth);
-    window.addEventListener("resize", onResize, { passive: true });
-
-    return () => window.removeEventListener("resize", onResize);
-  }, []);
 
   useEffect(() => {
     let ignore = false;
 
-    const fetchPosts = async () => {
+    async function fetchPosts() {
       try {
         setLoading(true);
-
         const formattedCategory = normalizeCategorySlug(category);
         const data = await getPostsByCategory(formattedCategory);
 
-        if (!ignore) {
-          setPosts(Array.isArray(data) ? data : []);
-        }
+        if (!ignore) setPosts(Array.isArray(data) ? data : []);
       } catch (error) {
         console.error("Gabim gjatë marrjes së postimeve:", error);
         if (!ignore) setPosts([]);
       } finally {
         if (!ignore) setLoading(false);
       }
-    };
+    }
 
     fetchPosts();
 
@@ -132,26 +59,6 @@ export default function JobCategoryPosts({ title, category, variant }) {
       ignore = true;
     };
   }, [category]);
-
-  const filterGridColumns =
-    screenWidth >= 1500
-      ? "repeat(6, minmax(0, 1fr))"
-      : screenWidth >= 1150
-      ? "repeat(3, minmax(0, 1fr))"
-      : screenWidth >= 700
-      ? "repeat(2, minmax(0, 1fr))"
-      : "1fr";
-
-  const cardGridColumns =
-    screenWidth >= 1800
-      ? "repeat(5, minmax(0, 1fr))"
-      : screenWidth >= 1420
-      ? "repeat(4, minmax(0, 1fr))"
-      : screenWidth >= 1060
-      ? "repeat(3, minmax(0, 1fr))"
-      : screenWidth >= 340
-      ? "repeat(2, minmax(0, 1fr))"
-      : "1fr";
 
   const filteredPosts = useMemo(() => {
     return [...posts]
@@ -244,316 +151,703 @@ export default function JobCategoryPosts({ title, category, variant }) {
   };
 
   const FilterBlock = ({ label, children }) => (
-    <div>
-      <label style={fieldLabelStyle}>{label}</label>
+    <div className="jobs-filter-field">
+      <label>{label}</label>
       {children}
     </div>
   );
 
-  if (loading) {
-    return (
-      <section
-        style={{
-          width: "100%",
-          maxWidth: "2000px",
-          margin: "0 auto 42px",
-          padding: isMobile ? "0 2px" : "0"
-        }}
-      >
-        <div
-          style={{
-            ...softCard,
-            borderRadius: "22px",
-            padding: "24px",
-            color: "#64748b",
-            fontWeight: "600"
-          }}
-        >
-          Duke u ngarkuar...
-        </div>
-      </section>
-    );
-  }
-
   return (
-    <section
-      style={{
-        width: "100%",
-        maxWidth: "2000px",
-        margin: "0 auto 46px",
-        padding: isMobile ? "0 0" : isTablet ? "0 2px" : "0"
-      }}
-    >
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "space-between",
-          gap: "14px",
-          alignItems: isMobile ? "flex-start" : "center",
-          flexDirection: isMobile ? "column" : "row",
-          marginBottom: "16px"
-        }}
-      >
-        {title ? (
-          <div>
-            <div
-              style={{
-                display: "inline-flex",
-                padding: "7px 12px",
-                borderRadius: "999px",
-                background: "#eff6ff",
-                color: "#1d4ed8",
-                fontSize: "12px",
-                fontWeight: "700",
-                marginBottom: "9px"
-              }}
-            >
-              KONKURSE PUNE
-            </div>
+    <section className="jobs-section">
+      <style>{`
+        .jobs-section {
+          width: 100%;
+          max-width: 1640px;
+          margin: 0 auto 54px;
+          position: relative;
+          padding: 0 4px;
+        }
 
-            <h2
-              style={{
-                margin: 0,
-                fontSize: isMobile ? "23px" : "32px",
-                lineHeight: "1.08",
-                fontWeight: "850",
-                color: "#07132b",
-                letterSpacing: "-0.035em"
-              }}
-            >
-              {title}
-            </h2>
-          </div>
-        ) : (
-          <div />
-        )}
+        .jobs-section-head {
+          position: relative;
+          overflow: hidden;
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          gap: 18px;
+          margin-bottom: 16px;
+          padding: 22px 24px;
+          border-radius: 26px;
+          background:
+            radial-gradient(circle at 8% 0%, rgba(37,99,235,.16), transparent 32%),
+            radial-gradient(circle at 92% 18%, rgba(14,165,233,.12), transparent 30%),
+            linear-gradient(135deg, rgba(255,255,255,.99), rgba(248,251,255,.94));
+          border: 1px solid rgba(191,219,254,.92);
+          box-shadow:
+            0 18px 44px rgba(15,23,42,.065),
+            inset 0 1px 0 rgba(255,255,255,.9);
+        }
 
-        {!isHomeVariant && (
-          <div
-            style={{
-              ...softCard,
-              borderRadius: "999px",
-              padding: "8px 13px",
-              color: "#64748b",
-              fontSize: "14px",
-              fontWeight: "600",
-              whiteSpace: "nowrap"
-            }}
-          >
-            Rezultate:{" "}
-            <span style={{ color: "#0f172a", fontWeight: "750" }}>
-              {filteredPosts.length}
-            </span>
-          </div>
-        )}
-      </div>
+        .jobs-section-head::after{
+          content:"";
+          position:absolute;
+          inset:auto 18px 0 18px;
+          height:1px;
+          background:linear-gradient(90deg, transparent, rgba(37,99,235,.42), transparent);
+        }
 
-      {!isHomeVariant && isMobile && (
-        <button
-          type="button"
-          onClick={() => setShowMobileFilters((prev) => !prev)}
-          style={{
-            width: "100%",
-            height: "48px",
-            marginBottom: "12px",
-            borderRadius: "16px",
-            border: "1px solid #bfdbfe",
-            background: showMobileFilters
-              ? "linear-gradient(135deg,#0f172a,#2563eb)"
-              : "#fff",
-            color: showMobileFilters ? "#fff" : "#0f172a",
-            cursor: "pointer",
-            fontWeight: "750",
-            fontSize: "15px",
-            boxShadow: "0 10px 24px rgba(15,23,42,0.06)"
-          }}
-        >
-          {showMobileFilters ? "Mbyll filtrat" : "Hap filtrat"}
-        </button>
-      )}
+        .jobs-eyebrow {
+          display: inline-flex;
+          align-items: center;
+          gap: 7px;
+          padding: 7px 12px;
+          border-radius: 999px;
+          background: linear-gradient(135deg, #eff6ff, #dbeafe);
+          color: #1d4ed8;
+          font-size: 10px;
+          font-weight: 950;
+          margin-bottom: 9px;
+          letter-spacing: .08em;
+          border: 1px solid rgba(191,219,254,.9);
+          text-transform: uppercase;
+          box-shadow: 0 10px 22px rgba(37,99,235,.10);
+        }
 
-      {!isHomeVariant && (!isMobile || showMobileFilters) && (
-        <div
-          style={{
-            ...softCard,
-            borderRadius: isMobile ? "18px" : "24px",
-            padding: isMobile ? "13px" : "18px",
-            marginBottom: "18px"
-          }}
-        >
-          <div
-            style={{
-              display: "grid",
-              gridTemplateColumns: filterGridColumns,
-              gap: isMobile ? "10px" : "14px",
-              alignItems: "end"
-            }}
-          >
-            <FilterBlock label="Kërko me fjalë kyçe">
-              <input
-                type="text"
-                placeholder="Titulli ose përshkrimi..."
-                value={jobSearch}
-                onChange={handleFilterChange(setJobSearch)}
-                style={inputStyle}
-              />
-            </FilterBlock>
+        .jobs-eyebrow::before{
+          content:"";
+          width:7px;
+          height:7px;
+          border-radius:999px;
+          background:#2563eb;
+          box-shadow:0 0 0 4px rgba(37,99,235,.12);
+        }
 
-            <FilterBlock label="Qyteti">
-              <select
-                value={selectedCity}
-                onChange={handleFilterChange(setSelectedCity)}
-                style={inputStyle}
-              >
-                <option value="">Të gjitha qytetet</option>
-                {CITY_OPTIONS.map((city) => (
-                  <option key={city} value={city}>
-                    {city}
-                  </option>
-                ))}
-              </select>
-            </FilterBlock>
+        .jobs-title {
+          margin: 0;
+          font-size: clamp(30px, 3.4vw, 48px);
+          line-height: .96;
+          font-weight: 950;
+          color: #07132b;
+          letter-spacing: -.06em;
+        }
 
-            <FilterBlock label="Kategori">
-              <select
-                value={selectedJobCategory}
-                onChange={handleFilterChange(setSelectedJobCategory)}
-                style={inputStyle}
-              >
-                <option value="">Të gjitha kategoritë</option>
-                {JOB_CATEGORY_OPTIONS.map((item) => (
-                  <option key={item} value={item}>
-                    {item}
-                  </option>
-                ))}
-              </select>
-            </FilterBlock>
+        .jobs-count-pill {
+          min-width: 112px;
+          background: rgba(255,255,255,.90);
+          border: 1px solid rgba(191,219,254,.92);
+          box-shadow:
+            0 14px 30px rgba(15,23,42,.06),
+            inset 0 1px 0 rgba(255,255,255,.9);
+          border-radius: 21px;
+          padding: 12px 15px;
+          color: #64748b;
+          font-size: 12px;
+          font-weight: 900;
+          white-space: nowrap;
+          text-align: center;
+          backdrop-filter: blur(16px);
+          -webkit-backdrop-filter: blur(16px);
+        }
 
-            <FilterBlock label="Përvoja">
-              <select
-                value={selectedExperience}
-                onChange={handleFilterChange(setSelectedExperience)}
-                style={inputStyle}
-              >
-                <option value="">Të gjitha përvojat</option>
-                {EXPERIENCE_OPTIONS.map((item) => (
-                  <option key={item} value={item}>
-                    {item}
-                  </option>
-                ))}
-              </select>
-            </FilterBlock>
+        .jobs-count-pill span {
+          color: #1d4ed8;
+          font-size: 27px;
+          font-weight: 950;
+          display: block;
+          line-height: .95;
+          letter-spacing: -.04em;
+        }
 
-            <FilterBlock label="Orët e punës">
-              <select
-                value={selectedWorkHours}
-                onChange={handleFilterChange(setSelectedWorkHours)}
-                style={inputStyle}
-              >
-                <option value="">Çdo orar</option>
-                {WORK_HOURS_OPTIONS.map((item) => (
-                  <option key={item} value={item}>
-                    {item}
-                  </option>
-                ))}
-              </select>
-            </FilterBlock>
+        .jobs-loading,
+        .jobs-empty {
+          background: rgba(255,255,255,.98);
+          border: 1px solid rgba(191,219,254,.88);
+          box-shadow: 0 18px 44px rgba(15,23,42,.06);
+          border-radius: 24px;
+          padding: 28px 18px;
+          color: #64748b;
+          font-weight: 850;
+          text-align: center;
+        }
 
-            <FilterBlock label="Gjuhët">
-              <select
-                value={selectedLanguage}
-                onChange={handleFilterChange(setSelectedLanguage)}
-                style={inputStyle}
-              >
-                <option value="">Të gjitha gjuhët</option>
-                {LANGUAGE_OPTIONS.map((item) => (
-                  <option key={item} value={item}>
-                    {item}
-                  </option>
-                ))}
-              </select>
-            </FilterBlock>
-          </div>
+        .jobs-mobile-filter-btn {
+          display: none;
+          align-items: center;
+          justify-content: center;
+          gap: 9px;
+          width: fit-content;
+          height: 44px;
+          margin: 0 0 12px auto;
+          padding: 0 18px;
+          border-radius: 999px;
+          border: 1px solid rgba(191,219,254,.95);
+          background: linear-gradient(135deg,#ffffff,#eff6ff);
+          color: #1d4ed8;
+          cursor: pointer;
+          font-weight: 950;
+          font-size: 13px;
+          box-shadow: 0 12px 26px rgba(37,99,235,.10);
+        }
 
-          <div
-            style={{
-              marginTop: "14px",
-              display: "flex",
-              justifyContent: "space-between",
-              gap: "10px",
-              flexWrap: "wrap",
-              alignItems: "center"
-            }}
-          >
-            <div
-              style={{
-                color: "#64748b",
-                fontSize: "14px",
-                fontWeight: "550"
-              }}
-            >
-              Shfaqen{" "}
-              <span style={{ color: "#0f172a", fontWeight: "700" }}>
-                {visiblePosts.length}
-              </span>{" "}
-              nga{" "}
-              <span style={{ color: "#0f172a", fontWeight: "700" }}>
-                {filteredPosts.length}
-              </span>
-            </div>
+        .jobs-mobile-filter-btn.active {
+          background: linear-gradient(135deg,#1d4ed8,#0284c7);
+          color: #fff;
+          border-color: rgba(125,211,252,.75);
+        }
 
-            <button type="button" onClick={clearAllFilters} style={clearBtnStyle}>
-              Largo filtrat
-            </button>
-          </div>
-        </div>
-      )}
+        .jobs-filter-icon {
+          width: 17px;
+          height: 17px;
+          display: block;
+        }
 
-      {filteredPosts.length === 0 ? (
-        <div
-          style={{
-            ...softCard,
-            borderRadius: "22px",
-            padding: isMobile ? "30px 18px" : "42px 24px",
-            textAlign: "center",
-            color: "#64748b",
-            fontWeight: "600"
-          }}
-        >
-          Nuk u gjet asnjë konkurs pune.
-        </div>
+        .jobs-filters-card {
+          position: relative;
+          overflow: hidden;
+          background:
+            radial-gradient(circle at 7% 0%, rgba(37,99,235,.10), transparent 30%),
+            radial-gradient(circle at 96% 8%, rgba(14,165,233,.10), transparent 28%),
+            linear-gradient(180deg, rgba(255,255,255,.99), rgba(248,251,255,.95));
+          border: 1px solid rgba(191,219,254,.88);
+          box-shadow:
+            0 18px 44px rgba(15,23,42,.06),
+            inset 0 1px 0 rgba(255,255,255,.85);
+          border-radius: 26px;
+          padding: 18px;
+          margin-bottom: 18px;
+        }
+
+        .jobs-filters-card::before{
+          content:"";
+          position:absolute;
+          left:18px;
+          right:18px;
+          top:0;
+          height:1px;
+          background:linear-gradient(90deg, transparent, rgba(37,99,235,.35), transparent);
+        }
+
+        .jobs-filter-top {
+          display: none;
+        }
+
+        .jobs-filters-grid {
+          display: grid;
+          grid-template-columns: 1.45fr repeat(5, minmax(0, 1fr));
+          gap: 12px;
+          align-items: end;
+        }
+
+        .jobs-filter-field label {
+          display: block;
+          font-size: 10.5px;
+          font-weight: 950;
+          color: #334155;
+          margin-bottom: 7px;
+          letter-spacing: .02em;
+        }
+
+        .jobs-search-wrap {
+          position: relative;
+        }
+
+        .jobs-search-wrap svg {
+          position: absolute;
+          left: 14px;
+          top: 50%;
+          transform: translateY(-50%);
+          width: 17px;
+          height: 17px;
+          color: #64748b;
+          pointer-events: none;
+        }
+
+        .jobs-filter-field input {
+          width: 100%;
+          height: 44px;
+          padding: 0 13px;
+          border-radius: 15px;
+          border: 1px solid #dbeafe;
+          outline: none;
+          font-size: 13px;
+          background: rgba(255,255,255,.96);
+          box-sizing: border-box;
+          color: #0f172a;
+          font-weight: 750;
+          box-shadow: 0 8px 18px rgba(15,23,42,.035);
+          transition:border-color .18s ease, box-shadow .18s ease, background .18s ease;
+        }
+
+        .jobs-search-wrap input {
+          padding-left: 42px;
+        }
+
+        .jobs-filter-field input:focus {
+          border-color: #60a5fa;
+          box-shadow: 0 0 0 4px rgba(37,99,235,.10);
+          background:#fff;
+        }
+
+        .jobs-filter-field input::placeholder{
+          color:#94a3b8;
+          font-weight:750;
+        }
+
+        .jobs-filter-bottom {
+          margin-top: 13px;
+          display: flex;
+          justify-content: space-between;
+          gap: 10px;
+          flex-wrap: wrap;
+          align-items: center;
+        }
+
+        .jobs-visible-count {
+          color: #64748b;
+          font-size: 13px;
+          font-weight: 850;
+        }
+
+        .jobs-visible-count span {
+          color: #0f172a;
+          font-weight: 950;
+        }
+
+        .jobs-clear-btn {
+          height: 38px;
+          padding: 0 15px;
+          border-radius: 999px;
+          border: 1px solid #bfdbfe;
+          background: #fff;
+          color: #1d4ed8;
+          font-weight: 950;
+          cursor: pointer;
+          font-size: 12.5px;
+          box-shadow: 0 10px 22px rgba(37,99,235,.08);
+        }
+
+        .jobs-grid {
+          display: grid;
+          grid-template-columns: repeat(5, minmax(0, 1fr));
+          gap: 15px;
+          align-items: stretch;
+          width: 100%;
+        }
+
+        .jobs-load-more-wrap {
+          margin-top: 26px;
+          display: flex;
+          justify-content: center;
+        }
+
+        .jobs-load-more-btn {
+          padding: 13px 22px;
+          border-radius: 999px;
+          border: 1px solid rgba(37,99,235,.75);
+          background: linear-gradient(135deg,#2563eb,#0284c7);
+          color: #fff;
+          font-weight: 950;
+          cursor: pointer;
+          font-size: 14px;
+          box-shadow: 0 16px 34px rgba(37,99,235,.22);
+        }
+
+        @media (max-width: 1800px) {
+          .jobs-grid {
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+          }
+        }
+
+        @media (max-width: 1420px) {
+          .jobs-filters-grid {
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+          }
+
+          .jobs-filter-field:first-child {
+            grid-column: 1 / -1;
+          }
+
+          .jobs-grid {
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+          }
+        }
+
+        @media (max-width: 1060px) {
+          .jobs-filters-grid {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+          }
+
+          .jobs-grid {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 12px;
+          }
+        }
+
+        @media (max-width: 640px) {
+          .jobs-section {
+            margin-bottom: 34px;
+            padding: 0;
+          }
+
+          .jobs-section-head {
+            display: block;
+            padding: 18px 16px;
+            border-radius: 22px;
+            margin-bottom: 12px;
+          }
+
+          .jobs-eyebrow {
+            font-size: 9px;
+            padding: 6px 10px;
+            margin-bottom: 8px;
+          }
+
+          .jobs-title {
+            font-size: 32px;
+            line-height: .95;
+          }
+
+          .jobs-count-pill {
+            display: none;
+          }
+
+          .jobs-mobile-filter-btn {
+            display: inline-flex;
+          }
+
+          .jobs-filters-card {
+            display: none;
+            border-radius: 22px;
+            padding: 14px;
+            margin-bottom: 14px;
+          }
+
+          .jobs-filters-card.open {
+            display: block;
+          }
+
+          .jobs-filter-top {
+            display: grid;
+            grid-template-columns: 1fr auto;
+            gap: 12px;
+            align-items: start;
+            margin-bottom: 14px;
+          }
+
+          .jobs-filter-pill {
+            display: inline-flex;
+            width: fit-content;
+            padding: 6px 10px;
+            border-radius: 999px;
+            background: #dbeafe;
+            color: #1d4ed8;
+            font-size: 10px;
+            font-weight: 950;
+            margin-bottom: 7px;
+          }
+
+          .jobs-filter-title {
+            margin: 0;
+            color: #0f172a;
+            font-size: 22px;
+            line-height: 1.05;
+            font-weight: 950;
+            letter-spacing: -.05em;
+          }
+
+          .jobs-mobile-count-box {
+            min-width: 80px;
+            border-radius: 16px;
+            border: 1px solid #dbeafe;
+            background: #fff;
+            padding: 10px 9px;
+            text-align: center;
+          }
+
+          .jobs-mobile-count-box strong {
+            display: block;
+            color: #1d4ed8;
+            font-size: 25px;
+            line-height: .95;
+            font-weight: 950;
+          }
+
+          .jobs-mobile-count-box span {
+            color: #64748b;
+            font-size: 11px;
+            font-weight: 900;
+          }
+
+          .jobs-filters-grid {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 10px;
+          }
+
+          .jobs-filter-field:first-child {
+            grid-column: 1 / -1;
+          }
+
+          .jobs-filter-field label {
+            font-size: 10.5px;
+            margin-bottom: 6px;
+          }
+
+          .jobs-filter-field input {
+            height: 46px;
+            border-radius: 14px;
+            font-size: 13px;
+            padding: 0 12px;
+          }
+
+          .jobs-search-wrap input {
+            padding-left: 42px;
+          }
+
+          .jobs-filter-bottom {
+            margin-top: 12px;
+          }
+
+          .jobs-visible-count {
+            font-size: 12px;
+          }
+
+          .jobs-clear-btn {
+            height: 42px;
+            font-size: 12px;
+            padding: 0 15px;
+          }
+
+          .jobs-grid {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 8px;
+          }
+
+          .jobs-load-more-wrap {
+            margin-top: 20px;
+          }
+
+          .jobs-load-more-btn {
+            width: 100%;
+            padding: 12px 16px;
+            font-size: 13px;
+          }
+
+          .jobs-loading,
+          .jobs-empty {
+            border-radius: 17px;
+            padding: 24px 14px;
+            font-size: 13px;
+          }
+        }
+
+        @media (max-width: 360px) {
+          .jobs-filters-grid {
+            gap: 9px;
+          }
+
+          .jobs-filter-field input {
+            height: 42px;
+            font-size: 12.5px;
+          }
+
+          .jobs-title {
+            font-size: 29px;
+          }
+
+          .jobs-filter-title {
+            font-size: 20px;
+          }
+
+          .jobs-mobile-count-box {
+            min-width: 74px;
+          }
+        }
+
+        @media (max-width: 330px) {
+          .jobs-grid {
+            grid-template-columns: 1fr;
+          }
+        }
+      `}</style>
+
+      {loading ? (
+        <div className="jobs-loading">Duke u ngarkuar...</div>
       ) : (
         <>
-          <div
-            style={{
-              display: "grid",
-              gridTemplateColumns: cardGridColumns,
-              gap: isMobile ? "10px" : "20px",
-              alignItems: "stretch",
-              width: "100%"
-            }}
-          >
-            {visiblePosts.map((post, index) => (
-              <JobPostCard key={post.id} post={post} index={index} />
-            ))}
+          <div className="jobs-section-head">
+            {title ? (
+              <div>
+                <div className="jobs-eyebrow">KONKURSE PUNE</div>
+                <h2 className="jobs-title">{title}</h2>
+              </div>
+            ) : (
+              <div />
+            )}
+
+            {!isHomeVariant && (
+              <div className="jobs-count-pill">
+                <span>{filteredPosts.length}</span>
+                konkurse
+              </div>
+            )}
           </div>
 
-          {hasMoreJobs && (
-            <div
-              style={{
-                marginTop: "28px",
-                display: "flex",
-                justifyContent: "center"
-              }}
+          {!isHomeVariant && (
+            <button
+              type="button"
+              onClick={() => setShowMobileFilters((prev) => !prev)}
+              className={`jobs-mobile-filter-btn ${
+                showMobileFilters ? "active" : ""
+              }`}
             >
-              <button
-                type="button"
-                onClick={() => setVisibleJobs((prev) => prev + LOAD_MORE_STEP)}
-                style={loadMoreBtnStyle}
-              >
-                Shfaq më shumë punë
-              </button>
+              {showMobileFilters ? (
+                <>
+                  <span>×</span> Mbyll
+                </>
+              ) : (
+                <>
+                  <svg
+                    className="jobs-filter-icon"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                  >
+                    <path
+                      d="M4 7h16M7 12h10M10 17h4"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                    />
+                  </svg>
+                  Filtrat
+                </>
+              )}
+            </button>
+          )}
+
+          {!isHomeVariant && (
+            <div
+              className={`jobs-filters-card ${
+                showMobileFilters ? "open" : ""
+              }`}
+            >
+              <div className="jobs-filter-top">
+                <div>
+                  <div className="jobs-filter-pill">Kërkim i avancuar</div>
+                  <h3 className="jobs-filter-title">Filtro konkurset</h3>
+                </div>
+
+                <div className="jobs-mobile-count-box">
+                  <strong>{filteredPosts.length}</strong>
+                  <span>konkurse</span>
+                </div>
+              </div>
+
+              <div className="jobs-filters-grid">
+                <FilterBlock label="Kërko konkurs">
+                  <div className="jobs-search-wrap">
+                    <svg viewBox="0 0 24 24" fill="none">
+                      <path
+                        d="M21 21l-4.35-4.35M10.5 18a7.5 7.5 0 1 1 0-15 7.5 7.5 0 0 1 0 15Z"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                      />
+                    </svg>
+                    <input
+                      type="text"
+                      placeholder="Titulli ose përshkrimi..."
+                      value={jobSearch}
+                      onChange={handleFilterChange(setJobSearch)}
+                    />
+                  </div>
+                </FilterBlock>
+
+                <FilterBlock label="Qyteti">
+                  <input
+                    type="text"
+                    placeholder="Shkruaj qytetin..."
+                    value={selectedCity}
+                    onChange={handleFilterChange(setSelectedCity)}
+                  />
+                </FilterBlock>
+
+                <FilterBlock label="Kategori">
+                  <input
+                    type="text"
+                    placeholder="P.sh. IT, shitje..."
+                    value={selectedJobCategory}
+                    onChange={handleFilterChange(setSelectedJobCategory)}
+                  />
+                </FilterBlock>
+
+                <FilterBlock label="Përvoja">
+                  <input
+                    type="text"
+                    placeholder="P.sh. 1 vit, senior..."
+                    value={selectedExperience}
+                    onChange={handleFilterChange(setSelectedExperience)}
+                  />
+                </FilterBlock>
+
+                <FilterBlock label="Orari">
+                  <input
+                    type="text"
+                    placeholder="P.sh. Full time..."
+                    value={selectedWorkHours}
+                    onChange={handleFilterChange(setSelectedWorkHours)}
+                  />
+                </FilterBlock>
+
+                <FilterBlock label="Gjuhët">
+                  <input
+                    type="text"
+                    placeholder="P.sh. Anglisht..."
+                    value={selectedLanguage}
+                    onChange={handleFilterChange(setSelectedLanguage)}
+                  />
+                </FilterBlock>
+              </div>
+
+              <div className="jobs-filter-bottom">
+                <div className="jobs-visible-count">
+                  Rezultatet përputhen me filtrat aktivë
+                </div>
+
+                <button
+                  type="button"
+                  onClick={clearAllFilters}
+                  className="jobs-clear-btn"
+                >
+                  Largo filtrat
+                </button>
+              </div>
             </div>
+          )}
+
+          {filteredPosts.length === 0 ? (
+            <div className="jobs-empty">Nuk u gjet asnjë konkurs pune.</div>
+          ) : (
+            <>
+              <div className="jobs-grid">
+                {visiblePosts.map((post, index) => (
+                  <JobPostCard key={post.id} post={post} index={index} />
+                ))}
+              </div>
+
+              {hasMoreJobs && (
+                <div className="jobs-load-more-wrap">
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setVisibleJobs((prev) => prev + LOAD_MORE_STEP)
+                    }
+                    className="jobs-load-more-btn"
+                  >
+                    Shfaq më shumë punë
+                  </button>
+                </div>
+              )}
+            </>
           )}
         </>
       )}

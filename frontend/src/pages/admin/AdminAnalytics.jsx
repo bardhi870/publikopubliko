@@ -3,8 +3,40 @@ import AdminTopNav from "../../components/admin/AdminTopNav";
 
 const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:5000";
 
+function getAdminToken() {
+  return (
+    localStorage.getItem("adminToken") ||
+    localStorage.getItem("token") ||
+    localStorage.getItem("authToken")
+  );
+}
+
+function getAuthHeaders() {
+  const token = getAdminToken();
+
+  return {
+    "Content-Type": "application/json",
+    Authorization: `Bearer ${token}`
+  };
+}
+
 function formatNumber(value) {
   return Number(value || 0).toLocaleString("en-US");
+}
+
+function formatTime(seconds) {
+  const total = Number(seconds || 0);
+  if (total < 60) return `${total}s`;
+
+  const minutes = Math.floor(total / 60);
+  const rest = total % 60;
+
+  if (minutes < 60) return rest > 0 ? `${minutes}m ${rest}s` : `${minutes}m`;
+
+  const hours = Math.floor(minutes / 60);
+  const min = minutes % 60;
+
+  return min > 0 ? `${hours}h ${min}m` : `${hours}h`;
 }
 
 function buildQuery(filters) {
@@ -46,12 +78,7 @@ function StatCard({ title, value, subtitle, accent = "#0f172a" }) {
         }}
       />
 
-      <div
-        style={{
-          position: "relative",
-          zIndex: 2
-        }}
-      >
+      <div style={{ position: "relative", zIndex: 2 }}>
         <div
           style={{
             fontSize: "12px",
@@ -262,23 +289,13 @@ function AnalyticsLineChart({ data }) {
   return (
     <div style={{ width: "100%", overflowX: "auto" }}>
       <div style={{ minWidth: "880px" }}>
-        <div
-          style={{
-            display: "flex",
-            gap: "10px",
-            flexWrap: "wrap",
-            marginBottom: "16px"
-          }}
-        >
+        <div style={{ display: "flex", gap: "10px", flexWrap: "wrap", marginBottom: "16px" }}>
           <LegendDot color="#ffffff" label="Views" dark />
           <LegendDot color="#22c55e" label="Clicks" dark />
           <LegendDot color="#a855f7" label="Unique visitors" dark />
         </div>
 
-        <svg
-          viewBox={`0 0 ${width} ${height}`}
-          style={{ width: "100%", height: "340px", display: "block" }}
-        >
+        <svg viewBox={`0 0 ${width} ${height}`} style={{ width: "100%", height: "340px", display: "block" }}>
           <defs>
             <linearGradient id="viewsFillDark" x1="0" y1="0" x2="0" y2="1">
               <stop offset="0%" stopColor="rgba(255,255,255,0.22)" />
@@ -291,20 +308,8 @@ function AnalyticsLineChart({ data }) {
 
             return (
               <g key={tick}>
-                <line
-                  x1={padding}
-                  y1={y}
-                  x2={width - padding}
-                  y2={y}
-                  stroke="rgba(255,255,255,0.12)"
-                  strokeDasharray="4 6"
-                />
-                <text
-                  x={8}
-                  y={y + 4}
-                  fontSize="12"
-                  fill="rgba(255,255,255,0.46)"
-                >
+                <line x1={padding} y1={y} x2={width - padding} y2={y} stroke="rgba(255,255,255,0.12)" strokeDasharray="4 6" />
+                <text x={8} y={y + 4} fontSize="12" fill="rgba(255,255,255,0.46)">
                   {formatNumber(tick)}
                 </text>
               </g>
@@ -313,32 +318,9 @@ function AnalyticsLineChart({ data }) {
 
           <path d={buildArea("page_views")} fill="url(#viewsFillDark)" />
 
-          <path
-            d={buildLine("page_views")}
-            fill="none"
-            stroke="#ffffff"
-            strokeWidth="3.5"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          />
-
-          <path
-            d={buildLine("clicks")}
-            fill="none"
-            stroke="#22c55e"
-            strokeWidth="3"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          />
-
-          <path
-            d={buildLine("unique_visitors")}
-            fill="none"
-            stroke="#a855f7"
-            strokeWidth="3"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          />
+          <path d={buildLine("page_views")} fill="none" stroke="#ffffff" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round" />
+          <path d={buildLine("clicks")} fill="none" stroke="#22c55e" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
+          <path d={buildLine("unique_visitors")} fill="none" stroke="#a855f7" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
 
           {data.map((item, index) => (
             <g key={`${item.label}-${index}`}>
@@ -349,14 +331,7 @@ function AnalyticsLineChart({ data }) {
           ))}
 
           {data.map((item, index) => (
-            <text
-              key={`label-${item.label}-${index}`}
-              x={getX(index)}
-              y={height - 10}
-              textAnchor="middle"
-              fontSize="12"
-              fill="rgba(255,255,255,0.50)"
-            >
+            <text key={`label-${item.label}-${index}`} x={getX(index)} y={height - 10} textAnchor="middle" fontSize="12" fill="rgba(255,255,255,0.50)">
               {String(item.label).slice(5)}
             </text>
           ))}
@@ -365,6 +340,22 @@ function AnalyticsLineChart({ data }) {
     </div>
   );
 }
+
+const actionLabels = {
+  page_view: "Vizita në faqe",
+  post_view: "Shikime postimesh",
+  post_click: "Klikime në postime",
+  category_click: "Klikime në kategori",
+  whatsapp_click: "Klikime WhatsApp",
+  phone_click: "Klikime telefoni",
+  email_click: "Klikime email",
+  ad_impression: "Shfaqje reklamash",
+  ad_click: "Klikime reklamash",
+  time_on_page: "Kohë në faqe",
+  search_used: "Kërkime",
+  filter_used: "Filtra",
+  load_more_click: "Load more"
+};
 
 function ProgressList({ items }) {
   if (!items.length) {
@@ -378,6 +369,7 @@ function ProgressList({ items }) {
       {items.map((item, index) => {
         const total = Number(item.total || 0);
         const percentage = Math.max((total / max) * 100, 4);
+        const label = actionLabels[item.event_type] || item.event_type;
 
         return (
           <div
@@ -389,44 +381,17 @@ function ProgressList({ items }) {
               padding: "14px"
             }}
           >
-            <div
-              style={{
-                display: "flex",
-                justifyContent: "space-between",
-                gap: "12px",
-                marginBottom: "10px"
-              }}
-            >
-              <div
-                style={{
-                  fontSize: "14px",
-                  fontWeight: 700,
-                  color: "#0f172a"
-                }}
-              >
-                {item.event_type}
+            <div style={{ display: "flex", justifyContent: "space-between", gap: "12px", marginBottom: "10px" }}>
+              <div style={{ fontSize: "14px", fontWeight: 800, color: "#0f172a" }}>
+                {label}
               </div>
 
-              <div
-                style={{
-                  fontSize: "14px",
-                  fontWeight: 900,
-                  color: "#0f172a"
-                }}
-              >
+              <div style={{ fontSize: "14px", fontWeight: 900, color: "#0f172a" }}>
                 {formatNumber(total)}
               </div>
             </div>
 
-            <div
-              style={{
-                width: "100%",
-                height: "10px",
-                borderRadius: "999px",
-                background: "#e2e8f0",
-                overflow: "hidden"
-              }}
-            >
+            <div style={{ width: "100%", height: "10px", borderRadius: "999px", background: "#e2e8f0", overflow: "hidden" }}>
               <div
                 style={{
                   width: `${percentage}%`,
@@ -439,6 +404,130 @@ function ProgressList({ items }) {
           </div>
         );
       })}
+    </div>
+  );
+}
+
+function MiniBarChart({ items, labelKey = "label", valueKey = "total", emptyText = "Ende nuk ka data." }) {
+  if (!items.length) return <EmptyState text={emptyText} />;
+
+  const max = Math.max(...items.map((item) => Number(item[valueKey] || 0)), 1);
+
+  return (
+    <div style={{ display: "grid", gap: "12px" }}>
+      {items.map((item, index) => {
+        const value = Number(item[valueKey] || 0);
+        const percent = Math.max((value / max) * 100, 5);
+        const label = item[labelKey] || "Unknown";
+
+        return (
+          <div
+            key={`${label}-${index}`}
+            style={{
+              display: "grid",
+              gap: "8px",
+              padding: "13px",
+              borderRadius: "16px",
+              background: "#f8fafc",
+              border: "1px solid #e2e8f0"
+            }}
+          >
+            <div style={{ display: "flex", justifyContent: "space-between", gap: "12px" }}>
+              <strong style={{ color: "#0f172a", fontSize: "14px" }}>{label}</strong>
+              <span style={{ color: "#0f172a", fontWeight: 900, fontSize: "14px" }}>
+                {formatNumber(value)}
+              </span>
+            </div>
+
+            <div style={{ height: "10px", background: "#e2e8f0", borderRadius: "999px", overflow: "hidden" }}>
+              <div
+                style={{
+                  width: `${percent}%`,
+                  height: "100%",
+                  borderRadius: "999px",
+                  background: "linear-gradient(90deg,#2563eb,#14b8a6)"
+                }}
+              />
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+function DevicePieChart({ items }) {
+  if (!items.length) return <EmptyState text="Ende nuk ka data për pajisje." />;
+
+  const total = items.reduce((sum, item) => sum + Number(item.total || 0), 0) || 1;
+  const colors = ["#2563eb", "#16a34a", "#f97316", "#7c3aed", "#0ea5e9"];
+
+  let current = 0;
+
+  const gradient = items
+    .map((item, index) => {
+      const value = Number(item.total || 0);
+      const start = current;
+      const end = current + (value / total) * 100;
+      current = end;
+
+      return `${colors[index % colors.length]} ${start}% ${end}%`;
+    })
+    .join(", ");
+
+  return (
+    <div style={{ display: "grid", gridTemplateColumns: "150px 1fr", gap: "18px", alignItems: "center" }} className="device-pie-wrap">
+      <div
+        style={{
+          width: "150px",
+          height: "150px",
+          borderRadius: "999px",
+          background: `conic-gradient(${gradient})`,
+          boxShadow: "inset 0 0 0 18px #fff, 0 18px 38px rgba(15,23,42,0.10)",
+          border: "1px solid #e2e8f0"
+        }}
+      />
+
+      <div style={{ display: "grid", gap: "10px" }}>
+        {items.map((item, index) => {
+          const value = Number(item.total || 0);
+          const percent = ((value / total) * 100).toFixed(1);
+
+          return (
+            <div
+              key={`${item.device}-${index}`}
+              style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                gap: "12px",
+                padding: "10px 12px",
+                borderRadius: "14px",
+                background: "#f8fafc",
+                border: "1px solid #e2e8f0"
+              }}
+            >
+              <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                <span
+                  style={{
+                    width: "10px",
+                    height: "10px",
+                    borderRadius: "999px",
+                    background: colors[index % colors.length]
+                  }}
+                />
+                <strong style={{ fontSize: "13px", color: "#0f172a" }}>
+                  {item.device || "Unknown"}
+                </strong>
+              </div>
+
+              <span style={{ fontSize: "13px", color: "#64748b", fontWeight: 800 }}>
+                {formatNumber(value)} · {percent}%
+              </span>
+            </div>
+          );
+        })}
+      </div>
     </div>
   );
 }
@@ -505,39 +594,79 @@ export default function AdminAnalytics() {
   const [topPages, setTopPages] = useState([]);
   const [topActions, setTopActions] = useState([]);
   const [ads, setAds] = useState([]);
+  const [countries, setCountries] = useState([]);
+  const [devices, setDevices] = useState([]);
+  const [timeData, setTimeData] = useState(null);
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
   const query = useMemo(() => buildQuery(filters), [filters]);
 
+  async function safeJson(res) {
+    try {
+      return await res.json();
+    } catch {
+      return {};
+    }
+  }
+
   async function fetchAnalytics() {
     try {
       setLoading(true);
       setError("");
 
-      const [overviewRes, chartRes, topPagesRes, topActionsRes, adsRes] =
-        await Promise.all([
-          fetch(`${API_BASE}/api/admin/analytics/overview?${query}`),
-          fetch(`${API_BASE}/api/admin/analytics/chart?${query}`),
-          fetch(`${API_BASE}/api/admin/analytics/top-pages?${query}`),
-          fetch(`${API_BASE}/api/admin/analytics/top-actions?${query}`),
-          fetch(`${API_BASE}/api/admin/analytics/ads?${query}`)
-        ]);
+      const token = getAdminToken();
+
+      if (!token) {
+        throw new Error("NO_TOKEN");
+      }
+
+      const headers = getAuthHeaders();
+
+      const [
+        overviewRes,
+        chartRes,
+        topPagesRes,
+        topActionsRes,
+        adsRes,
+        countriesRes,
+        devicesRes,
+        timeRes
+      ] = await Promise.all([
+        fetch(`${API_BASE}/api/admin/analytics/overview?${query}`, { headers }),
+        fetch(`${API_BASE}/api/admin/analytics/chart?${query}`, { headers }),
+        fetch(`${API_BASE}/api/admin/analytics/top-pages?${query}`, { headers }),
+        fetch(`${API_BASE}/api/admin/analytics/top-actions?${query}`, { headers }),
+        fetch(`${API_BASE}/api/admin/analytics/ads?${query}`, { headers }),
+        fetch(`${API_BASE}/api/admin/analytics/countries?${query}`, { headers }),
+        fetch(`${API_BASE}/api/admin/analytics/devices?${query}`, { headers }),
+        fetch(`${API_BASE}/api/admin/analytics/time?${query}`, { headers })
+      ]);
 
       const [
         overviewJson,
         chartJson,
         topPagesJson,
         topActionsJson,
-        adsJson
+        adsJson,
+        countriesJson,
+        devicesJson,
+        timeJson
       ] = await Promise.all([
-        overviewRes.json(),
-        chartRes.json(),
-        topPagesRes.json(),
-        topActionsRes.json(),
-        adsRes.json()
+        safeJson(overviewRes),
+        safeJson(chartRes),
+        safeJson(topPagesRes),
+        safeJson(topActionsRes),
+        safeJson(adsRes),
+        safeJson(countriesRes),
+        safeJson(devicesRes),
+        safeJson(timeRes)
       ]);
+
+      if (overviewRes.status === 401 || overviewRes.status === 403) {
+        throw new Error("AUTH_ERROR");
+      }
 
       if (!overviewRes.ok) {
         throw new Error(overviewJson.message || "Failed to load analytics");
@@ -548,9 +677,19 @@ export default function AdminAnalytics() {
       setTopPages(topPagesJson.data || []);
       setTopActions(topActionsJson.data || []);
       setAds(adsJson.data || []);
+      setCountries(countriesJson.data || []);
+      setDevices(devicesJson.data || []);
+      setTimeData(timeJson.data || null);
     } catch (err) {
-      console.error(err);
-      setError("Nuk u ngarkuan analytics.");
+      console.error("AdminAnalytics error:", err);
+
+      if (err.message === "NO_TOKEN") {
+        setError("Nuk ka token. Ju lutem bëni login përsëri si admin.");
+      } else if (err.message === "AUTH_ERROR") {
+        setError("Sesioni ka skaduar ose token-i nuk është valid. Ju lutem bëni login përsëri.");
+      } else {
+        setError("Nuk u ngarkuan analytics.");
+      }
     } finally {
       setLoading(false);
     }
@@ -559,6 +698,12 @@ export default function AdminAnalytics() {
   useEffect(() => {
     fetchAnalytics();
   }, [query]);
+
+  const avgTimeSeconds =
+    Number(timeData?.avg_time_seconds || overview?.avg_time_seconds || 0);
+
+  const avgTimeMinutes =
+    Number(timeData?.avg_time_minutes || overview?.avg_time_minutes || 0);
 
   return (
     <div
@@ -602,13 +747,7 @@ export default function AdminAnalytics() {
                 border: "1px solid rgba(255,255,255,0.10)"
               }}
             >
-              <h2
-                style={{
-                  margin: "0 0 14px",
-                  fontSize: "22px",
-                  fontWeight: "700"
-                }}
-              >
+              <h2 style={{ margin: "0 0 14px", fontSize: "22px", fontWeight: "700" }}>
                 Admin Panel
               </h2>
 
@@ -669,37 +808,17 @@ export default function AdminAnalytics() {
                 </p>
               </div>
 
-              <div
-                style={{
-                  display: "flex",
-                  flexDirection: "column",
-                  alignItems: "flex-end",
-                  gap: "12px"
-                }}
-              >
+              <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: "12px" }}>
                 <PoweredBadge />
 
-                <div
-                  style={{
-                    display: "flex",
-                    gap: "10px",
-                    flexWrap: "wrap",
-                    justifyContent: "flex-end"
-                  }}
-                >
+                <div style={{ display: "flex", gap: "10px", flexWrap: "wrap", justifyContent: "flex-end" }}>
                   {["today", "7d", "30d", "month", "year"].map((item) => {
                     const active = filters.range === item;
 
                     return (
                       <button
                         key={item}
-                        onClick={() =>
-                          setFilters({
-                            range: item,
-                            from: "",
-                            to: ""
-                          })
-                        }
+                        onClick={() => setFilters({ range: item, from: "", to: "" })}
                         style={{
                           border: active
                             ? "1px solid rgba(255,255,255,0.30)"
@@ -729,12 +848,7 @@ export default function AdminAnalytics() {
                   })}
 
                   <button
-                    onClick={() =>
-                      setFilters((prev) => ({
-                        ...prev,
-                        range: "custom"
-                      }))
-                    }
+                    onClick={() => setFilters((prev) => ({ ...prev, range: "custom" }))}
                     style={{
                       border:
                         filters.range === "custom"
@@ -770,49 +884,25 @@ export default function AdminAnalytics() {
                 }}
               >
                 <div>
-                  <div
-                    style={{
-                      fontSize: "12px",
-                      fontWeight: 700,
-                      color: "rgba(255,255,255,0.8)",
-                      marginBottom: "8px"
-                    }}
-                  >
+                  <div style={{ fontSize: "12px", fontWeight: 700, color: "rgba(255,255,255,0.8)", marginBottom: "8px" }}>
                     Nga data
                   </div>
                   <input
                     type="date"
                     value={filters.from}
-                    onChange={(e) =>
-                      setFilters((prev) => ({
-                        ...prev,
-                        from: e.target.value
-                      }))
-                    }
+                    onChange={(e) => setFilters((prev) => ({ ...prev, from: e.target.value }))}
                     style={dateInputStyle}
                   />
                 </div>
 
                 <div>
-                  <div
-                    style={{
-                      fontSize: "12px",
-                      fontWeight: 700,
-                      color: "rgba(255,255,255,0.8)",
-                      marginBottom: "8px"
-                    }}
-                  >
+                  <div style={{ fontSize: "12px", fontWeight: 700, color: "rgba(255,255,255,0.8)", marginBottom: "8px" }}>
                     Deri më
                   </div>
                   <input
                     type="date"
                     value={filters.to}
-                    onChange={(e) =>
-                      setFilters((prev) => ({
-                        ...prev,
-                        to: e.target.value
-                      }))
-                    }
+                    onChange={(e) => setFilters((prev) => ({ ...prev, to: e.target.value }))}
                     style={dateInputStyle}
                   />
                 </div>
@@ -864,54 +954,98 @@ export default function AdminAnalytics() {
                 marginBottom: "22px"
               }}
             >
-              <StatCard
-                title="Page Views"
-                value={formatNumber(overview?.total_page_views)}
-                subtitle="Shikime totale të faqeve"
-                accent="#0f172a"
-              />
-              <StatCard
-                title="Vizitorë unikë"
-                value={formatNumber(overview?.unique_visitors)}
-                subtitle="Përdorues unikë në periudhë"
-                accent="#7c3aed"
-              />
-              <StatCard
-                title="Klikime totale"
-                value={formatNumber(overview?.total_clicks)}
-                subtitle="Të gjitha veprimet e regjistruara"
-                accent="#16a34a"
-              />
-              <StatCard
-                title="WhatsApp Clicks"
-                value={formatNumber(overview?.whatsapp_clicks)}
-                subtitle="Klikime në WhatsApp"
-                accent="#16a34a"
-              />
-              <StatCard
-                title="Phone Clicks"
-                value={formatNumber(overview?.phone_clicks)}
-                subtitle="Klikime në numër telefoni"
-                accent="#0ea5e9"
-              />
-              <StatCard
-                title="Email Clicks"
-                value={formatNumber(overview?.email_clicks)}
-                subtitle="Klikime në email"
-                accent="#f97316"
-              />
-              <StatCard
-                title="Ad Impressions"
-                value={formatNumber(overview?.ad_impressions)}
-                subtitle="Sa herë janë parë reklamat"
-                accent="#6366f1"
-              />
-              <StatCard
-                title="Ad CTR"
-                value={`${overview?.ad_ctr || 0}%`}
-                subtitle="Përqindja e klikimeve në reklama"
-                accent="#06b6d4"
-              />
+              <StatCard title="Page Views" value={formatNumber(overview?.total_page_views)} subtitle="Shikime totale të faqeve" accent="#0f172a" />
+              <StatCard title="Vizitorë unikë" value={formatNumber(overview?.unique_visitors)} subtitle="Përdorues unikë në periudhë" accent="#7c3aed" />
+              <StatCard title="Klikime totale" value={formatNumber(overview?.total_clicks)} subtitle="Të gjitha veprimet e regjistruara" accent="#16a34a" />
+              <StatCard title="WhatsApp Clicks" value={formatNumber(overview?.whatsapp_clicks)} subtitle="Klikime në WhatsApp" accent="#16a34a" />
+              <StatCard title="Phone Clicks" value={formatNumber(overview?.phone_clicks)} subtitle="Klikime në numër telefoni" accent="#0ea5e9" />
+              <StatCard title="Email Clicks" value={formatNumber(overview?.email_clicks)} subtitle="Klikime në email" accent="#f97316" />
+              <StatCard title="Ad Impressions" value={formatNumber(overview?.ad_impressions)} subtitle="Sa herë janë parë reklamat" accent="#6366f1" />
+              <StatCard title="Ad CTR" value={`${overview?.ad_ctr || 0}%`} subtitle="Përqindja e klikimeve në reklama" accent="#06b6d4" />
+              <StatCard title="Average Time" value={formatTime(avgTimeSeconds)} subtitle={`${avgTimeMinutes || 0} minuta mesatarisht në faqe`} accent="#f59e0b" />
+            </div>
+
+            <div
+              style={{
+                display: "grid",
+                gridTemplateColumns: "1fr 1fr 0.7fr",
+                gap: "16px",
+                marginBottom: "22px"
+              }}
+              className="analytics-insight-grid"
+            >
+              <SectionCard title="🌍 Countries" subtitle="Shtetet prej nga vijnë vizitorët">
+                <MiniBarChart
+                  items={countries.map((item) => ({
+                    ...item,
+                    label: item.country || "Unknown"
+                  }))}
+                  labelKey="label"
+                  valueKey="total"
+                  emptyText="Ende nuk ka data për shtete."
+                />
+              </SectionCard>
+
+              <SectionCard title="📱 Devices" subtitle="Mobile, desktop dhe pajisje tjera">
+                <DevicePieChart items={devices} />
+              </SectionCard>
+
+              <SectionCard title="⏱ Time on page" subtitle="Mesatarja e qëndrimit në faqe">
+                <div
+                  style={{
+                    minHeight: "210px",
+                    display: "flex",
+                    flexDirection: "column",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    textAlign: "center",
+                    borderRadius: "20px",
+                    background:
+                      "radial-gradient(circle at top, rgba(245,158,11,0.18), transparent 42%), linear-gradient(180deg,#fff7ed,#ffffff)",
+                    border: "1px solid #fed7aa",
+                    padding: "22px"
+                  }}
+                >
+                  <div
+                    style={{
+                      width: "86px",
+                      height: "86px",
+                      borderRadius: "999px",
+                      display: "grid",
+                      placeItems: "center",
+                      background: "#fff",
+                      border: "1px solid #fed7aa",
+                      boxShadow: "0 18px 38px rgba(245,158,11,0.14)",
+                      fontSize: "34px",
+                      marginBottom: "16px"
+                    }}
+                  >
+                    ⏱
+                  </div>
+
+                  <strong
+                    style={{
+                      fontSize: "38px",
+                      lineHeight: 1,
+                      color: "#0f172a",
+                      fontWeight: 950
+                    }}
+                  >
+                    {formatTime(avgTimeSeconds)}
+                  </strong>
+
+                  <span
+                    style={{
+                      marginTop: "10px",
+                      color: "#92400e",
+                      fontSize: "13px",
+                      fontWeight: 800
+                    }}
+                  >
+                    {formatNumber(timeData?.samples || 0)} mostra të regjistruara
+                  </span>
+                </div>
+              </SectionCard>
             </div>
 
             <div
@@ -923,18 +1057,11 @@ export default function AdminAnalytics() {
               }}
               className="analytics-mid-grid"
             >
-              <SectionCard
-                title="Traffic diagram"
-                subtitle="Views, clicks dhe vizitorë unikë sipas periudhës"
-                dark
-              >
+              <SectionCard title="Traffic diagram" subtitle="Views, clicks dhe vizitorë unikë sipas periudhës" dark>
                 <AnalyticsLineChart data={chart} />
               </SectionCard>
 
-              <SectionCard
-                title="Top actions"
-                subtitle="Veprimet më të përdorura nga vizitorët"
-              >
+              <SectionCard title="Top actions" subtitle="Veprimet më të përdorura nga vizitorët">
                 <ProgressList items={topActions.slice(0, 8)} />
               </SectionCard>
             </div>
@@ -948,10 +1075,7 @@ export default function AdminAnalytics() {
               }}
               className="analytics-bottom-grid"
             >
-              <SectionCard
-                title="Top pages"
-                subtitle="Faqet më të vizituara në portal"
-              >
+              <SectionCard title="Top pages" subtitle="Faqet më të vizituara në portal">
                 {topPages.length === 0 ? (
                   <EmptyState text="Ende nuk ka data për faqet." />
                 ) : (
@@ -980,10 +1104,7 @@ export default function AdminAnalytics() {
                 )}
               </SectionCard>
 
-              <SectionCard
-                title="Ads performance"
-                subtitle="Performanca e reklamave aktive"
-              >
+              <SectionCard title="Ads performance" subtitle="Performanca e reklamave aktive">
                 {ads.length === 0 ? (
                   <EmptyState text="Ende nuk ka data për reklama." />
                 ) : (
@@ -1083,8 +1204,16 @@ export default function AdminAnalytics() {
       <style>{`
         @media (max-width: 1180px) {
           .analytics-mid-grid,
-          .analytics-bottom-grid {
+          .analytics-bottom-grid,
+          .analytics-insight-grid {
             grid-template-columns: 1fr !important;
+          }
+        }
+
+        @media (max-width: 680px) {
+          .device-pie-wrap {
+            grid-template-columns: 1fr !important;
+            justify-items: center;
           }
         }
 

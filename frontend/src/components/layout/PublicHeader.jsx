@@ -21,6 +21,79 @@ const mobileNewsItems = [
   { to: "/kategori/lajme-bota", label: "Bota", desc: "Ngjarje ndërkombëtare" }
 ];
 
+const MobileIcon = ({ type }) => {
+  const commonProps = {
+    viewBox: "0 0 24 24",
+    fill: "none",
+    xmlns: "http://www.w3.org/2000/svg",
+    "aria-hidden": "true"
+  };
+
+  const paths = {
+    home: (
+      <>
+        <path d="M3.5 10.7L12 3.6L20.5 10.7" />
+        <path d="M5.6 9.6V20.2H18.4V9.6" />
+        <path d="M9.4 20.2V13.7H14.6V20.2" />
+      </>
+    ),
+    news: (
+      <>
+        <path d="M5 4.7H16.6C18 4.7 19.1 5.8 19.1 7.2V19.3H6.9C5.9 19.3 5 18.4 5 17.4V4.7Z" />
+        <path d="M8.1 8H15.8" />
+        <path d="M8.1 11.1H15.8" />
+        <path d="M8.1 14.2H13" />
+      </>
+    ),
+    property: (
+      <>
+        <path d="M4.2 11L12 4.3L19.8 11" />
+        <path d="M6.1 9.9V20H17.9V9.9" />
+        <path d="M9.2 20V14.2H14.8V20" />
+        <path d="M9.2 10.9H14.8" />
+      </>
+    ),
+    car: (
+      <>
+        <path d="M4.2 13.1L6 8.4C6.4 7.4 7.3 6.8 8.4 6.8H15.6C16.7 6.8 17.6 7.4 18 8.4L19.8 13.1" />
+        <path d="M5 13.1H19V17.9H5V13.1Z" />
+        <path d="M7 17.9V19.5" />
+        <path d="M17 17.9V19.5" />
+        <path d="M7.8 15.4H8" />
+        <path d="M16 15.4H16.2" />
+      </>
+    ),
+    jobs: (
+      <>
+        <path d="M8.2 8.2V6.5C8.2 5.6 8.9 4.9 9.8 4.9H14.2C15.1 4.9 15.8 5.6 15.8 6.5V8.2" />
+        <path d="M4.8 8.2H19.2V18.7H4.8V8.2Z" />
+        <path d="M4.8 12.2H19.2" />
+        <path d="M10.4 12.2V13.8H13.6V12.2" />
+      </>
+    ),
+    offers: (
+      <>
+        <path d="M4.6 12.7L11.4 5.9H18.7V13.2L11.9 20L4.6 12.7Z" />
+        <path d="M15.9 8.8H16" />
+        <path d="M9.2 13.2L11.1 15.1L15.1 11.1" />
+      </>
+    ),
+    advertise: (
+      <>
+        <path d="M5 15.1V8.9L14.4 5.2V18.8L5 15.1Z" />
+        <path d="M14.4 9.2H17.3C18.6 9.2 19.6 10.2 19.6 11.5V12.5C19.6 13.8 18.6 14.8 17.3 14.8H14.4" />
+        <path d="M7.2 15.9L8.2 19.2H10.5L9.4 16.7" />
+      </>
+    )
+  };
+
+  return (
+    <svg {...commonProps}>
+      {paths[type] || paths.home}
+    </svg>
+  );
+};
+
 export default function PublicHeader() {
   const [screenWidth, setScreenWidth] = useState(
     typeof window !== "undefined" ? window.innerWidth : 1280
@@ -130,7 +203,10 @@ export default function PublicHeader() {
                     `mobile-link ${isActive ? "active" : ""}`
                   }
                 >
-                  Ballina
+                  <span className="mobile-link-main">
+                    <i className="mobile-link-icon"><MobileIcon type="home" /></i>
+                    <span>Ballina</span>
+                  </span>
                 </NavLink>
 
                 <button
@@ -138,31 +214,47 @@ export default function PublicHeader() {
                   className="mobile-link news-button"
                   onClick={() => setNewsOpen(true)}
                 >
-                  <span>Lajme</span>
+                  <span className="mobile-link-main">
+                    <i className="mobile-link-icon"><MobileIcon type="news" /></i>
+                    <span>Lajme</span>
+                  </span>
                   <b>Hap kategoritë</b>
                 </button>
 
-                {navItems.slice(1).map((item) => (
-                  <NavLink
-                    key={item.to}
-                    to={item.to}
-                    end={item.end}
-                    className={({ isActive }) =>
-                      `mobile-link ${isActive ? "active" : ""} ${
-                        item.to === "/kategori/oferta" ? "offer-link" : ""
-                      } ${
-                        item.to === "/reklamo-me-ne" ? "advertise-link" : ""
-                      }`
-                    }
-                  >
-                    {item.label}
-                  </NavLink>
-                ))}
+                {navItems.slice(1).map((item) => {
+                  const iconMap = {
+                    "/kategori/patundshmeri": "property",
+                    "/kategori/automjete": "car",
+                    "/kategori/konkurse-pune": "jobs",
+                    "/kategori/oferta": "offers",
+                    "/reklamo-me-ne": "advertise"
+                  };
+
+                  return (
+                    <NavLink
+                      key={item.to}
+                      to={item.to}
+                      end={item.end}
+                      className={({ isActive }) =>
+                        `mobile-link ${isActive ? "active" : ""} ${
+                          item.to === "/kategori/oferta" ? "offer-link" : ""
+                        } ${
+                          item.to === "/reklamo-me-ne" ? "advertise-link" : ""
+                        }`
+                      }
+                    >
+                      <span className="mobile-link-main">
+                        <i className="mobile-link-icon"><MobileIcon type={iconMap[item.to]} /></i>
+                        <span>{item.label}</span>
+                      </span>
+                    </NavLink>
+                  );
+                })}
               </nav>
 
               <a href="tel:044000000" className="mobile-call">
                 <span>📞</span>
-                Kontakto tani
+                <strong>Kontakto tani</strong>
               </a>
             </div>
           </div>
@@ -242,6 +334,7 @@ export default function PublicHeader() {
 
 .brand-logo{
   animation:logoFloat 6s ease-in-out infinite;
+  filter:drop-shadow(0 8px 14px rgba(14,99,246,.22));
 }
 
 @keyframes logoReveal{
@@ -386,16 +479,21 @@ export default function PublicHeader() {
         }
 
         .brand-logo-box{
+          position:relative;
           width:56px;
           height:56px;
           border-radius:20px;
-          background:linear-gradient(135deg,#020617,#0f3fb8 55%,#0ea5e9);
+          background:
+            radial-gradient(circle at 28% 18%,rgba(255,255,255,.35),transparent 34%),
+            linear-gradient(135deg,#020617 0%,#0f3fb8 55%,#0ea5e9 100%);
           display:flex;
           align-items:center;
           justify-content:center;
           overflow:hidden;
-          border:1px solid rgba(255,255,255,.55);
-          box-shadow:0 18px 40px rgba(37,99,235,.28);
+          border:1px solid rgba(255,255,255,.58);
+          box-shadow:
+            0 18px 40px rgba(37,99,235,.28),
+            inset 0 1px 0 rgba(255,255,255,.22);
         }
 
         .brand-logo{
@@ -616,35 +714,127 @@ export default function PublicHeader() {
         }
 
         .mobile-menu{
-          padding:14px;
-          border-radius:28px;
-          background:#ffffff;
-          border:1px solid #dbeafe;
-          box-shadow:0 24px 60px rgba(15,23,42,.14);
+          position:relative;
+          padding:11px;
+          border-radius:26px;
+          background:
+            radial-gradient(circle at 10% 0%, rgba(59,130,246,.16), transparent 34%),
+            radial-gradient(circle at 92% 12%, rgba(14,165,233,.14), transparent 34%),
+            linear-gradient(180deg,rgba(255,255,255,.86),rgba(248,251,255,.74));
+          border:1px solid rgba(191,219,254,.84);
+          box-shadow:
+            0 26px 70px rgba(15,23,42,.16),
+            inset 0 1px 0 rgba(255,255,255,.8);
+          backdrop-filter:blur(24px);
+          -webkit-backdrop-filter:blur(24px);
+          overflow:hidden;
+        }
+
+        .mobile-menu::before{
+          content:"";
+          position:absolute;
+          inset:0;
+          background:linear-gradient(135deg,rgba(255,255,255,.42),transparent 48%);
+          pointer-events:none;
         }
 
         .mobile-nav{
+          position:relative;
+          z-index:1;
           display:grid;
-          grid-template-columns:1fr;
-          gap:10px;
+          grid-template-columns:repeat(2,minmax(0,1fr));
+          gap:8px;
         }
 
         .mobile-link{
+          position:relative;
+          min-width:0;
+          min-height:62px;
           text-decoration:none;
           color:#172033;
-          font-size:15px;
+          font-size:12.5px;
           font-weight:950;
-          line-height:1.25;
-          padding:16px;
+          line-height:1.12;
+          padding:10px;
           border-radius:18px;
-          background:#fff;
-          border:1px solid #dbe4f0;
-          box-shadow:0 8px 18px rgba(15,23,42,.045);
-          min-height:56px;
+          background:
+            linear-gradient(180deg,rgba(255,255,255,.96),rgba(248,251,255,.9));
+          border:1px solid rgba(203,213,225,.92);
+          box-shadow:
+            0 10px 24px rgba(15,23,42,.055),
+            inset 0 1px 0 rgba(255,255,255,.9);
+          display:flex;
+          flex-direction:column;
+          align-items:flex-start;
+          justify-content:center;
+          gap:7px;
+          box-sizing:border-box;
+          overflow:hidden;
+          transition:transform .18s ease,border-color .18s ease,box-shadow .18s ease,background .18s ease;
+        }
+
+        .mobile-link::after{
+          content:"";
+          position:absolute;
+          right:-18px;
+          top:-18px;
+          width:58px;
+          height:58px;
+          border-radius:999px;
+          background:radial-gradient(circle,rgba(37,99,235,.12),transparent 68%);
+          pointer-events:none;
+        }
+
+        .mobile-link-main{
+          position:relative;
+          z-index:1;
           display:flex;
           align-items:center;
-          justify-content:space-between;
-          box-sizing:border-box;
+          gap:8px;
+          min-width:0;
+          width:100%;
+        }
+
+        .mobile-link-main span{
+          min-width:0;
+          overflow:hidden;
+          text-overflow:ellipsis;
+          white-space:nowrap;
+        }
+
+        .mobile-link-icon{
+          width:29px;
+          height:29px;
+          flex:0 0 29px;
+          border-radius:12px;
+          display:inline-flex;
+          align-items:center;
+          justify-content:center;
+          font-style:normal;
+          color:#0b63f6;
+          background:
+            radial-gradient(circle at 28% 18%,rgba(255,255,255,.9),transparent 40%),
+            linear-gradient(135deg,#eff6ff,#dbeafe);
+          border:1px solid rgba(147,197,253,.88);
+          box-shadow:
+            0 8px 18px rgba(37,99,235,.12),
+            inset 0 1px 0 rgba(255,255,255,.85);
+        }
+
+        .mobile-link-icon svg{
+          width:17px;
+          height:17px;
+          stroke:currentColor;
+          stroke-width:1.85;
+          stroke-linecap:round;
+          stroke-linejoin:round;
+        }
+
+        .mobile-link:hover,
+        .mobile-link:active{
+          transform:translateY(-1px) scale(.99);
+          border-color:#93c5fd;
+          box-shadow:0 14px 30px rgba(37,99,235,.13);
         }
 
         button.mobile-link{
@@ -655,39 +845,72 @@ export default function PublicHeader() {
         }
 
         .news-button{
-          background:linear-gradient(135deg,#eff6ff,#dbeafe);
+          background:
+            radial-gradient(circle at 15% 0%,rgba(255,255,255,.65),transparent 32%),
+            linear-gradient(135deg,#eff6ff 0%,#dbeafe 100%);
           border-color:#93c5fd;
           color:#082f6f;
         }
 
         .news-button b{
-          font-size:12px;
+          position:relative;
+          z-index:1;
+          display:inline-flex;
+          align-items:center;
           color:#2563eb;
-          font-weight:900;
+          font-size:9.2px;
+          font-weight:950;
+          line-height:1;
+          white-space:nowrap;
+          opacity:.92;
         }
 
         .mobile-link.active{
           color:#082f6f;
-          background:linear-gradient(135deg,#dbeafe,#bfdbfe);
+          background:
+            radial-gradient(circle at 20% 0%,rgba(255,255,255,.65),transparent 34%),
+            linear-gradient(135deg,#dbeafe 0%,#bfdbfe 100%);
           border-color:#60a5fa;
+          box-shadow:0 14px 30px rgba(37,99,235,.16);
         }
 
         .mobile-link.offer-link{
           color:#065f46;
-          background:#ecfdf5;
+          background:linear-gradient(135deg,#ecfdf5 0%,#dcfce7 100%);
+          border-color:#86efac;
+        }
+
+        .mobile-link.offer-link .mobile-link-icon{
+          color:#047857;
+          background:linear-gradient(135deg,#ecfdf5,#bbf7d0);
           border-color:#86efac;
         }
 
         .mobile-link.advertise-link{
           color:#fff;
-          background:linear-gradient(135deg,#0b63f6,#0284c7);
-          border-color:#38bdf8;
-          box-shadow:0 14px 28px rgba(14,99,246,.24);
+          background:
+            radial-gradient(circle at 20% 0%,rgba(255,255,255,.30),transparent 34%),
+            linear-gradient(135deg,#2563eb 0%,#0284c7 100%);
+          border-color:rgba(125,211,252,.75);
+          box-shadow:0 15px 32px rgba(37,99,235,.26);
+        }
+
+        .mobile-link.advertise-link .mobile-link-icon{
+          color:#fff;
+          background:rgba(255,255,255,.18);
+          border-color:rgba(255,255,255,.28);
+          box-shadow:none;
+        }
+
+        .mobile-link.advertise-link::after{
+          background:radial-gradient(circle,rgba(255,255,255,.25),transparent 68%);
         }
 
         .mobile-call{
-          margin-top:14px;
-          min-height:54px;
+          position:relative;
+          z-index:1;
+          margin-top:10px;
+          min-height:48px;
           border-radius:18px;
           display:flex;
           align-items:center;
@@ -695,19 +918,28 @@ export default function PublicHeader() {
           gap:9px;
           text-decoration:none;
           color:#fff;
-          font-size:16px;
+          font-size:14px;
           font-weight:950;
-          background:linear-gradient(135deg,#0b63f6,#0284c7);
-          box-shadow:0 16px 32px rgba(14,99,246,.26);
+          background:
+            radial-gradient(circle at 18% 0%,rgba(255,255,255,.25),transparent 30%),
+            linear-gradient(135deg,#0b63f6 0%,#0284c7 100%);
+          box-shadow:0 16px 30px rgba(14,99,246,.25);
+        }
+
+        .mobile-call strong{
+          font-size:14px;
+          font-weight:950;
         }
 
         .news-modal-backdrop{
           position:fixed;
           inset:0;
           z-index:2000;
-          background:rgba(2,6,23,.56);
-          backdrop-filter:blur(10px);
-          -webkit-backdrop-filter:blur(10px);
+          background:
+            radial-gradient(circle at 20% 0%,rgba(37,99,235,.28),transparent 35%),
+            rgba(2,6,23,.62);
+          backdrop-filter:blur(16px);
+          -webkit-backdrop-filter:blur(16px);
           display:flex;
           align-items:flex-end;
           justify-content:center;
@@ -715,16 +947,36 @@ export default function PublicHeader() {
         }
 
         .news-modal{
+          position:relative;
           width:100%;
           max-width:520px;
           max-height:88vh;
           overflow:auto;
           border-radius:30px;
-          background:#fff;
-          border:1px solid #dbeafe;
-          box-shadow:0 30px 90px rgba(2,6,23,.34);
-          padding:18px;
+          background:
+            radial-gradient(circle at 12% 0%, rgba(59,130,246,.17), transparent 36%),
+            radial-gradient(circle at 92% 16%, rgba(14,165,233,.13), transparent 34%),
+            rgba(255,255,255,.88);
+          border:1px solid rgba(191,219,254,.88);
+          box-shadow:
+            0 32px 95px rgba(2,6,23,.34),
+            inset 0 1px 0 rgba(255,255,255,.85);
+          padding:16px;
           animation:modalUp .25s ease;
+          backdrop-filter:blur(24px);
+          -webkit-backdrop-filter:blur(24px);
+        }
+
+        .news-modal::before{
+          content:"";
+          position:absolute;
+          left:18px;
+          right:18px;
+          top:10px;
+          height:4px;
+          border-radius:999px;
+          background:linear-gradient(90deg,transparent,#60a5fa,transparent);
+          opacity:.55;
         }
 
         @keyframes modalUp{
@@ -733,74 +985,106 @@ export default function PublicHeader() {
         }
 
         .news-modal-head{
+          position:relative;
+          z-index:1;
           display:flex;
           align-items:flex-start;
           justify-content:space-between;
           gap:14px;
-          margin-bottom:16px;
+          margin:6px 0 14px;
         }
 
         .news-modal-head span{
           color:#2563eb;
-          font-size:12px;
+          font-size:11px;
           font-weight:950;
           text-transform:uppercase;
-          letter-spacing:.08em;
+          letter-spacing:.09em;
         }
 
         .news-modal-head h3{
-          margin:6px 0 0;
+          margin:5px 0 0;
           color:#0f172a;
-          font-size:24px;
+          font-size:23px;
+          line-height:1;
           font-weight:950;
-          letter-spacing:-.04em;
+          letter-spacing:-.045em;
         }
 
         .news-modal-head button{
-          width:44px;
-          height:44px;
+          width:42px;
+          height:42px;
           border-radius:16px;
-          border:1px solid #dbeafe;
-          background:#eff6ff;
+          border:1px solid rgba(147,197,253,.85);
+          background:rgba(239,246,255,.85);
           color:#0f172a;
-          font-size:30px;
+          font-size:28px;
           line-height:1;
           cursor:pointer;
+          box-shadow:0 10px 22px rgba(15,23,42,.08);
         }
 
         .news-modal-grid{
+          position:relative;
+          z-index:1;
           display:grid;
-          gap:10px;
+          grid-template-columns:repeat(2,minmax(0,1fr));
+          gap:9px;
         }
 
         .news-modal-link{
+          position:relative;
+          min-height:86px;
           text-decoration:none;
-          padding:16px;
+          padding:13px;
           border-radius:20px;
-          background:#f8fbff;
-          border:1px solid #dbeafe;
+          background:
+            linear-gradient(180deg,rgba(255,255,255,.96),rgba(248,251,255,.88));
+          border:1px solid rgba(203,213,225,.88);
           display:flex;
           flex-direction:column;
-          gap:6px;
+          justify-content:center;
+          gap:7px;
           transition:.2s ease;
+          overflow:hidden;
+          box-shadow:0 10px 24px rgba(15,23,42,.055);
+        }
+
+        .news-modal-link::after{
+          content:"";
+          position:absolute;
+          right:-18px;
+          top:-18px;
+          width:60px;
+          height:60px;
+          border-radius:999px;
+          background:radial-gradient(circle,rgba(37,99,235,.12),transparent 68%);
         }
 
         .news-modal-link strong{
+          position:relative;
+          z-index:1;
           color:#0f172a;
-          font-size:16px;
+          font-size:14.5px;
+          line-height:1.1;
           font-weight:950;
         }
 
         .news-modal-link small{
+          position:relative;
+          z-index:1;
           color:#64748b;
-          font-size:13px;
+          font-size:11.3px;
+          line-height:1.25;
           font-weight:800;
         }
 
         .news-modal-link.active,
         .news-modal-link:hover{
+          transform:translateY(-1px);
           background:linear-gradient(135deg,#dbeafe,#bfdbfe);
           border-color:#60a5fa;
+          box-shadow:0 14px 30px rgba(37,99,235,.14);
         }
 
         @media(max-width:980px){
@@ -818,12 +1102,30 @@ export default function PublicHeader() {
           .brand-title{font-size:21px}
           .brand-subtitle{font-size:10.5px;max-width:160px;overflow:hidden;text-overflow:ellipsis}
           .menu-button{width:48px;height:48px;border-radius:16px}
-          .mobile-menu{padding:12px;border-radius:24px}
+          .mobile-menu{padding:9px;border-radius:22px}
+          .mobile-nav{gap:7px}
+          .mobile-link{min-height:58px;border-radius:16px;padding:9px;font-size:12px}
+          .mobile-link-icon{width:26px;height:26px;flex-basis:26px;border-radius:10px}
+          .mobile-link-icon svg{width:15.5px;height:15.5px}
+          .news-button b{font-size:8.8px}
+          .mobile-call{min-height:46px;border-radius:16px;font-size:13px}
+          .news-modal{padding:14px;border-radius:26px}
+          .news-modal-grid{gap:8px}
+          .news-modal-link{min-height:78px;padding:11px;border-radius:18px}
+          .news-modal-link strong{font-size:13.5px}
+          .news-modal-link small{font-size:10.5px}
         }
 
         @media(max-width:370px){
           .brand-subtitle{display:none}
           .brand-title{font-size:20px}
+          .mobile-link{min-height:54px;padding:8px;font-size:11.2px}
+          .mobile-link-icon{width:24px;height:24px;flex-basis:24px;border-radius:9px}
+          .mobile-link-icon svg{width:14.5px;height:14.5px}
+          .news-button b{font-size:8.2px}
+          .news-modal-link{min-height:72px;padding:10px}
+          .news-modal-link strong{font-size:12.5px}
+          .news-modal-link small{display:none}
         }
       `}</style>
     </header>

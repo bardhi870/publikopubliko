@@ -13,6 +13,30 @@ import { getInitialFormData } from "../utils/postHelpers";
 const MAX_IMAGES = 10;
 const MAX_VIDEOS = 1;
 
+const REAL_ESTATE_FIELDS = {
+  property_type: "",
+  purpose: "",
+  priceType: "",
+  city: "",
+  area: "",
+  year_built: "",
+  rooms: "",
+  bedrooms: "",
+  bathrooms: "",
+  floor: "",
+  orientation: "",
+  heating: "",
+  furnishing: "",
+  features: "",
+  neighborhood: "",
+  address: "",
+  parking: "",
+  elevator: "",
+  balcony: "",
+  legal_status: "",
+  ownership: ""
+};
+
 const VEHICLE_FIELDS = {
   mileage: "",
   power: "",
@@ -45,6 +69,12 @@ const normalizePositionsCount = (value) => {
   return Number.isFinite(numberValue) ? numberValue : null;
 };
 
+const parseNumberOrNull = (value) => {
+  if (value === "" || value === null || value === undefined) return null;
+  const numberValue = Number(value);
+  return Number.isFinite(numberValue) ? numberValue : null;
+};
+
 export default function useAdminPosts() {
   const [posts, setPosts] = useState([]);
   const [editingId, setEditingId] = useState(null);
@@ -58,12 +88,16 @@ export default function useAdminPosts() {
 
   const [formData, setFormData] = useState({
     ...getInitialFormData(),
+    ...REAL_ESTATE_FIELDS,
     ...VEHICLE_FIELDS,
 
     company_name: "",
     job_category: "",
     job_location: "",
     positions_count: "",
+    experience: "",
+    work_hours: "",
+    languages: "",
 
     externalLink: "",
     externalLinkLabel: "",
@@ -197,13 +231,9 @@ export default function useAdminPosts() {
         if (!categoryNeedsPrice) updated.price = "";
 
         if (fieldValue !== "patundshmeri") {
-          updated.propertyType = "";
-          updated.listingType = "";
-          updated.priceType = "";
-          updated.city = "";
-          updated.area = "";
-          updated.rooms = "";
-          updated.bathrooms = "";
+          Object.keys(REAL_ESTATE_FIELDS).forEach((key) => {
+            updated[key] = "";
+          });
         }
 
         if (fieldValue !== "automjete") {
@@ -497,6 +527,8 @@ export default function useAdminPosts() {
   function buildFormDataFromPost(post) {
     return {
       ...getInitialFormData(),
+      ...REAL_ESTATE_FIELDS,
+      ...VEHICLE_FIELDS,
 
       title: post.title || "",
       description: post.description || "",
@@ -509,13 +541,27 @@ export default function useAdminPosts() {
       cover_type: post.cover_type || "image",
       cover_url: post.cover_url || "",
 
-      propertyType: post.property_type || "",
-      listingType: post.listing_type || "",
+      property_type: post.property_type || "",
+      purpose: post.purpose || post.listing_type || "",
       priceType: post.price_type || "",
       city: post.city || "",
       area: post.area || "",
+      year_built: post.year_built || "",
       rooms: post.rooms || "",
+      bedrooms: post.bedrooms || "",
       bathrooms: post.bathrooms || "",
+      floor: post.floor || "",
+      orientation: post.orientation || "",
+      heating: post.heating || "",
+      furnishing: post.furnishing || "",
+      features: post.features || "",
+      neighborhood: post.neighborhood || "",
+      address: post.address || "",
+      parking: post.parking || "",
+      elevator: post.elevator || "",
+      balcony: post.balcony || "",
+      legal_status: post.legal_status || "",
+      ownership: post.ownership || "",
 
       mileage: post.mileage || "",
       power: post.power || "",
@@ -595,7 +641,8 @@ export default function useAdminPosts() {
     const category = source.category;
     const isJobPost = category === "konkurse-pune";
     const isVehiclePost = category === "automjete";
-    const isNewsCategory = ["vendi", "rajoni", "bota"].includes(category);
+    const isRealEstatePost = category === "patundshmeri";
+    const isNewsCategory = ["vendi", "rajoni", "bota", "lajme"].includes(category);
 
     return {
       title: source.title,
@@ -604,9 +651,7 @@ export default function useAdminPosts() {
       clientId: source.clientId || source.client_id || null,
 
       price:
-        category === "patundshmeri" ||
-        category === "automjete" ||
-        category === "oferta"
+        isRealEstatePost || isVehiclePost || category === "oferta"
           ? source.price
             ? Number(source.price)
             : null
@@ -618,31 +663,38 @@ export default function useAdminPosts() {
       cover_type: options.coverType ?? source.cover_type ?? "image",
       cover_url: options.coverUrl ?? source.cover_url ?? source.image_url ?? null,
 
-      propertyType:
-        category === "patundshmeri"
-          ? source.propertyType || source.property_type || null
-          : null,
-      listingType:
-        category === "patundshmeri"
-          ? source.listingType || source.listing_type || null
-          : null,
-      priceType:
-        category === "patundshmeri"
-          ? source.priceType || source.price_type || null
-          : null,
+      property_type: isRealEstatePost
+        ? source.property_type || source.propertyType || null
+        : null,
+      purpose: isRealEstatePost
+        ? source.purpose || source.listingType || source.listing_type || null
+        : null,
+      priceType: isRealEstatePost
+        ? source.priceType || source.price_type || null
+        : null,
 
       city:
-        category === "patundshmeri" || isJobPost
+        isRealEstatePost || isJobPost
           ? source.city || source.job_location || null
           : null,
 
-      area: category === "patundshmeri" ? source.area || null : null,
-      rooms:
-        category === "patundshmeri" && source.rooms ? Number(source.rooms) : null,
-      bathrooms:
-        category === "patundshmeri" && source.bathrooms
-          ? Number(source.bathrooms)
-          : null,
+      area: isRealEstatePost ? source.area || null : null,
+      year_built: isRealEstatePost ? source.year_built || null : null,
+      rooms: isRealEstatePost ? parseNumberOrNull(source.rooms) : null,
+      bedrooms: isRealEstatePost ? parseNumberOrNull(source.bedrooms) : null,
+      bathrooms: isRealEstatePost ? parseNumberOrNull(source.bathrooms) : null,
+      floor: isRealEstatePost ? source.floor || null : null,
+      orientation: isRealEstatePost ? source.orientation || null : null,
+      heating: isRealEstatePost ? source.heating || null : null,
+      furnishing: isRealEstatePost ? source.furnishing || null : null,
+      features: isRealEstatePost ? source.features || null : null,
+      neighborhood: isRealEstatePost ? source.neighborhood || null : null,
+      address: isRealEstatePost ? source.address || null : null,
+      parking: isRealEstatePost ? source.parking || null : null,
+      elevator: isRealEstatePost ? source.elevator || null : null,
+      balcony: isRealEstatePost ? source.balcony || null : null,
+      legal_status: isRealEstatePost ? source.legal_status || null : null,
+      ownership: isRealEstatePost ? source.ownership || null : null,
 
       mileage: isVehiclePost ? source.mileage || null : null,
       power: isVehiclePost ? source.power || null : null,
@@ -662,15 +714,15 @@ export default function useAdminPosts() {
       location: isVehiclePost ? source.location || null : null,
 
       phone:
-        category === "patundshmeri" ||
-        category === "automjete" ||
+        isRealEstatePost ||
+        isVehiclePost ||
         category === "oferta" ||
         isJobPost
           ? source.phone || null
           : null,
       whatsapp:
-        category === "patundshmeri" ||
-        category === "automjete" ||
+        isRealEstatePost ||
+        isVehiclePost ||
         category === "oferta" ||
         isJobPost
           ? source.whatsapp || null
@@ -699,10 +751,13 @@ export default function useAdminPosts() {
           : [],
 
       externalLink: normalizeExternalLink(
-        source.externalLink || source.external_link || ""
+        source.externalLink || source.external_link || source.link_url || ""
       ),
       externalLinkLabel:
-        source.externalLinkLabel || source.external_link_label || null,
+        source.externalLinkLabel ||
+        source.external_link_label ||
+        source.link_text ||
+        null,
 
       featured: options.featured ?? !!source.featured,
       breaking: isNewsCategory ? options.breaking ?? !!source.breaking : false,
@@ -822,12 +877,16 @@ export default function useAdminPosts() {
 
     setFormData({
       ...getInitialFormData(),
+      ...REAL_ESTATE_FIELDS,
       ...VEHICLE_FIELDS,
 
       company_name: "",
       job_category: "",
       job_location: "",
       positions_count: "",
+      experience: "",
+      work_hours: "",
+      languages: "",
 
       externalLink: "",
       externalLinkLabel: "",
