@@ -34,7 +34,6 @@ const stringifyJsonArray = (value) => {
 
 const buildFileUrl = (req, file) => {
   if (!file) return null;
-
   if (file.location) return file.location;
 
   if (file.filename) {
@@ -130,13 +129,28 @@ const createPost = async (req, res) => {
       gallery_images,
       video_url,
 
-      propertyType,
-      listingType,
+      property_type,
+      purpose,
       priceType,
+      price_type,
       city,
       area,
+      year_built,
       rooms,
+      bedrooms,
       bathrooms,
+      floor,
+      orientation,
+      heating,
+      furnishing,
+      features,
+      neighborhood,
+      address,
+      parking,
+      elevator,
+      balcony,
+      legal_status,
+      ownership,
 
       mileage,
       power,
@@ -181,16 +195,21 @@ const createPost = async (req, res) => {
       externalLink,
       externalLinkLabel,
       external_link,
-      external_link_label
+      external_link_label,
+      link_text,
+      link_url
     } = req.body;
 
     const isNewsCategory = ["vendi", "rajoni", "bota", "lajme"].includes(category);
 
-    const finalExternalLink = normalizeExternalLink(external_link || externalLink);
+    const finalExternalLink = normalizeExternalLink(
+      external_link || externalLink || link_url
+    );
 
     const finalExternalLinkLabel =
       external_link_label ||
       externalLinkLabel ||
+      link_text ||
       (finalExternalLink ? "Hap linkun" : null);
 
     const finalImageUrl = uploadedImages[0] || image_url || null;
@@ -202,7 +221,9 @@ const createPost = async (req, res) => {
       `
       INSERT INTO posts (
         title, description, category, price, image_url, gallery_images, video_url,
-        property_type, listing_type, price_type, city, area, rooms, bathrooms,
+        property_type, price_type, city, area, year_built, rooms,
+        bedrooms, bathrooms, floor, orientation, heating, furnishing, features,
+        neighborhood, address, parking, elevator, balcony, legal_status, ownership, purpose,
         mileage, power, transmission, drive_type, fuel_type, vehicle_year,
         body_type, series, doors, seats, exterior_color, interior_color,
         weight, engine_capacity, vehicle_condition, location,
@@ -214,15 +235,17 @@ const createPost = async (req, res) => {
       )
       VALUES (
         $1,$2,$3,$4,$5,$6,$7,
-        $8,$9,$10,$11,$12,$13,$14,
-        $15,$16,$17,$18,$19,$20,
-        $21,$22,$23,$24,$25,$26,
-        $27,$28,$29,$30,
-        $31,$32,$33,$34,$35,
-        $36,$37,$38,$39,
-        $40,$41,$42,$43,
-        $44,$45,$46,
-        $47,$48,$49,$50
+        $8,$9,$10,$11,$12,$13,
+        $14,$15,$16,$17,$18,$19,$20,
+        $21,$22,$23,$24,$25,$26,$27,$28,
+        $29,$30,$31,$32,$33,$34,
+        $35,$36,$37,$38,$39,$40,
+        $41,$42,$43,$44,
+        $45,$46,$47,$48,$49,
+        $50,$51,$52,$53,
+        $54,$55,$56,$57,
+        $58,$59,$60,
+        $61,$62,$63,$64
       )
       RETURNING *
       `,
@@ -235,13 +258,27 @@ const createPost = async (req, res) => {
         stringifyJsonArray(finalGalleryImages),
         finalVideoUrl,
 
-        propertyType || null,
-        listingType || null,
-        priceType || null,
+        property_type || null,
+        priceType || price_type || null,
         city || null,
         area || null,
+        year_built || null,
         rooms || null,
+        bedrooms || null,
         bathrooms || null,
+        floor || null,
+        orientation || null,
+        heating || null,
+        furnishing || null,
+        features || null,
+        neighborhood || null,
+        address || null,
+        parking || null,
+        elevator || null,
+        balcony || null,
+        legal_status || null,
+        ownership || null,
+        purpose || null,
 
         mileage || null,
         power || null,
@@ -309,13 +346,28 @@ const updatePost = async (req, res) => {
       gallery_images,
       video_url,
 
-      propertyType,
-      listingType,
+      property_type,
+      purpose,
       priceType,
+      price_type,
       city,
       area,
+      year_built,
       rooms,
+      bedrooms,
       bathrooms,
+      floor,
+      orientation,
+      heating,
+      furnishing,
+      features,
+      neighborhood,
+      address,
+      parking,
+      elevator,
+      balcony,
+      legal_status,
+      ownership,
 
       mileage,
       power,
@@ -360,16 +412,21 @@ const updatePost = async (req, res) => {
       externalLink,
       externalLinkLabel,
       external_link,
-      external_link_label
+      external_link_label,
+      link_text,
+      link_url
     } = req.body;
 
     const isNewsCategory = ["vendi", "rajoni", "bota", "lajme"].includes(category);
 
-    const finalExternalLink = normalizeExternalLink(external_link || externalLink);
+    const finalExternalLink = normalizeExternalLink(
+      external_link || externalLink || link_url
+    );
 
     const finalExternalLinkLabel =
       external_link_label ||
       externalLinkLabel ||
+      link_text ||
       (finalExternalLink ? "Hap linkun" : null);
 
     const finalImageUrl = uploadedImages[0] || image_url || null;
@@ -388,50 +445,64 @@ const updatePost = async (req, res) => {
           gallery_images = $6,
           video_url = $7,
           property_type = $8,
-          listing_type = $9,
-          price_type = $10,
-          city = $11,
-          area = $12,
+          price_type = $9,
+          city = $10,
+          area = $11,
+          year_built = $12,
           rooms = $13,
-          bathrooms = $14,
-          mileage = $15,
-          power = $16,
-          transmission = $17,
-          drive_type = $18,
-          fuel_type = $19,
-          vehicle_year = $20,
-          body_type = $21,
-          series = $22,
-          doors = $23,
-          seats = $24,
-          exterior_color = $25,
-          interior_color = $26,
-          weight = $27,
-          engine_capacity = $28,
-          vehicle_condition = $29,
-          location = $30,
-          phone = $31,
-          whatsapp = $32,
-          offer_badge = $33,
-          offer_features = $34,
-          client_id = $35,
-          is_active = $36,
-          is_unlimited = $37,
-          active_from = $38,
-          active_until = $39,
-          company_name = $40,
-          job_category = $41,
-          job_location = $42,
-          positions_count = $43,
-          experience = $44,
-          work_hours = $45,
-          languages = $46,
-          featured = $47,
-          breaking = $48,
-          external_link = $49,
-          external_link_label = $50,
+          bedrooms = $14,
+          bathrooms = $15,
+          floor = $16,
+          orientation = $17,
+          heating = $18,
+          furnishing = $19,
+          features = $20,
+          neighborhood = $21,
+          address = $22,
+          parking = $23,
+          elevator = $24,
+          balcony = $25,
+          legal_status = $26,
+          ownership = $27,
+          purpose = $28,
+          mileage = $29,
+          power = $30,
+          transmission = $31,
+          drive_type = $32,
+          fuel_type = $33,
+          vehicle_year = $34,
+          body_type = $35,
+          series = $36,
+          doors = $37,
+          seats = $38,
+          exterior_color = $39,
+          interior_color = $40,
+          weight = $41,
+          engine_capacity = $42,
+          vehicle_condition = $43,
+          location = $44,
+          phone = $45,
+          whatsapp = $46,
+          offer_badge = $47,
+          offer_features = $48,
+          client_id = $49,
+          is_active = $50,
+          is_unlimited = $51,
+          active_from = $52,
+          active_until = $53,
+          company_name = $54,
+          job_category = $55,
+          job_location = $56,
+          positions_count = $57,
+          experience = $58,
+          work_hours = $59,
+          languages = $60,
+          featured = $61,
+          breaking = $62,
+          external_link = $63,
+          external_link_label = $64,
           updated_at = NOW()
-      WHERE id = $51
+      WHERE id = $65
       RETURNING *
       `,
       [
@@ -443,13 +514,27 @@ const updatePost = async (req, res) => {
         stringifyJsonArray(finalGalleryImages),
         finalVideoUrl,
 
-        propertyType || null,
-        listingType || null,
-        priceType || null,
+        property_type || null,
+        priceType || price_type || null,
         city || null,
         area || null,
+        year_built || null,
         rooms || null,
+        bedrooms || null,
         bathrooms || null,
+        floor || null,
+        orientation || null,
+        heating || null,
+        furnishing || null,
+        features || null,
+        neighborhood || null,
+        address || null,
+        parking || null,
+        elevator || null,
+        balcony || null,
+        legal_status || null,
+        ownership || null,
+        purpose || null,
 
         mileage || null,
         power || null,
@@ -491,7 +576,6 @@ const updatePost = async (req, res) => {
 
         featured === true || featured === "true",
         isNewsCategory ? breaking === true || breaking === "true" : false,
-
         finalExternalLink,
         finalExternalLinkLabel,
 

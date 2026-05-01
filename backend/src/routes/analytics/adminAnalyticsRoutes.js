@@ -96,7 +96,8 @@ router.get("/overview", async (req, res) => {
       `
       SELECT
         COUNT(*) FILTER (WHERE event_type = 'page_view')::int AS total_page_views,
-        COUNT(DISTINCT visitor_id)::int AS unique_visitors,
+
+        COUNT(DISTINCT COALESCE(visitor_id, ip_hash))::int AS unique_visitors,
 
         COUNT(*) FILTER (
           WHERE event_type IN (
@@ -119,7 +120,13 @@ router.get("/overview", async (req, res) => {
         COUNT(*) FILTER (WHERE event_type = 'phone_click')::int AS phone_clicks,
         COUNT(*) FILTER (WHERE event_type = 'email_click')::int AS email_clicks,
         COUNT(*) FILTER (WHERE event_type = 'ad_impression')::int AS ad_impressions,
-        COUNT(*) FILTER (WHERE event_type = 'ad_click')::int AS ad_clicks
+        COUNT(*) FILTER (WHERE event_type = 'ad_click')::int AS ad_clicks,
+
+        COALESCE(
+          AVG(duration_seconds) FILTER (WHERE event_type = 'time_on_page'),
+          0
+        )::int AS avg_time_seconds
+
       FROM analytics_events
       WHERE ${dateFilter.clause}
       `,
@@ -138,6 +145,8 @@ router.get("/overview", async (req, res) => {
           )
         : 0;
 
+    const avgSeconds = Number(row.avg_time_seconds || 0);
+
     return res.json({
       success: true,
       filter: {
@@ -154,7 +163,9 @@ router.get("/overview", async (req, res) => {
         email_clicks: Number(row.email_clicks || 0),
         ad_impressions: Number(row.ad_impressions || 0),
         ad_clicks: Number(row.ad_clicks || 0),
-        ad_ctr: adCtr
+        ad_ctr: adCtr,
+        avg_time_seconds: avgSeconds,
+        avg_time_minutes: Number((avgSeconds / 60).toFixed(2))
       }
     });
   } catch (error) {
@@ -196,7 +207,7 @@ router.get("/chart", async (req, res) => {
             'load_more_click'
           )
         )::int AS clicks,
-        COUNT(DISTINCT visitor_id)::int AS unique_visitors,
+        COUNT(DISTINCT COALESCE(visitor_id, ip_hash))::int AS unique_visitors,
         COUNT(*) FILTER (WHERE event_type = 'ad_impression')::int AS ad_impressions,
         COUNT(*) FILTER (WHERE event_type = 'ad_click')::int AS ad_clicks
       FROM analytics_events
@@ -238,7 +249,7 @@ router.get("/top-pages", async (req, res) => {
       SELECT
         COALESCE(page_url, 'unknown') AS page_url,
         COUNT(*) FILTER (WHERE event_type = 'page_view')::int AS views,
-        COUNT(DISTINCT visitor_id)::int AS unique_visitors,
+        COUNT(DISTINCT COALESCE(visitor_id, ip_hash))::int AS unique_visitors,
         COUNT(*) FILTER (
           WHERE event_type IN (
             'post_click',
@@ -299,8 +310,7 @@ router.get("/top-actions", async (req, res) => {
       WHERE ${dateFilter.clause}
       GROUP BY event_type
       ORDER BY total DESC
-      `
-      ,
+      `,
       dateFilter.values
     );
 
@@ -354,9 +364,10 @@ router.get("/ads", async (req, res) => {
         ad_id: Number(item.ad_id || 0),
         impressions,
         clicks,
-        ctr: impressions > 0
-          ? Number(((clicks / impressions) * 100).toFixed(2))
-          : 0
+        ctr:
+          impressions > 0
+            ? Number(((clicks / impressions) * 100).toFixed(2))
+            : 0
       };
     });
 
@@ -374,6 +385,173 @@ router.get("/ads", async (req, res) => {
     return res.status(500).json({
       success: false,
       message: "Failed to load ads analytics"
+    });
+  }
+});
+
+/*
+  COUNTRIES
+*/
+router.get("/countries", async (req, res) => {
+  try {
+    const { range = "30d", from, to } = req.query;
+    const dateFilter = buildDateFilter(range, from, to);
+
+    const result = await db.query(
+      `
+      SELECT
+        COALESCE(NULLIF(country, ''), 'Unknown') AS country,
+        COUNT(*) FILTER (WHERE event_type = 'page_view')::int AS total
+      FROM analytics_events
+      WHERE ${dateFilter.clause}
+      GROUP BY COALESCE(NULLIF(country, ''), 'Unknown')
+      ORDER BY total DESC
+      LIMIT 10
+      `,
+      dateFilter.values
+    );
+
+    return res.json({
+      success: true,
+      filter: {
+        range,
+        from: from || null,
+        to: to || null
+      },
+      data: result.rows
+    });
+  } catch (error) {
+    console.error("Analytics countries error:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Failed to load countries analytics"
+    });
+  }
+});
+
+/*
+  CITIES
+*/
+router.get("/cities", async (req, res) => {
+  try {
+    const { range = "30d", from, to } = req.query;
+    const dateFilter = buildDateFilter(range, from, to);
+
+    const result = await db.query(
+      `
+      SELECT
+        COALESCE(NULLIF(city, ''), 'Unknown') AS city,
+        COALESCE(NULLIF(country, ''), 'Unknown') AS country,
+        COUNT(*) FILTER (WHERE event_type = 'page_view')::int AS total
+      FROM analytics_events
+      WHERE ${dateFilter.clause}
+      GROUP BY
+        COALESCE(NULLIF(city, ''), 'Unknown'),
+        COALESCE(NULLIF(country, ''), 'Unknown')
+      ORDER BY total DESC
+      LIMIT 10
+      `,
+      dateFilter.values
+    );
+
+    return res.json({
+      success: true,
+      filter: {
+        range,
+        from: from || null,
+        to: to || null
+      },
+      data: result.rows
+    });
+  } catch (error) {
+    console.error("Analytics cities error:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Failed to load cities analytics"
+    });
+  }
+});
+
+/*
+  DEVICES
+*/
+router.get("/devices", async (req, res) => {
+  try {
+    const { range = "30d", from, to } = req.query;
+    const dateFilter = buildDateFilter(range, from, to);
+
+    const result = await db.query(
+      `
+      SELECT
+        COALESCE(NULLIF(device, ''), NULLIF(device_type, ''), 'Unknown') AS device,
+        COUNT(*)::int AS total
+      FROM analytics_events
+      WHERE ${dateFilter.clause}
+      GROUP BY COALESCE(NULLIF(device, ''), NULLIF(device_type, ''), 'Unknown')
+      ORDER BY total DESC
+      `,
+      dateFilter.values
+    );
+
+    return res.json({
+      success: true,
+      filter: {
+        range,
+        from: from || null,
+        to: to || null
+      },
+      data: result.rows
+    });
+  } catch (error) {
+    console.error("Analytics devices error:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Failed to load devices analytics"
+    });
+  }
+});
+
+/*
+  TIME ON PAGE
+*/
+router.get("/time", async (req, res) => {
+  try {
+    const { range = "30d", from, to } = req.query;
+    const dateFilter = buildDateFilter(range, from, to);
+
+    const result = await db.query(
+      `
+      SELECT
+        COALESCE(AVG(duration_seconds), 0)::int AS avg_time_seconds,
+        COUNT(*) FILTER (WHERE event_type = 'time_on_page')::int AS samples
+      FROM analytics_events
+      WHERE ${dateFilter.clause}
+        AND event_type = 'time_on_page'
+      `,
+      dateFilter.values
+    );
+
+    const row = result.rows[0] || {};
+    const avgSeconds = Number(row.avg_time_seconds || 0);
+
+    return res.json({
+      success: true,
+      filter: {
+        range,
+        from: from || null,
+        to: to || null
+      },
+      data: {
+        avg_time_seconds: avgSeconds,
+        avg_time_minutes: Number((avgSeconds / 60).toFixed(2)),
+        samples: Number(row.samples || 0)
+      }
+    });
+  } catch (error) {
+    console.error("Analytics time error:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Failed to load time analytics"
     });
   }
 });

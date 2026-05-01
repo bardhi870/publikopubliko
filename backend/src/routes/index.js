@@ -1,5 +1,8 @@
 const router = require("express").Router();
 
+const authRoutes = require("../modules/auth/auth.routes");
+const requireAdminAuth = require("../middleware/requireAdminAuth");
+
 const postRoutes = require("../modules/posts/post.routes");
 const packageRoutes = require("../modules/packages/package.routes");
 const publicClientsRoutes = require("../modules/packages/publicClients.routes");
@@ -17,28 +20,30 @@ const adminAnalyticsRoutes = require("./analytics/adminAnalyticsRoutes");
 
 const upload = require("../config/multer");
 
-/* MAIN MODULES */
+/* AUTH - PUBLIC */
+router.use("/auth", authRoutes);
+
+/* PUBLIC MODULES */
 router.use("/posts", postRoutes);
-router.use("/packages", packageRoutes);
-router.use("/clients", clientRoutes);
 router.use("/public-clients", publicClientsRoutes);
-router.use("/stats", statsRoutes);
-
-/* ANALYTICS */
-router.use("/analytics", analyticsRoutes);
-router.use("/admin/analytics", adminAnalyticsRoutes);
-
-/* ADS PLATFORM */
-router.use("/advertisers", advertisersRoutes);
-router.use("/campaigns", campaignsRoutes);
-router.use("/ad-placements", adPlacementsRoutes);
-router.use("/ad-creatives", adCreativesRoutes);
 router.use("/public/ads", publicAdsRoutes);
+router.use("/analytics", analyticsRoutes);
+
+/* ADMIN PROTECTED MODULES */
+router.use("/packages", requireAdminAuth, packageRoutes);
+router.use("/clients", requireAdminAuth, clientRoutes);
+router.use("/stats", requireAdminAuth, statsRoutes);
+
+router.use("/advertisers", requireAdminAuth, advertisersRoutes);
+router.use("/campaigns", requireAdminAuth, campaignsRoutes);
+router.use("/ad-placements", requireAdminAuth, adPlacementsRoutes);
+router.use("/ad-creatives", requireAdminAuth, adCreativesRoutes);
+router.use("/admin/analytics", requireAdminAuth, adminAnalyticsRoutes);
 
 /*
- SINGLE FILE
+ PROTECTED SINGLE FILE UPLOAD
 */
-router.post("/upload", upload.single("image"), (req, res) => {
+router.post("/upload", requireAdminAuth, upload.single("image"), (req, res) => {
   if (!req.file) {
     return res.status(400).json({
       message: "No file uploaded"
@@ -52,10 +57,11 @@ router.post("/upload", upload.single("image"), (req, res) => {
 });
 
 /*
- MULTI MEDIA UPLOAD
+ PROTECTED MULTI MEDIA UPLOAD
 */
 router.post(
   "/upload/media",
+  requireAdminAuth,
   upload.fields([
     { name: "images", maxCount: 10 },
     { name: "video", maxCount: 1 }
