@@ -8,23 +8,31 @@ import {
   FiBriefcase,
   FiBarChart2,
   FiCheckCircle,
-  FiZap
+  FiZap,
+  FiShield,
+  FiStar
 } from "react-icons/fi";
 
 const API = import.meta.env.VITE_API_URL || "http://localhost:5000";
 
 const PUBLIKO_LOGO =
-  "https://res.cloudinary.com/dbz7fjuty/image/upload/v1776285534/ChatGPT_Image_Apr_15_2026_10_38_27_PM_bf2mf9.png";
+  "https://res.cloudinary.com/dbz7fjuty/image/upload/v1776969027/PUBLIKO_LOGO_pomulk.png";
+
+const fallbackStats = [
+  { id: "views", value: "100K+", label: "Vizitorë potencialë çdo muaj" },
+  { id: "business", value: "24/7", label: "Prezencë aktive online" },
+  { id: "growth", value: "PRO", label: "Publikim profesional për biznesin" }
+];
 
 const defaultHighlights = [
-  "Shtrirje e gjerë – shpallja juaj promovohet te një audiencë më e madhe.",
-  "Publikim profesional dhe prezencë më serioze për biznesin tuaj.",
-  "Kontakt më i lehtë me klientët përmes telefonit, WhatsApp apo formularëve."
+  "Shpallja juaj promovohet te një audiencë më e madhe.",
+  "Prezantim më profesional dhe më serioz për biznesin tuaj.",
+  "Kontakt direkt përmes telefonit, WhatsApp ose formularëve."
 ];
 
 export default function OffersSection() {
   const [offers, setOffers] = useState([]);
-  const [stats, setStats] = useState([]);
+  const [stats, setStats] = useState(fallbackStats);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
@@ -36,16 +44,24 @@ export default function OffersSection() {
         setLoading(true);
         setError("");
 
-        const [offersRes, statsRes] = await Promise.all([
-          fetch(`${API}/api/packages`),
-          fetch(`${API}/api/stats`)
-        ]);
+        const offersRes = await fetch(`${API}/api/packages`);
 
-        if (!offersRes.ok) throw new Error("Gabim gjatë marrjes së ofertave.");
-        if (!statsRes.ok) throw new Error("Gabim gjatë marrjes së statistikave.");
+        if (!offersRes.ok) {
+          throw new Error("Gabim gjatë marrjes së ofertave.");
+        }
 
         const offersData = await offersRes.json();
-        const statsData = await statsRes.json();
+
+        let statsData = [];
+
+        try {
+          const statsRes = await fetch(`${API}/api/stats`);
+          if (statsRes.ok) {
+            statsData = await statsRes.json();
+          }
+        } catch {
+          statsData = [];
+        }
 
         if (!ignore) {
           setOffers(
@@ -53,28 +69,28 @@ export default function OffersSection() {
               offer.is_active !== undefined
                 ? !!offer.is_active
                 : offer.isActive !== undefined
-                  ? !!offer.isActive
-                  : true
+                ? !!offer.isActive
+                : true
             )
           );
 
-          setStats(
-            (Array.isArray(statsData) ? statsData : [])
-              .filter((stat) =>
-                stat.status !== undefined ? stat.status === "Aktive" : true
-              )
-              .sort(
-                (a, b) =>
-                  Number(a?.sort_order ?? a?.sortOrder ?? 0) -
-                  Number(b?.sort_order ?? b?.sortOrder ?? 0)
-              )
-              .slice(0, 3)
-          );
+          const activeStats = (Array.isArray(statsData) ? statsData : [])
+            .filter((stat) =>
+              stat.status !== undefined ? stat.status === "Aktive" : true
+            )
+            .sort(
+              (a, b) =>
+                Number(a?.sort_order ?? a?.sortOrder ?? 0) -
+                Number(b?.sort_order ?? b?.sortOrder ?? 0)
+            )
+            .slice(0, 3);
+
+          setStats(activeStats.length ? activeStats : fallbackStats);
         }
       } catch (err) {
         if (!ignore) {
           console.error(err);
-          setError("Nuk u ngarkuan të dhënat.");
+          setError("Nuk u ngarkuan ofertat.");
         }
       } finally {
         if (!ignore) setLoading(false);
@@ -116,452 +132,397 @@ export default function OffersSection() {
   return (
     <section className="offers-section">
       <style>{`
-        .offers-section {
-          width: 100%;
-          position: relative;
-          isolation: isolate;
-          padding: clamp(20px, 3vw, 44px) 0 clamp(30px, 4vw, 60px);
+        .offers-section{
+          width:100%;
+          position:relative;
+          isolation:isolate;
+          padding:clamp(22px,3vw,44px) 0 clamp(36px,5vw,72px);
         }
 
-        .offers-section::before {
-          content: "";
-          position: absolute;
-          inset: -40px 0 auto 0;
-          height: 420px;
+        .offers-section::before{
+          content:"";
+          position:absolute;
+          inset:-50px 0 auto;
+          height:520px;
           background:
-            radial-gradient(circle at 18% 12%, rgba(59,130,246,.13), transparent 34%),
-            radial-gradient(circle at 82% 18%, rgba(20,184,166,.12), transparent 32%);
-          pointer-events: none;
-          z-index: -1;
+            radial-gradient(circle at 16% 12%, rgba(37,99,235,.16), transparent 34%),
+            radial-gradient(circle at 84% 18%, rgba(14,165,233,.14), transparent 34%),
+            linear-gradient(180deg, rgba(239,246,255,.75), transparent);
+          pointer-events:none;
+          z-index:-1;
         }
 
-        .offers-hero {
-          max-width: 980px;
-          margin: 0 auto clamp(26px, 4vw, 44px);
-          padding: 0 16px;
-          text-align: center;
+        .offers-hero{
+          max-width:1080px;
+          margin:0 auto clamp(28px,4vw,48px);
+          padding:0 16px;
+          text-align:center;
         }
 
-        .offers-badge {
-          display: inline-flex;
-          align-items: center;
-          justify-content: center;
-          gap: 8px;
-          padding: 10px 16px;
-          border-radius: 999px;
-          background: linear-gradient(135deg, #eff6ff, #dbeafe);
-          color: #1d4ed8;
-          font-weight: 900;
-          font-size: 13px;
-          margin-bottom: 16px;
-          box-shadow: 0 14px 30px rgba(37,99,235,.11);
-          border: 1px solid rgba(191,219,254,.95);
+        .offers-brand-top{
+          display:inline-flex;
+          align-items:center;
+          gap:12px;
+          padding:10px 16px;
+          border-radius:999px;
+          background:rgba(255,255,255,.9);
+          border:1px solid #dbeafe;
+          box-shadow:0 16px 38px rgba(37,99,235,.10);
+          margin-bottom:18px;
         }
 
-        .offers-title {
-          margin: 0;
-          color: #0f172a;
-          font-size: clamp(34px, 5vw, 62px);
-          line-height: .98;
-          letter-spacing: -.06em;
-          font-weight: 950;
+        .offers-brand-top img{
+          width:34px;
+          height:34px;
+          object-fit:contain;
+          border-radius:11px;
+          background:#fff;
         }
 
-        .offers-title span {
-          background: linear-gradient(135deg, #2563eb, #0f766e);
-          -webkit-background-clip: text;
-          background-clip: text;
-          color: transparent;
+        .offers-brand-top strong{
+          color:#0f172a;
+          font-size:14px;
+          font-weight:950;
         }
 
-        .offers-subtitle {
-          max-width: 740px;
-          margin: 16px auto 0;
-          color: #64748b;
-          font-size: clamp(14px, 1.6vw, 17px);
-          line-height: 1.85;
-          font-weight: 600;
+        .offers-badge{
+          display:inline-flex;
+          align-items:center;
+          justify-content:center;
+          gap:8px;
+          padding:10px 16px;
+          border-radius:999px;
+          background:linear-gradient(135deg,#2563eb,#0ea5e9);
+          color:#fff;
+          font-weight:950;
+          font-size:13px;
+          margin-bottom:18px;
+          box-shadow:0 18px 38px rgba(37,99,235,.22);
         }
 
-        .offers-ad-wrap {
-          max-width: 1280px;
-          margin: 0 auto 28px;
-          padding: 0 16px;
+        .offers-title{
+          margin:0;
+          color:#0f172a;
+          font-size:clamp(36px,5.5vw,68px);
+          line-height:.96;
+          letter-spacing:-.065em;
+          font-weight:950;
         }
 
-        .offers-grid {
-          display: grid;
-          justify-content: center;
-          align-items: stretch;
-          gap: 26px;
-          max-width: 1280px;
-          margin: 0 auto;
-          padding: 0 16px;
+        .offers-title span{
+          background:linear-gradient(135deg,#2563eb,#0ea5e9);
+          -webkit-background-clip:text;
+          background-clip:text;
+          color:transparent;
         }
 
-        .offers-grid.single {
-          max-width: 780px;
-          grid-template-columns: minmax(280px, 720px);
+        .offers-subtitle{
+          max-width:780px;
+          margin:18px auto 0;
+          color:#64748b;
+          font-size:clamp(14px,1.6vw,17px);
+          line-height:1.85;
+          font-weight:650;
         }
 
-        .offers-grid.two {
-          max-width: 1120px;
-          grid-template-columns: repeat(2, minmax(300px, 540px));
+        .offers-ad-wrap{
+          max-width:1280px;
+          margin:0 auto 28px;
+          padding:0 16px;
         }
 
-        .offers-grid.multi {
-          grid-template-columns: repeat(auto-fit, minmax(310px, 1fr));
+        .offers-grid{
+          display:grid;
+          justify-content:center;
+          align-items:stretch;
+          gap:26px;
+          max-width:1280px;
+          margin:0 auto;
+          padding:0 16px;
         }
 
-        .offers-proof {
-          max-width: 1280px;
-          margin: clamp(30px, 4vw, 52px) auto 0;
-          padding: 0 16px;
+        .offers-grid.single{
+          max-width:780px;
+          grid-template-columns:minmax(280px,720px);
         }
 
-        .offers-proof-card {
-          position: relative;
-          overflow: hidden;
-          border-radius: 36px;
-          padding: clamp(24px, 4vw, 42px);
+        .offers-grid.two{
+          max-width:1120px;
+          grid-template-columns:repeat(2,minmax(300px,540px));
+        }
+
+        .offers-grid.multi{
+          grid-template-columns:repeat(auto-fit,minmax(310px,1fr));
+        }
+
+        .offers-proof{
+          max-width:1280px;
+          margin:clamp(32px,4vw,56px) auto 0;
+          padding:0 16px;
+        }
+
+        .offers-proof-card{
+          position:relative;
+          overflow:hidden;
+          border-radius:34px;
+          padding:clamp(24px,4vw,44px);
           background:
-            linear-gradient(135deg, rgba(255,255,255,.98), rgba(240,253,250,.96)),
-            radial-gradient(circle at top right, rgba(45,212,191,.16), transparent 34%);
-          border: 1px solid rgba(203,213,225,.85);
-          box-shadow: 0 28px 80px rgba(15,23,42,.08);
+            radial-gradient(circle at 88% 12%, rgba(59,130,246,.26), transparent 34%),
+            radial-gradient(circle at 12% 88%, rgba(14,165,233,.18), transparent 34%),
+            linear-gradient(135deg,#071225 0%,#0b2b63 55%,#0b63ce 100%);
+          border:1px solid rgba(191,219,254,.35);
+          box-shadow:0 34px 90px rgba(15,23,42,.18);
+          color:#fff;
         }
 
-        .offers-proof-card::before {
-          content: "";
-          position: absolute;
-          top: -120px;
-          right: -90px;
-          width: 320px;
-          height: 320px;
-          border-radius: 50%;
-          background: radial-gradient(circle, rgba(45,212,191,.20), transparent 70%);
-          pointer-events: none;
+        .offers-proof-content{
+          position:relative;
+          z-index:1;
+          max-width:1060px;
+          margin:0 auto;
+          text-align:center;
         }
 
-        .offers-proof-card::after {
-          content: "";
-          position: absolute;
-          bottom: -130px;
-          left: -90px;
-          width: 340px;
-          height: 340px;
-          border-radius: 50%;
-          background: radial-gradient(circle, rgba(59,130,246,.14), transparent 72%);
-          pointer-events: none;
+        .offers-brand-pill{
+          display:inline-flex;
+          align-items:center;
+          gap:10px;
+          padding:10px 16px;
+          border-radius:999px;
+          background:rgba(255,255,255,.12);
+          border:1px solid rgba(255,255,255,.18);
+          backdrop-filter:blur(12px);
+          margin-bottom:18px;
         }
 
-        .offers-proof-content {
-          position: relative;
-          z-index: 1;
-          max-width: 1030px;
-          margin: 0 auto;
-          text-align: center;
+        .offers-brand-pill img{
+          width:34px;
+          height:34px;
+          object-fit:contain;
+          border-radius:11px;
+          background:#fff;
+          padding:3px;
         }
 
-        .offers-brand-pill {
-          display: inline-flex;
-          align-items: center;
-          gap: 10px;
-          padding: 10px 16px;
-          border-radius: 999px;
-          background: rgba(255,255,255,.88);
-          border: 1px solid rgba(226,232,240,.95);
-          box-shadow: 0 14px 34px rgba(15,23,42,.07);
-          margin-bottom: 18px;
+        .offers-brand-pill span{
+          color:#fff;
+          font-weight:950;
+          font-size:14px;
         }
 
-        .offers-brand-pill img {
-          width: 32px;
-          height: 32px;
-          object-fit: contain;
-          border-radius: 999px;
-          background: #fff;
-          padding: 3px;
-          box-shadow: 0 8px 18px rgba(15,23,42,.10);
+        .offers-proof-title{
+          margin:0;
+          color:#fff;
+          font-size:clamp(30px,4vw,50px);
+          line-height:1.02;
+          font-weight:950;
+          letter-spacing:-.055em;
         }
 
-        .offers-brand-pill span {
-          color: #0f172a;
-          font-weight: 900;
-          font-size: 13px;
+        .offers-proof-text{
+          max-width:780px;
+          margin:15px auto 0;
+          color:#dbeafe;
+          font-size:clamp(14px,1.5vw,17px);
+          line-height:1.85;
+          font-weight:650;
         }
 
-        .offers-proof-title {
-          margin: 0;
-          color: #0f172a;
-          font-size: clamp(30px, 4vw, 48px);
-          line-height: 1.02;
-          font-weight: 950;
-          letter-spacing: -.05em;
+        .offers-stats-grid{
+          display:grid;
+          grid-template-columns:repeat(3,minmax(0,1fr));
+          gap:16px;
+          margin-top:30px;
         }
 
-        .offers-proof-text {
-          max-width: 760px;
-          margin: 14px auto 0;
-          color: #64748b;
-          font-size: clamp(14px, 1.5vw, 17px);
-          line-height: 1.9;
-          font-weight: 600;
+        .offers-stat-card{
+          border-radius:24px;
+          padding:24px 22px;
+          background:rgba(255,255,255,.12);
+          border:1px solid rgba(255,255,255,.16);
+          box-shadow:inset 0 1px 0 rgba(255,255,255,.10);
+          backdrop-filter:blur(12px);
+          text-align:left;
+          transition:transform .22s ease, box-shadow .22s ease;
         }
 
-        .offers-stats-grid {
-          display: grid;
-          grid-template-columns: repeat(3, minmax(0, 1fr));
-          gap: 16px;
-          margin-top: 30px;
+        .offers-stat-card:hover{
+          transform:translateY(-4px);
+          box-shadow:0 24px 50px rgba(0,0,0,.18);
         }
 
-        .offers-stat-card {
-          border-radius: 26px;
-          padding: 24px 22px;
-          background: rgba(255,255,255,.9);
-          border: 1px solid rgba(203,213,225,.8);
-          box-shadow: 0 18px 38px rgba(15,23,42,.055);
-          backdrop-filter: blur(10px);
-          text-align: left;
-          transition: transform .22s ease, box-shadow .22s ease;
+        .offers-stat-icon{
+          width:58px;
+          height:58px;
+          border-radius:18px;
+          display:flex;
+          align-items:center;
+          justify-content:center;
+          margin-bottom:16px;
+          background:linear-gradient(135deg,#38bdf8,#2563eb);
+          color:#fff;
         }
 
-        .offers-stat-card:hover {
-          transform: translateY(-4px);
-          box-shadow: 0 24px 50px rgba(15,23,42,.08);
+        .offers-stat-value{
+          color:#fff;
+          font-size:36px;
+          font-weight:950;
+          line-height:1;
+          letter-spacing:-.05em;
+          margin-bottom:10px;
         }
 
-        .offers-stat-icon {
-          width: 62px;
-          height: 62px;
-          border-radius: 20px;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          margin-bottom: 16px;
-          background: linear-gradient(135deg, #ecfeff, #e0f2fe);
-          color: #0891b2;
-          border: 1px solid #c7f0f5;
+        .offers-stat-label{
+          color:#dbeafe;
+          font-size:14px;
+          line-height:1.65;
+          font-weight:800;
         }
 
-        .offers-stat-value {
-          color: #0f172a;
-          font-size: 38px;
-          font-weight: 950;
-          line-height: 1;
-          letter-spacing: -.05em;
-          margin-bottom: 10px;
+        .offers-highlights{
+          display:grid;
+          grid-template-columns:repeat(3,minmax(0,1fr));
+          gap:14px;
+          margin:28px auto 0;
+          text-align:left;
         }
 
-        .offers-stat-label {
-          color: #64748b;
-          font-size: 14px;
-          line-height: 1.7;
-          font-weight: 800;
+        .offers-highlight{
+          display:flex;
+          align-items:flex-start;
+          gap:12px;
+          padding:17px 18px;
+          border-radius:20px;
+          background:rgba(255,255,255,.10);
+          border:1px solid rgba(255,255,255,.14);
         }
 
-        .offers-highlights {
-          display: grid;
-          grid-template-columns: repeat(3, minmax(0, 1fr));
-          gap: 14px;
-          margin: 28px auto 0;
-          text-align: left;
+        .offers-highlight-icon{
+          width:28px;
+          height:28px;
+          min-width:28px;
+          border-radius:999px;
+          background:rgba(56,189,248,.18);
+          color:#7dd3fc;
+          display:inline-flex;
+          align-items:center;
+          justify-content:center;
+          margin-top:1px;
         }
 
-        .offers-highlight {
-          display: flex;
-          align-items: flex-start;
-          gap: 12px;
-          padding: 17px 18px;
-          border-radius: 22px;
-          background: rgba(255,255,255,.78);
-          border: 1px solid rgba(226,232,240,.95);
-          box-shadow: 0 14px 30px rgba(15,23,42,.045);
+        .offers-highlight span:last-child{
+          color:#e0f2fe;
+          font-size:14px;
+          line-height:1.7;
+          font-weight:750;
         }
 
-        .offers-highlight-icon {
-          width: 28px;
-          height: 28px;
-          min-width: 28px;
-          border-radius: 999px;
-          background: rgba(20,184,166,.14);
-          color: #0f766e;
-          display: inline-flex;
-          align-items: center;
-          justify-content: center;
-          margin-top: 1px;
+        .offers-empty-state{
+          max-width:760px;
+          margin:30px auto;
+          padding:42px 24px;
+          border-radius:28px;
+          background:linear-gradient(180deg,#fff,#f8fafc);
+          border:1px dashed #cbd5e1;
+          color:#64748b;
+          text-align:center;
+          font-size:15px;
+          box-shadow:0 18px 45px rgba(15,23,42,.05);
         }
 
-        .offers-highlight span:last-child {
-          color: #334155;
-          font-size: 14.5px;
-          line-height: 1.7;
-          font-weight: 700;
-        }
-
-        .offers-empty-state {
-          padding: 42px 24px;
-          border-radius: 28px;
-          background: linear-gradient(180deg, #ffffff, #f8fafc);
-          border: 1px dashed #cbd5e1;
-          color: #64748b;
-          text-align: center;
-          font-size: 15px;
-          box-shadow: 0 18px 45px rgba(15,23,42,.05);
-        }
-
-        @media (max-width: 1100px) {
-          .offers-grid.multi {
-            grid-template-columns: repeat(2, minmax(280px, 1fr));
+        @media(max-width:1100px){
+          .offers-grid.multi{
+            grid-template-columns:repeat(2,minmax(280px,1fr));
           }
 
-          .offers-highlights {
-            grid-template-columns: 1fr;
-            max-width: 780px;
+          .offers-highlights{
+            grid-template-columns:1fr;
+            max-width:780px;
           }
         }
 
-        @media (max-width: 768px) {
-          .offers-section {
-            padding-top: 18px;
+        @media(max-width:768px){
+          .offers-section{
+            padding-top:18px;
           }
 
-          .offers-hero {
-            padding: 0 14px;
-            margin-bottom: 24px;
+          .offers-hero{
+            padding:0 14px;
+            margin-bottom:24px;
           }
 
-          .offers-badge {
-            padding: 8px 13px;
-            font-size: 12px;
-            margin-bottom: 13px;
+          .offers-title{
+            font-size:clamp(32px,10vw,42px);
+            line-height:1.05;
           }
 
-          .offers-title {
-            font-size: clamp(32px, 10vw, 42px);
-            line-height: 1.05;
-            letter-spacing: -.045em;
+          .offers-subtitle{
+            font-size:14px;
+            line-height:1.75;
           }
 
-          .offers-subtitle {
-            font-size: 14px;
-            line-height: 1.75;
-            margin-top: 12px;
-          }
-
-          .offers-ad-wrap {
-            padding: 0 12px;
-            margin-bottom: 20px;
+          .offers-ad-wrap{
+            padding:0 12px;
+            margin-bottom:20px;
           }
 
           .offers-grid,
           .offers-grid.single,
           .offers-grid.two,
-          .offers-grid.multi {
-            grid-template-columns: 1fr;
-            gap: 18px;
-            padding: 0 12px;
-            max-width: 100%;
+          .offers-grid.multi{
+            grid-template-columns:1fr;
+            gap:18px;
+            padding:0 12px;
+            max-width:100%;
           }
 
-          .offers-proof {
-            margin-top: 30px;
-            padding: 0 12px;
+          .offers-proof{
+            margin-top:30px;
+            padding:0 12px;
           }
 
-          .offers-proof-card {
-            border-radius: 26px;
-            padding: 24px 15px;
+          .offers-proof-card{
+            border-radius:26px;
+            padding:24px 15px;
           }
 
-          .offers-brand-pill {
-            padding: 8px 13px;
-            margin-bottom: 15px;
+          .offers-stats-grid{
+            grid-template-columns:1fr;
+            gap:12px;
+            margin-top:22px;
           }
 
-          .offers-brand-pill img {
-            width: 27px;
-            height: 27px;
+          .offers-stat-card{
+            border-radius:20px;
+            padding:18px 16px;
           }
 
-          .offers-proof-title {
-            font-size: clamp(28px, 9vw, 36px);
-            line-height: 1.08;
-          }
-
-          .offers-proof-text {
-            font-size: 14px;
-            line-height: 1.75;
-          }
-
-          .offers-stats-grid {
-            grid-template-columns: 1fr;
-            gap: 12px;
-            margin-top: 22px;
-          }
-
-          .offers-stat-card {
-            border-radius: 20px;
-            padding: 18px 16px;
-          }
-
-          .offers-stat-icon {
-            width: 54px;
-            height: 54px;
-            border-radius: 17px;
-            margin-bottom: 14px;
-          }
-
-          .offers-stat-value {
-            font-size: 30px;
-          }
-
-          .offers-stat-label {
-            font-size: 13px;
-          }
-
-          .offers-highlights {
-            grid-template-columns: 1fr;
-            gap: 12px;
-            margin-top: 22px;
-          }
-
-          .offers-highlight {
-            border-radius: 18px;
-            padding: 14px;
-          }
-
-          .offers-highlight span:last-child {
-            font-size: 14px;
-          }
-        }
-
-        @media (max-width: 420px) {
-          .offers-title {
-            font-size: 31px;
-          }
-
-          .offers-proof-card {
-            padding-left: 13px;
-            padding-right: 13px;
+          .offers-highlights{
+            grid-template-columns:1fr;
+            gap:12px;
+            margin-top:22px;
           }
         }
       `}</style>
 
       <div className="offers-hero">
+        <div className="offers-brand-top">
+          <img src={PUBLIKO_LOGO} alt="Publiko" />
+          <strong>Publiko.biz</strong>
+        </div>
+
         <div className="offers-badge">
           <FiZap size={15} />
           Paketa & Oferta
         </div>
 
         <h2 className="offers-title">
-          Zgjedh ofertën që <span>të përshtatet</span> më së miri
+          Zgjidh ofertën që <span>të përshtatet</span> më së miri
         </h2>
 
         <p className="offers-subtitle">
           Paketa fleksibile, prezencë më profesionale dhe mundësi kontakti direkt
-          për regjistrim apo konsultim.
+          për promovim, regjistrim apo konsultim.
         </p>
       </div>
 
@@ -588,7 +549,7 @@ export default function OffersSection() {
           <div className="offers-proof-content">
             <div className="offers-brand-pill">
               <img src={PUBLIKO_LOGO} alt="Publiko" />
-              <span>Publiko</span>
+              <span>Publiko Business Platform</span>
             </div>
 
             <h3 className="offers-proof-title">Pse të zgjidhni Publiko?</h3>
@@ -599,34 +560,20 @@ export default function OffersSection() {
             </p>
 
             <div className="offers-stats-grid">
-              {stats.length ? (
-                stats.map((stat, index) => {
-                  const Icon = getStatIcon(stat, index);
+              {stats.map((stat, index) => {
+                const Icon = getStatIcon(stat, index);
 
-                  return (
-                    <div className="offers-stat-card" key={stat.id || index}>
-                      <div className="offers-stat-icon">
-                        <Icon size={28} />
-                      </div>
-
-                      <div className="offers-stat-value">{stat.value}</div>
-                      <div className="offers-stat-label">{stat.label}</div>
+                return (
+                  <div className="offers-stat-card" key={stat.id || index}>
+                    <div className="offers-stat-icon">
+                      <Icon size={27} />
                     </div>
-                  );
-                })
-              ) : (
-                <div
-                  style={{
-                    gridColumn: "1 / -1",
-                    textAlign: "center",
-                    color: "#64748b",
-                    padding: "12px 0",
-                    fontWeight: 700
-                  }}
-                >
-                  Nuk ka statistika aktive për momentin.
-                </div>
-              )}
+
+                    <div className="offers-stat-value">{stat.value}</div>
+                    <div className="offers-stat-label">{stat.label}</div>
+                  </div>
+                );
+              })}
             </div>
 
             <div className="offers-highlights">
@@ -687,6 +634,6 @@ function getStatIcon(item, index) {
     return FiBriefcase;
   }
 
-  const icons = [FiUsers, FiHome, FiTrendingUp, FiBriefcase, FiBarChart2];
+  const icons = [FiUsers, FiHome, FiTrendingUp, FiBriefcase, FiBarChart2, FiShield, FiStar];
   return icons[index % icons.length];
 }

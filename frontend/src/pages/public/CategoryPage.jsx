@@ -10,6 +10,7 @@ import AdSlot from "../../components/ads/AdSlot";
 export default function CategoryPage() {
   const { category } = useParams();
   const isOffersPage = category === "oferta";
+  const hideInnerCategoryHeader = ["patundshmeri", "automjete", "konkurse-pune"].includes(category);
 
   const [screenWidth, setScreenWidth] = useState(
     typeof window !== "undefined" ? window.innerWidth : 1280
@@ -180,9 +181,16 @@ export default function CategoryPage() {
               position: "relative",
               zIndex: 2,
               display: "grid",
-              gap: isMobile ? "16px" : "24px"
+              gap: hideInnerCategoryHeader
+                ? isMobile
+                  ? "10px"
+                  : "14px"
+                : isMobile
+                  ? "16px"
+                  : "24px"
             }}
           >
+{!hideInnerCategoryHeader && (
             <div
               style={{
                 display: "flex",
@@ -284,6 +292,7 @@ export default function CategoryPage() {
                 </div>
               </div>
             </div>
+            )}
 
             {adConfig.topPlacement && (
               <div

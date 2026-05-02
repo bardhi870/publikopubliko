@@ -22,7 +22,6 @@ import AdminOffers from "./pages/admin/AdminOffers";
 import AdminClients from "./pages/admin/AdminClients";
 import AdminPayments from "./pages/admin/AdminPayments";
 import AdminAdRequests from "./pages/admin/AdminAdRequests";
-import AdminPublicClients from "./pages/admin/AdminPublicClients";
 import AdminStats from "./pages/admin/AdminStats";
 import AdminAds from "./pages/admin/AdminAds";
 import AdminAnalytics from "./pages/admin/AdminAnalytics";
@@ -64,7 +63,6 @@ function AppShell() {
         <Route path="/admin/clients" element={<ProtectedAdmin><AdminClients /></ProtectedAdmin>} />
         <Route path="/admin/payments" element={<ProtectedAdmin><AdminPayments /></ProtectedAdmin>} />
         <Route path="/admin/ad-requests" element={<ProtectedAdmin><AdminAdRequests /></ProtectedAdmin>} />
-        <Route path="/admin/public-clients" element={<ProtectedAdmin><AdminPublicClients /></ProtectedAdmin>} />
       </Routes>
 
       {!isAdmin && (

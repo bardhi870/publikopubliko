@@ -1087,6 +1087,123 @@ export default function PublicHeader() {
           box-shadow:0 14px 30px rgba(37,99,235,.14);
         }
 
+
+
+        /* FINAL MOBILE MENU POLISH - premium compact cards */
+        .mobile-menu{
+          padding:10px !important;
+          border-radius:24px !important;
+          background:
+            radial-gradient(circle at 0% 0%, rgba(59,130,246,.18), transparent 32%),
+            radial-gradient(circle at 100% 0%, rgba(14,165,233,.14), transparent 34%),
+            linear-gradient(180deg, rgba(248,251,255,.94), rgba(226,236,249,.88)) !important;
+          border:1px solid rgba(219,234,254,.92) !important;
+          box-shadow:
+            0 24px 70px rgba(2,6,23,.22),
+            inset 0 1px 0 rgba(255,255,255,.92) !important;
+        }
+
+        .mobile-nav{ gap:9px !important; }
+
+        .mobile-link{
+          min-height:58px !important;
+          border-radius:15px !important;
+          padding:10px 12px !important;
+          background:linear-gradient(180deg,#ffffff 0%,#f8fbff 100%) !important;
+          border:1px solid rgba(203,213,225,.9) !important;
+          box-shadow:0 8px 20px rgba(15,23,42,.07), inset 0 1px 0 rgba(255,255,255,.95) !important;
+          flex-direction:row !important;
+          align-items:center !important;
+          justify-content:space-between !important;
+        }
+
+        .mobile-link::before{
+          content:"›";
+          position:absolute;
+          right:12px;
+          top:50%;
+          transform:translateY(-50%);
+          color:#1d4ed8;
+          font-size:20px;
+          font-weight:900;
+          opacity:.75;
+          z-index:2;
+        }
+
+        .mobile-link::after{
+          width:54px !important;
+          height:54px !important;
+          right:-20px !important;
+          top:-20px !important;
+          background:radial-gradient(circle,rgba(37,99,235,.10),transparent 68%) !important;
+        }
+
+        .mobile-link-main{ gap:9px !important; padding-right:18px; }
+
+        .mobile-link-main > span{
+          font-size:13px !important;
+          font-weight:950 !important;
+          color:#0f172a;
+        }
+
+        .mobile-link-icon{
+          width:32px !important;
+          height:32px !important;
+          flex:0 0 32px !important;
+          border-radius:13px !important;
+          color:#2563eb !important;
+          background:linear-gradient(135deg,#eff6ff,#dbeafe) !important;
+          border:1px solid #bfdbfe !important;
+          box-shadow:0 8px 18px rgba(37,99,235,.12) !important;
+        }
+
+        .mobile-link-icon svg{ width:17px !important; height:17px !important; }
+
+        .news-button{
+          background:linear-gradient(135deg,#eff6ff 0%,#dbeafe 100%) !important;
+          border-color:#93c5fd !important;
+        }
+
+        .news-button b{
+          position:absolute !important;
+          left:53px;
+          bottom:9px;
+          color:#2563eb !important;
+          font-size:9px !important;
+          line-height:1 !important;
+        }
+
+        .mobile-link.offer-link{
+          background:linear-gradient(135deg,#ecfdf5 0%,#dcfce7 100%) !important;
+          border-color:#86efac !important;
+          box-shadow:0 10px 24px rgba(16,185,129,.13) !important;
+        }
+
+        .mobile-link.offer-link::before{ color:#047857; }
+
+        .mobile-link.advertise-link{
+          grid-column:1 / -1;
+          min-height:62px !important;
+          color:#fff !important;
+          background:
+            radial-gradient(circle at 16% 0%,rgba(255,255,255,.26),transparent 32%),
+            linear-gradient(135deg,#7c3aed 0%,#4338ca 48%,#2563eb 100%) !important;
+          border-color:rgba(196,181,253,.75) !important;
+          box-shadow:0 16px 34px rgba(79,70,229,.24) !important;
+        }
+
+        .mobile-link.advertise-link .mobile-link-main > span,
+        .mobile-link.advertise-link::before{ color:#fff !important; }
+
+        .mobile-call{
+          min-height:56px !important;
+          border-radius:18px !important;
+          background:
+            radial-gradient(circle at 12% 0%,rgba(56,189,248,.34),transparent 30%),
+            linear-gradient(135deg,#0f2b80 0%,#0b63ce 48%,#0284c7 100%) !important;
+          box-shadow:0 18px 36px rgba(14,99,246,.28) !important;
+        }
+
         @media(max-width:980px){
           .header-shell{padding:10px 12px}
           .header-inner{min-height:60px}

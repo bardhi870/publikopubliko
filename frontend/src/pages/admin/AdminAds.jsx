@@ -3,6 +3,19 @@ import AdminTopNav from "../../components/admin/AdminTopNav";
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
 
+const getAdminToken = () => localStorage.getItem("admin_token");
+
+const getAuthHeaders = () => {
+  const token = getAdminToken();
+  return token ? { Authorization: `Bearer ${token}` } : {};
+};
+
+const getJsonHeaders = () => ({
+  "Content-Type": "application/json",
+  ...getAuthHeaders()
+});
+
+
 const PACKAGES = {
   basic: ["home_in_feed_1"],
   standard: ["home_in_feed_1", "realestate_inline"],
@@ -281,10 +294,10 @@ export default function AdminAds() {
 
       const [advertisersRes, campaignsRes, placementsRes, creativesRes] =
         await Promise.all([
-          fetch(`${API_URL}/api/advertisers`),
-          fetch(`${API_URL}/api/campaigns`),
-          fetch(`${API_URL}/api/ad-placements`),
-          fetch(`${API_URL}/api/ad-creatives`)
+          fetch(`${API_URL}/api/advertisers`, { headers: getAuthHeaders() }),
+          fetch(`${API_URL}/api/campaigns`, { headers: getAuthHeaders() }),
+          fetch(`${API_URL}/api/ad-placements`, { headers: getAuthHeaders() }),
+          fetch(`${API_URL}/api/ad-creatives`, { headers: getAuthHeaders() })
         ]);
 
       const [advertisersData, campaignsData, placementsData, creativesData] =
@@ -419,7 +432,7 @@ export default function AdminAds() {
 
       const res = await fetch(url, {
         method,
-        headers: { "Content-Type": "application/json" },
+        headers: getJsonHeaders(),
         body: JSON.stringify(advertiserForm)
       });
 
@@ -469,7 +482,7 @@ export default function AdminAds() {
 
       const res = await fetch(url, {
         method,
-        headers: { "Content-Type": "application/json" },
+        headers: getJsonHeaders(),
         body: JSON.stringify(payload)
       });
 
@@ -537,6 +550,7 @@ export default function AdminAds() {
 
       const res = await fetch(url, {
         method,
+        headers: getAuthHeaders(),
         body: formData
       });
 
@@ -590,7 +604,8 @@ export default function AdminAds() {
       setMessage("");
 
       const res = await fetch(`${API_URL}/api/advertisers/${id}`, {
-        method: "DELETE"
+        method: "DELETE",
+        headers: getAuthHeaders()
       });
 
       const data = await res.json();
@@ -649,7 +664,8 @@ export default function AdminAds() {
       setMessage("");
 
       const res = await fetch(`${API_URL}/api/campaigns/${id}`, {
-        method: "DELETE"
+        method: "DELETE",
+        headers: getAuthHeaders()
       });
 
       const data = await res.json();
@@ -702,7 +718,8 @@ export default function AdminAds() {
       setMessage("");
 
       const res = await fetch(`${API_URL}/api/ad-creatives/${id}`, {
-        method: "DELETE"
+        method: "DELETE",
+        headers: getAuthHeaders()
       });
 
       const data = await res.json();

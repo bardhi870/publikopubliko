@@ -8,21 +8,21 @@ import JobCategoryPosts from "../posts/JobCategoryPosts";
 const META = {
   patundshmeri: {
     eyebrow: "Prona",
-    badge: "Premium listings",
+    badge: "Featured • Të reja",
     letter: "P",
     link: "/kategori/patundshmeri",
     className: "realestate"
   },
   automjete: {
-    eyebrow: "Auto",
-    badge: "Të reja",
+    eyebrow: "Automjete",
+    badge: "Featured • Të reja",
     letter: "A",
     link: "/kategori/automjete",
     className: "vehicles"
   },
   "konkurse-pune": {
     eyebrow: "Karrierë",
-    badge: "Pozita aktive",
+    badge: "Aktive • Të reja",
     letter: "K",
     link: "/kategori/konkurse-pune",
     className: "jobs"
@@ -43,47 +43,31 @@ export default function HomeSection({ title, category, subtitle }) {
     className: "default"
   };
 
+  const commonProps = {
+    title: "",
+    category: normalizedCategory,
+    variant: "home",
+    initialLimit: 4,
+    hideLoadMore: true
+  };
+
   const renderPosts = () => {
     if (normalizedCategory === "automjete") {
-      return (
-        <VehicleCategoryPosts
-          title=""
-          category="automjete"
-          variant="home"
-          initialLimit={6}
-          showMoreStep={6}
-        />
-      );
+      return <VehicleCategoryPosts {...commonProps} category="automjete" />;
     }
 
     if (
       normalizedCategory === "patundshmeri" ||
       normalizedCategory === "patundshmëri"
     ) {
-      return (
-        <RealEstateCategoryPosts
-          title=""
-          category="patundshmeri"
-          variant="home"
-          initialLimit={6}
-          showMoreStep={6}
-        />
-      );
+      return <RealEstateCategoryPosts {...commonProps} category="patundshmeri" />;
     }
 
     if (
       normalizedCategory === "konkurse-pune" ||
       normalizedCategory === "konkurse pune"
     ) {
-      return (
-        <JobCategoryPosts
-          title=""
-          category="konkurse-pune"
-          variant="home"
-          initialLimit={6}
-          showMoreStep={6}
-        />
-      );
+      return <JobCategoryPosts {...commonProps} category="konkurse-pune" />;
     }
 
     return null;
@@ -105,8 +89,7 @@ export default function HomeSection({ title, category, subtitle }) {
         </div>
 
         <Link to={meta.link} className="home-section-link">
-          Shiko më shumë
-          <span>→</span>
+          Shiko më shumë <span>→</span>
         </Link>
       </div>
 

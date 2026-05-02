@@ -3,6 +3,8 @@ import PublicHeader from "../../components/layout/PublicHeader";
 import PublicFooter from "../../components/layout/PublicFooter";
 
 const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:5000";
+const LOGO_URL =
+  "https://res.cloudinary.com/dbz7fjuty/image/upload/v1776969027/PUBLIKO_LOGO_pomulk.png";
 
 const initialForm = {
   full_name: "",
@@ -22,11 +24,7 @@ export default function AdRequestPage() {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-
-    setFormData((prev) => ({
-      ...prev,
-      [name]: value
-    }));
+    setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
   const handleSubmit = async (e) => {
@@ -38,15 +36,11 @@ export default function AdRequestPage() {
     try {
       const response = await fetch(`${API_BASE}/api/ad-requests`, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(formData)
       });
 
-      if (!response.ok) {
-        throw new Error("Nuk u dërgua kërkesa.");
-      }
+      if (!response.ok) throw new Error("Nuk u dërgua kërkesa.");
 
       setSuccessMessage(
         "Kërkesa u dërgua me sukses. Do t’ju kontaktojmë së shpejti me ofertën e personalizuar."
@@ -60,161 +54,71 @@ export default function AdRequestPage() {
   };
 
   return (
-    <div
-      style={{
-        minHeight: "100vh",
-        background:
-          "radial-gradient(circle at top, rgba(59,130,246,0.08), transparent 32%), #f8fafc",
-        display: "flex",
-        flexDirection: "column"
-      }}
-    >
+    <div className="ad-page">
       <PublicHeader />
 
-      <main style={{ flex: 1 }}>
-        <section
-          style={{
-            maxWidth: "1320px",
-            margin: "0 auto",
-            padding: "34px 16px 70px"
-          }}
-        >
-          <div
-            style={{
-              position: "relative",
-              overflow: "hidden",
-              borderRadius: "34px",
-              padding: "30px 22px",
-              background:
-                "linear-gradient(135deg, #0f172a 0%, #1e3a8a 52%, #2563eb 100%)",
-              boxShadow: "0 25px 70px rgba(15,23,42,0.20)",
-              marginBottom: "28px"
-            }}
-          >
-            <div
-              style={{
-                position: "absolute",
-                top: "-80px",
-                right: "-80px",
-                width: "220px",
-                height: "220px",
-                borderRadius: "50%",
-                background: "rgba(255,255,255,0.10)",
-                filter: "blur(10px)"
-              }}
-            />
-            <div
-              style={{
-                position: "absolute",
-                bottom: "-70px",
-                left: "-50px",
-                width: "180px",
-                height: "180px",
-                borderRadius: "50%",
-                background: "rgba(96,165,250,0.16)",
-                filter: "blur(8px)"
-              }}
-            />
+      <main className="ad-main">
+        <section className="hero-section">
+          <div className="hero-bg-grid" />
+          <div className="hero-glow hero-glow-one" />
+          <div className="hero-glow hero-glow-two" />
 
-            <div style={{ position: "relative", zIndex: 2, maxWidth: "760px" }}>
-              <div
-                style={{
-                  display: "inline-flex",
-                  alignItems: "center",
-                  gap: "8px",
-                  padding: "9px 14px",
-                  borderRadius: "999px",
-                  background: "rgba(255,255,255,0.12)",
-                  border: "1px solid rgba(255,255,255,0.18)",
-                  color: "#dbeafe",
-                  fontSize: "13px",
-                  fontWeight: "700",
-                  marginBottom: "16px"
-                }}
-              >
-                🚀 Promovo biznesin tuaj
-              </div>
+          <div className="hero-container">
+            <div className="hero-left">
+              <div className="hero-badge">🚀 REKLAMO ME PUBLIKO</div>
 
-              <h1
-                style={{
-                  margin: 0,
-                  color: "#fff",
-                  fontSize: "clamp(30px, 5vw, 54px)",
-                  lineHeight: 1.02,
-                  fontWeight: "900",
-                  letterSpacing: "-0.04em"
-                }}
-              >
-                Reklamo me ne
+              <h1>
+                Promovo biznesin tënd <span>me Publiko</span>
               </h1>
 
-              <p
-                style={{
-                  marginTop: "16px",
-                  marginBottom: 0,
-                  color: "rgba(255,255,255,0.84)",
-                  fontSize: "16px",
-                  lineHeight: 1.75,
-                  maxWidth: "680px",
-                  whiteSpace: "pre-line"
-                }}
-              >
-                {"Na kontaktoni dhe merrni ofertën e personalizuar për promovimin e biznesit tuaj në Publiko.\n\nOfrojmë banerë reklamues, linke të sponsorizuara, foto me link brenda lajmeve, postime të sponsorizuara, artikuj promovues dhe paketa reklamimi sipas nevojës dhe buxhetit tuaj."}
+              <p>
+                Arrij klientë të rinj çdo ditë me banerë reklamues, postime të
+                sponsorizuara, artikuj promovues dhe paketa reklamimi të
+                personalizuara.
               </p>
+
+              <div className="hero-features">
+                <div>👁️ Shikueshmëri maksimale</div>
+                <div>🎯 Zgjidhje fleksibile</div>
+                <div>📈 Rezultate të matshme</div>
+                <div>🤝 Mbështetje profesionale</div>
+              </div>
+            </div>
+
+            <div className="hero-visual">
+              <div className="logo-float">
+                <img src={LOGO_URL} alt="Publiko" />
+                <strong>Publiko</strong>
+              </div>
+
+              <div className="megaphone">📣</div>
+
+              <div className="float-card card-one">📈</div>
+              <div className="float-card card-two">🖼️</div>
+              <div className="float-card card-three">▶</div>
+              <div className="target">🎯</div>
             </div>
           </div>
+        </section>
 
-          <div
-            className="ad-request-grid"
-            style={{
-              display: "grid",
-              gridTemplateColumns: "1.05fr 0.95fr",
-              gap: "24px"
-            }}
-          >
-            <div
-              style={{
-                background: "rgba(255,255,255,0.92)",
-                border: "1px solid rgba(226,232,240,0.95)",
-                borderRadius: "28px",
-                padding: "26px",
-                boxShadow: "0 20px 50px rgba(15,23,42,0.07)"
-              }}
-            >
-              <h2
-                style={{
-                  marginTop: 0,
-                  marginBottom: "10px",
-                  color: "#0f172a",
-                  fontSize: "26px",
-                  fontWeight: "900",
-                  letterSpacing: "-0.03em"
-                }}
-              >
-                Kërko ofertë për reklamim
-              </h2>
+        <section className="content-section">
+          <div className="content-container">
+            <div className="form-card">
+              <div className="form-title-row">
+                <div className="form-icon">✈️</div>
+                <div>
+                  <span>Kërkesë e re</span>
+                  <h2>Kërko ofertë për reklamim</h2>
+                </div>
+              </div>
 
-              <p
-                style={{
-                  marginTop: 0,
-                  marginBottom: "24px",
-                  color: "#64748b",
-                  fontSize: "15px",
-                  lineHeight: 1.7
-                }}
-              >
-                Plotësoni të dhënat dhe ekipi ynë do t’ju kontaktojë me ofertë të
-                personalizuar për reklamimin e biznesit ose shërbimit tuaj.
+              <p className="form-intro">
+                Plotësoni të dhënat më poshtë dhe ekipi ynë do t’ju kontaktojë
+                me ofertën më të përshtatshme për biznesin tuaj.
               </p>
 
               <form onSubmit={handleSubmit}>
-                <div
-                  style={{
-                    display: "grid",
-                    gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
-                    gap: "16px"
-                  }}
-                >
+                <div className="form-grid">
                   <Field
                     label="Emri i plotë"
                     name="full_name"
@@ -256,7 +160,7 @@ export default function AdRequestPage() {
                   />
 
                   <Field
-                    label="Buxheti"
+                    label="Buxheti i përafërt"
                     name="budget"
                     value={formData.budget}
                     onChange={handleChange}
@@ -264,240 +168,720 @@ export default function AdRequestPage() {
                   />
                 </div>
 
-                <div style={{ marginTop: "16px" }}>
-                  <label
-                    style={{
-                      display: "block",
-                      marginBottom: "8px",
-                      color: "#334155",
-                      fontSize: "14px",
-                      fontWeight: "700"
-                    }}
-                  >
-                    Përshkrimi i kërkesës
-                  </label>
-
+                <div className="field-full">
+                  <label>Përshkrimi i kërkesës</label>
                   <textarea
                     name="message"
                     value={formData.message}
                     onChange={handleChange}
-                    placeholder="Na tregoni çfarë promovimi dëshironi, ku doni të shfaqeni dhe çfarë synoni të arrini me reklamën tuaj."
-                    rows={6}
-                    style={textareaStyle}
+                    placeholder="Na tregoni çfarë promovimi dëshironi, ku doni të shfaqeni dhe çfarë synoni të arrini me reklamën tuaj..."
+                    rows={5}
                   />
                 </div>
 
                 {successMessage ? (
-                  <div style={successStyle}>{successMessage}</div>
+                  <div className="success-box">✅ {successMessage}</div>
                 ) : null}
 
                 {errorMessage ? (
-                  <div style={errorStyle}>{errorMessage}</div>
+                  <div className="error-box">❌ {errorMessage}</div>
                 ) : null}
 
-                <button
-                  type="submit"
-                  disabled={loading}
-                  style={{
-                    marginTop: "18px",
-                    width: "100%",
-                    border: "none",
-                    borderRadius: "18px",
-                    padding: "16px 18px",
-                    cursor: loading ? "not-allowed" : "pointer",
-                    background: loading
-                      ? "linear-gradient(135deg, #94a3b8, #cbd5e1)"
-                      : "linear-gradient(135deg, #2563eb, #60a5fa)",
-                    color: "#fff",
-                    fontSize: "15px",
-                    fontWeight: "900",
-                    letterSpacing: "-0.01em",
-                    boxShadow: "0 18px 34px rgba(37,99,235,0.22)",
-                    transition: "all 0.2s ease"
-                  }}
-                >
-                  {loading
-                    ? "Duke u dërguar..."
-                    : "Kërko ofertën e personalizuar"}
+                <button type="submit" disabled={loading} className="submit-btn">
+                  {loading ? "Duke u dërguar..." : "✈️ Kërko ofertën e personalizuar"}
                 </button>
               </form>
             </div>
 
-            <div
-              style={{
-                display: "flex",
-                flexDirection: "column",
-                gap: "18px"
-              }}
-            >
+            <aside className="side-column">
               <InfoCard
                 icon="📢"
-                title="Promovim më i dukshëm"
-                text="Biznesi juaj mund të promovohet me banerë, linke ose postime të sponsorizuara për të arritur audiencën e duhur."
+                title="Banerë reklamues"
+                text="Shfaq biznesin tuaj në vendet më të dukshme të platformës."
               />
-
               <InfoCard
-                icon="🎯"
-                title="Zgjidhje fleksibile"
-                text="Zgjidhni ndërmjet banerëve reklamues, fotos me link brenda lajmit, artikujve promovues ose paketave të kombinuara."
+                icon="🔗"
+                title="Linke të sponsorizuara"
+                text="Drejto klientët direkt te faqja ose profili i biznesit tuaj."
               />
-
               <InfoCard
-                icon="⚡"
-                title="Ofertë e personalizuar"
-                text="Çdo biznes ka nevoja të ndryshme. Ju përgatisim ofertë sipas qëllimit, kohëzgjatjes dhe buxhetit tuaj."
+                icon="🖼️"
+                title="Foto me link në lajme"
+                text="Foto brenda artikujve me link të drejtpërdrejtë."
+              />
+              <InfoCard
+                icon="📝"
+                title="Artikuj promovues"
+                text="Përmbajtje profesionale që rrit besueshmërinë e biznesit."
               />
 
-              <div
-                style={{
-                  background: "linear-gradient(135deg, #ffffff, #f8fafc)",
-                  border: "1px solid #e2e8f0",
-                  borderRadius: "28px",
-                  padding: "28px",
-                  boxShadow: "0 20px 50px rgba(15,23,42,0.06)"
-                }}
-              >
-                <h3
-                  style={{
-                    marginTop: 0,
-                    fontSize: "28px",
-                    fontWeight: "900",
-                    color: "#0f172a",
-                    marginBottom: "16px",
-                    letterSpacing: "-0.03em"
-                  }}
-                >
-                  Pse të reklamoni me Publiko?
-                </h3>
-
-                <p
-                  style={{
-                    color: "#64748b",
-                    lineHeight: 1.7,
-                    marginBottom: "24px"
-                  }}
-                >
-                  Prani më e fortë, promovim më i dukshëm dhe forma të ndryshme
-                  reklamimi për të arritur klientët e duhur.
-                </p>
-
-                <div
-                  style={{
-                    display: "grid",
-                    gap: "12px",
-                    marginBottom: "24px"
-                  }}
-                >
-                  {[
-                    "Banerë reklamues",
-                    "Postime të sponsorizuara",
-                    "Linke brenda lajmeve",
-                    "Paketa promovimi të personalizuara"
-                  ].map((item) => (
-                    <div
-                      key={item}
-                      style={{
-                        display: "flex",
-                        alignItems: "center",
-                        gap: "10px",
-                        padding: "14px 16px",
-                        borderRadius: "16px",
-                        background: "#f8fafc",
-                        border: "1px solid #dbeafe",
-                        fontWeight: "800",
-                        color: "#1e293b"
-                      }}
-                    >
-                      <span
-                        style={{
-                          width: "24px",
-                          height: "24px",
-                          borderRadius: "999px",
-                          display: "inline-flex",
-                          alignItems: "center",
-                          justifyContent: "center",
-                          background: "#dbeafe",
-                          color: "#1d4ed8",
-                          fontSize: "14px",
-                          flexShrink: 0
-                        }}
-                      >
-                        ✓
-                      </span>
-                      <span>{item}</span>
-                    </div>
-                  ))}
+              <div className="why-card">
+                <div className="why-brand">
+                  <img src={LOGO_URL} alt="Publiko" />
+                  <strong>Publiko</strong>
                 </div>
 
-                <div style={{ display: "grid", gap: "14px" }}>
-                  <a href="https://wa.me/38344000000" style={contactBtnGreen}>
-                    WhatsApp: 044 000 000
-                  </a>
+                <h3>Pse të reklamoni me Publiko?</h3>
 
-                  <a href="tel:044000000" style={contactBtnBlue}>
-                    Telefon: 044 000 000
-                  </a>
+                <ul>
+                  <li>Platformë për biznese dhe shpallje</li>
+                  <li>Zgjidhje reklamimi për çdo biznes</li>
+                  <li>Çmime konkuruese</li>
+                  <li>Mbështetje dhe raportim i plotë</li>
+                </ul>
 
-                  <a href="mailto:info@publiko.biz" style={contactBtnGray}>
-                    Email: info@publiko.biz
-                  </a>
-                </div>
+                <a href="tel:044000000">📞 Na kontaktoni</a>
               </div>
-            </div>
+            </aside>
+          </div>
+
+          <div className="bottom-stats">
+            <div>👥 <strong>100K+</strong><span>Vizitorë çdo muaj</span></div>
+            <div>👁️ <strong>500K+</strong><span>Shikime faqesh</span></div>
+            <div>📈 <strong>100%</strong><span>Kënaqësi e klientëve</span></div>
+            <div>⭐ <strong>24/7</strong><span>Mbështetje</span></div>
           </div>
         </section>
       </main>
 
       <PublicFooter />
 
-      <style>
-        {`
-          @media (max-width: 980px) {
-            .ad-request-grid {
-              grid-template-columns: 1fr !important;
-            }
+      <style>{`
+        .ad-page{
+          min-height:100vh;
+          display:flex;
+          flex-direction:column;
+          background:#f8fafc;
+          color:#0f172a;
+          overflow-x:hidden;
+        }
+
+        .ad-main{
+          flex:1;
+          background:#f8fafc;
+        }
+
+        .hero-section{
+          position:relative;
+          overflow:hidden;
+          background:
+            radial-gradient(circle at 22% 30%, rgba(37,99,235,.35), transparent 28%),
+            radial-gradient(circle at 78% 34%, rgba(14,165,233,.28), transparent 28%),
+            linear-gradient(135deg, #020617 0%, #071225 48%, #063b68 100%);
+          padding:118px 18px 68px;
+          color:#fff;
+        }
+
+        .hero-bg-grid{
+          position:absolute;
+          inset:0;
+          background-image:
+            linear-gradient(rgba(255,255,255,.04) 1px, transparent 1px),
+            linear-gradient(90deg, rgba(255,255,255,.04) 1px, transparent 1px);
+          background-size:54px 54px;
+          opacity:.8;
+        }
+
+        .hero-glow{
+          position:absolute;
+          border-radius:999px;
+          pointer-events:none;
+          filter:blur(10px);
+        }
+
+        .hero-glow-one{
+          width:220px;
+          height:220px;
+          left:8%;
+          top:20%;
+          background:rgba(59,130,246,.20);
+          border:1px solid rgba(147,197,253,.20);
+        }
+
+        .hero-glow-two{
+          width:460px;
+          height:460px;
+          right:-130px;
+          bottom:-190px;
+          background:rgba(37,99,235,.24);
+        }
+
+        .hero-container{
+          position:relative;
+          z-index:2;
+          max-width:1180px;
+          margin:0 auto;
+          display:grid;
+          grid-template-columns:1fr 1fr;
+          gap:42px;
+          align-items:center;
+        }
+
+        .hero-badge{
+          width:max-content;
+          padding:10px 16px;
+          border-radius:999px;
+          background:rgba(37,99,235,.45);
+          border:1px solid rgba(96,165,250,.38);
+          color:#dbeafe;
+          font-size:12px;
+          font-weight:950;
+          letter-spacing:.05em;
+          margin-bottom:22px;
+        }
+
+        .hero-left h1{
+          margin:0;
+          max-width:560px;
+          font-size:clamp(42px, 5.6vw, 72px);
+          line-height:.96;
+          font-weight:950;
+          letter-spacing:-.065em;
+        }
+
+        .hero-left h1 span{
+          color:#1995ff;
+          text-shadow:0 0 35px rgba(59,130,246,.48);
+        }
+
+        .hero-left p{
+          max-width:560px;
+          margin:22px 0 0;
+          color:#dbeafe;
+          font-size:18px;
+          line-height:1.75;
+          font-weight:650;
+        }
+
+        .hero-features{
+          display:grid;
+          grid-template-columns:repeat(4, minmax(0,1fr));
+          gap:12px;
+          margin-top:30px;
+        }
+
+        .hero-features div{
+          padding:13px 10px;
+          border-top:1px solid rgba(59,130,246,.65);
+          color:#e0f2fe;
+          font-size:12px;
+          font-weight:800;
+        }
+
+        .hero-visual{
+          position:relative;
+          min-height:390px;
+        }
+
+        .logo-float{
+          position:absolute;
+          top:6px;
+          left:16px;
+          display:flex;
+          align-items:center;
+          gap:10px;
+          padding:12px 14px;
+          border-radius:20px;
+          background:rgba(255,255,255,.08);
+          border:1px solid rgba(255,255,255,.14);
+          backdrop-filter:blur(16px);
+        }
+
+        .logo-float img{
+          width:38px;
+          height:38px;
+          object-fit:contain;
+          border-radius:12px;
+          background:#fff;
+          padding:5px;
+        }
+
+        .logo-float strong{
+          font-size:18px;
+          font-weight:950;
+        }
+
+        .megaphone{
+          position:absolute;
+          left:120px;
+          top:80px;
+          font-size:142px;
+          filter:drop-shadow(0 28px 42px rgba(37,99,235,.55));
+          transform:rotate(-10deg);
+        }
+
+        .float-card{
+          position:absolute;
+          width:150px;
+          height:76px;
+          display:flex;
+          align-items:center;
+          justify-content:center;
+          border-radius:18px;
+          background:linear-gradient(135deg, rgba(37,99,235,.35), rgba(14,165,233,.18));
+          border:1px solid rgba(96,165,250,.42);
+          box-shadow:0 20px 50px rgba(0,0,0,.20);
+          backdrop-filter:blur(16px);
+          font-size:42px;
+        }
+
+        .card-one{
+          top:50px;
+          right:50px;
+          transform:rotate(-8deg);
+        }
+
+        .card-two{
+          top:150px;
+          right:0;
+          width:190px;
+        }
+
+        .card-three{
+          left:160px;
+          bottom:35px;
+          width:230px;
+        }
+
+        .target{
+          position:absolute;
+          right:42px;
+          bottom:40px;
+          font-size:98px;
+          filter:drop-shadow(0 18px 34px rgba(37,99,235,.45));
+        }
+
+        .hero-visual::after{
+          content:"";
+          position:absolute;
+          left:70px;
+          right:20px;
+          bottom:8px;
+          height:34px;
+          border-radius:999px;
+          border:2px solid rgba(14,165,233,.55);
+          box-shadow:0 0 28px rgba(14,165,233,.5);
+        }
+
+        .content-section{
+          max-width:1180px;
+          margin:0 auto;
+          padding:32px 18px 70px;
+        }
+
+        .content-container{
+          display:grid;
+          grid-template-columns:1.55fr .75fr;
+          gap:26px;
+          align-items:start;
+        }
+
+        .form-card,
+        .info-card,
+        .why-card,
+        .bottom-stats{
+          background:#fff;
+          border:1px solid #e2e8f0;
+          box-shadow:0 20px 55px rgba(15,23,42,.08);
+        }
+
+        .form-card{
+          border-radius:18px;
+          padding:28px;
+        }
+
+        .form-title-row{
+          display:flex;
+          gap:16px;
+          align-items:center;
+          margin-bottom:14px;
+        }
+
+        .form-icon{
+          width:58px;
+          height:58px;
+          border-radius:14px;
+          display:flex;
+          align-items:center;
+          justify-content:center;
+          color:#fff;
+          background:linear-gradient(135deg,#2563eb,#1d4ed8);
+          box-shadow:0 14px 34px rgba(37,99,235,.32);
+          font-size:24px;
+        }
+
+        .form-title-row span{
+          color:#64748b;
+          font-size:13px;
+          font-weight:800;
+        }
+
+        .form-title-row h2{
+          margin:4px 0 0;
+          color:#0f172a;
+          font-size:30px;
+          line-height:1.1;
+          font-weight:950;
+          letter-spacing:-.04em;
+        }
+
+        .form-intro{
+          max-width:640px;
+          margin:0 0 28px 74px;
+          color:#64748b;
+          font-size:15px;
+          line-height:1.7;
+          font-weight:650;
+        }
+
+        .form-grid{
+          display:grid;
+          grid-template-columns:1fr 1fr;
+          gap:18px 22px;
+        }
+
+        label{
+          display:block;
+          margin-bottom:8px;
+          color:#0f172a;
+          font-size:13px;
+          font-weight:900;
+        }
+
+        input,
+        select,
+        textarea{
+          width:100%;
+          box-sizing:border-box;
+          border:1px solid #dbe3ee;
+          background:#fff;
+          outline:none;
+          color:#0f172a;
+          font-family:inherit;
+          font-size:14px;
+          font-weight:700;
+          transition:.18s ease;
+        }
+
+        input,
+        select{
+          height:56px;
+          border-radius:12px;
+          padding:0 15px;
+        }
+
+        textarea{
+          border-radius:13px;
+          padding:15px;
+          resize:vertical;
+        }
+
+        input:focus,
+        select:focus,
+        textarea:focus{
+          border-color:#2563eb;
+          box-shadow:0 0 0 4px rgba(37,99,235,.12);
+        }
+
+        .field-full{
+          margin-top:20px;
+        }
+
+        .success-box,
+        .error-box{
+          margin-top:18px;
+          padding:14px 16px;
+          border-radius:12px;
+          font-size:13px;
+          font-weight:800;
+        }
+
+        .success-box{
+          background:#ecfdf5;
+          border:1px solid #86efac;
+          color:#166534;
+        }
+
+        .error-box{
+          background:#fef2f2;
+          border:1px solid #fca5a5;
+          color:#991b1b;
+        }
+
+        .submit-btn{
+          width:100%;
+          height:58px;
+          margin-top:22px;
+          border:none;
+          border-radius:12px;
+          cursor:pointer;
+          background:linear-gradient(135deg,#2563eb,#1d4ed8);
+          color:#fff;
+          font-size:15px;
+          font-weight:950;
+          box-shadow:0 18px 36px rgba(37,99,235,.28);
+          transition:.18s ease;
+        }
+
+        .submit-btn:hover{
+          transform:translateY(-2px);
+          box-shadow:0 24px 48px rgba(37,99,235,.36);
+        }
+
+        .submit-btn:disabled{
+          cursor:not-allowed;
+          opacity:.7;
+          transform:none;
+        }
+
+        .side-column{
+          display:flex;
+          flex-direction:column;
+          gap:14px;
+        }
+
+        .info-card{
+          border-radius:14px;
+          padding:18px;
+          display:grid;
+          grid-template-columns:52px 1fr;
+          gap:14px;
+          align-items:center;
+        }
+
+        .info-icon{
+          width:52px;
+          height:52px;
+          border-radius:999px;
+          display:flex;
+          align-items:center;
+          justify-content:center;
+          background:linear-gradient(135deg,#2563eb,#1d4ed8);
+          color:#fff;
+          font-size:22px;
+          box-shadow:0 14px 28px rgba(37,99,235,.25);
+        }
+
+        .info-card h3{
+          margin:0;
+          color:#1d4ed8;
+          font-size:16px;
+          font-weight:950;
+        }
+
+        .info-card p{
+          margin:5px 0 0;
+          color:#64748b;
+          font-size:13px;
+          line-height:1.45;
+          font-weight:650;
+        }
+
+        .why-card{
+          border-radius:16px;
+          padding:24px;
+          background:
+            radial-gradient(circle at 80% 20%, rgba(59,130,246,.35), transparent 38%),
+            linear-gradient(135deg,#061b46,#073b82);
+          color:#fff;
+        }
+
+        .why-brand{
+          display:flex;
+          align-items:center;
+          gap:10px;
+          margin-bottom:20px;
+        }
+
+        .why-brand img{
+          width:38px;
+          height:38px;
+          object-fit:contain;
+          background:#fff;
+          border-radius:11px;
+          padding:5px;
+        }
+
+        .why-brand strong{
+          font-size:22px;
+          font-weight:950;
+        }
+
+        .why-card h3{
+          margin:0 0 18px;
+          font-size:26px;
+          line-height:1.1;
+          letter-spacing:-.04em;
+          font-weight:950;
+        }
+
+        .why-card ul{
+          list-style:none;
+          padding:0;
+          margin:0 0 22px;
+          display:grid;
+          gap:12px;
+        }
+
+        .why-card li{
+          color:#dbeafe;
+          font-size:13px;
+          font-weight:750;
+        }
+
+        .why-card li::before{
+          content:"✓";
+          display:inline-flex;
+          align-items:center;
+          justify-content:center;
+          width:18px;
+          height:18px;
+          margin-right:9px;
+          border-radius:999px;
+          background:#0ea5e9;
+          color:#fff;
+          font-size:11px;
+          font-weight:950;
+        }
+
+        .why-card a{
+          display:inline-flex;
+          text-decoration:none;
+          color:#fff;
+          background:#0b63ce;
+          border:1px solid rgba(255,255,255,.18);
+          padding:13px 18px;
+          border-radius:12px;
+          font-weight:950;
+        }
+
+        .bottom-stats{
+          margin-top:24px;
+          border-radius:14px;
+          padding:22px 28px;
+          display:grid;
+          grid-template-columns:repeat(4,1fr);
+          gap:18px;
+          background:linear-gradient(135deg,#0b4ac2,#073b82);
+          color:#fff;
+        }
+
+        .bottom-stats div{
+          display:grid;
+          gap:4px;
+          font-size:24px;
+        }
+
+        .bottom-stats strong{
+          font-size:24px;
+          font-weight:950;
+        }
+
+        .bottom-stats span{
+          font-size:13px;
+          color:#dbeafe;
+          font-weight:750;
+        }
+
+        @media(max-width:980px){
+          .hero-section{
+            padding-top:96px;
           }
 
-          @media (max-width: 640px) {
-            .ad-request-grid form > div:first-child {
-              grid-template-columns: 1fr !important;
-            }
+          .hero-container,
+          .content-container{
+            grid-template-columns:1fr;
           }
-        `}
-      </style>
+
+          .hero-visual{
+            min-height:320px;
+          }
+
+          .bottom-stats{
+            grid-template-columns:1fr 1fr;
+          }
+        }
+
+        @media(max-width:640px){
+          .hero-section{
+            padding:88px 12px 46px;
+          }
+
+          .hero-features,
+          .form-grid,
+          .bottom-stats{
+            grid-template-columns:1fr;
+          }
+
+          .hero-left h1{
+            font-size:42px;
+          }
+
+          .hero-left p{
+            font-size:15px;
+          }
+
+          .hero-visual{
+            min-height:250px;
+          }
+
+          .megaphone{
+            font-size:98px;
+            left:60px;
+            top:70px;
+          }
+
+          .float-card{
+            width:105px;
+            height:58px;
+            font-size:28px;
+          }
+
+          .card-two{
+            width:130px;
+          }
+
+          .card-three{
+            width:150px;
+            left:95px;
+          }
+
+          .target{
+            font-size:64px;
+            right:20px;
+          }
+
+          .content-section{
+            padding:22px 12px 48px;
+          }
+
+          .form-card{
+            padding:20px;
+          }
+
+          .form-intro{
+            margin-left:0;
+          }
+
+          .form-title-row{
+            align-items:flex-start;
+          }
+        }
+      `}</style>
     </div>
   );
 }
 
-function Field({
-  label,
-  name,
-  value,
-  onChange,
-  placeholder,
-  type = "text"
-}) {
+function Field({ label, name, value, onChange, placeholder, type = "text" }) {
   return (
     <div>
-      <label
-        style={{
-          display: "block",
-          marginBottom: "8px",
-          color: "#334155",
-          fontSize: "14px",
-          fontWeight: "700"
-        }}
-      >
-        {label}
-      </label>
-
+      <label>{label}</label>
       <input
         type={type}
         name={name}
         value={value}
         onChange={onChange}
         placeholder={placeholder}
-        style={inputStyle}
       />
     </div>
   );
@@ -506,24 +890,8 @@ function Field({
 function SelectField({ label, name, value, onChange }) {
   return (
     <div>
-      <label
-        style={{
-          display: "block",
-          marginBottom: "8px",
-          color: "#334155",
-          fontSize: "14px",
-          fontWeight: "700"
-        }}
-      >
-        {label}
-      </label>
-
-      <select
-        name={name}
-        value={value}
-        onChange={onChange}
-        style={inputStyle}
-      >
+      <label>{label}</label>
+      <select name={name} value={value} onChange={onChange}>
         <option value="">Zgjidh shërbimin</option>
         <option value="banner">Baner reklamues në faqe</option>
         <option value="sponsored_link">Link i sponsorizuar</option>
@@ -538,134 +906,12 @@ function SelectField({ label, name, value, onChange }) {
 
 function InfoCard({ icon, title, text }) {
   return (
-    <div
-      style={{
-        background: "rgba(255,255,255,0.94)",
-        border: "1px solid rgba(226,232,240,0.95)",
-        borderRadius: "24px",
-        padding: "22px",
-        boxShadow: "0 18px 42px rgba(15,23,42,0.06)"
-      }}
-    >
-      <div
-        style={{
-          width: "52px",
-          height: "52px",
-          borderRadius: "16px",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          background: "linear-gradient(135deg, #dbeafe, #bfdbfe)",
-          fontSize: "24px",
-          marginBottom: "14px"
-        }}
-      >
-        {icon}
+    <div className="info-card">
+      <div className="info-icon">{icon}</div>
+      <div>
+        <h3>{title}</h3>
+        <p>{text}</p>
       </div>
-
-      <h3
-        style={{
-          margin: 0,
-          color: "#0f172a",
-          fontSize: "20px",
-          fontWeight: "900",
-          letterSpacing: "-0.02em"
-        }}
-      >
-        {title}
-      </h3>
-
-      <p
-        style={{
-          marginTop: "10px",
-          marginBottom: 0,
-          color: "#64748b",
-          lineHeight: 1.75,
-          fontSize: "15px"
-        }}
-      >
-        {text}
-      </p>
     </div>
   );
 }
-
-const inputStyle = {
-  width: "100%",
-  padding: "14px 16px",
-  borderRadius: "16px",
-  border: "1px solid #dbe3ee",
-  outline: "none",
-  fontSize: "15px",
-  color: "#0f172a",
-  background: "#fff",
-  boxSizing: "border-box",
-  boxShadow: "inset 0 1px 2px rgba(15,23,42,0.03)"
-};
-
-const textareaStyle = {
-  width: "100%",
-  padding: "14px 16px",
-  borderRadius: "18px",
-  border: "1px solid #dbe3ee",
-  outline: "none",
-  fontSize: "15px",
-  color: "#0f172a",
-  background: "#fff",
-  boxSizing: "border-box",
-  resize: "vertical",
-  fontFamily: "inherit",
-  boxShadow: "inset 0 1px 2px rgba(15,23,42,0.03)"
-};
-
-const successStyle = {
-  marginTop: "16px",
-  padding: "14px 16px",
-  borderRadius: "16px",
-  background: "rgba(220,252,231,0.8)",
-  border: "1px solid rgba(74,222,128,0.35)",
-  color: "#166534",
-  fontWeight: "700",
-  fontSize: "14px"
-};
-
-const errorStyle = {
-  marginTop: "16px",
-  padding: "14px 16px",
-  borderRadius: "16px",
-  background: "rgba(254,226,226,0.82)",
-  border: "1px solid rgba(248,113,113,0.35)",
-  color: "#991b1b",
-  fontWeight: "700",
-  fontSize: "14px"
-};
-
-const contactBtnGreen = {
-  display: "flex",
-  textDecoration: "none",
-  padding: "14px 16px",
-  borderRadius: "16px",
-  background: "#dcfce7",
-  color: "#166534",
-  fontWeight: "800"
-};
-
-const contactBtnBlue = {
-  display: "flex",
-  textDecoration: "none",
-  padding: "14px 16px",
-  borderRadius: "16px",
-  background: "#dbeafe",
-  color: "#1d4ed8",
-  fontWeight: "800"
-};
-
-const contactBtnGray = {
-  display: "flex",
-  textDecoration: "none",
-  padding: "14px 16px",
-  borderRadius: "16px",
-  background: "#f1f5f9",
-  color: "#334155",
-  fontWeight: "800"
-};

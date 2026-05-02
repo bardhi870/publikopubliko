@@ -836,24 +836,18 @@ export default function AdminPostForm({
                 />
               </div>
 
-              <div>
-                <label style={labelStyle}>Kategoritë</label>
-                <select
-                  name="job_category"
-                  value={formData.job_category || ""}
-                  onChange={handleChange}
-                  style={inputStyle}
-                >
-                  <option value="">Zgjedh kategorinë</option>
-                  <option value="Mjekësi">Mjekësi</option>
-                  <option value="IT">IT</option>
-                  <option value="Marketing">Marketing</option>
-                  <option value="Shitje">Shitje</option>
-                  <option value="Administratë">Administratë</option>
-                  <option value="Ndërtimtari">Ndërtimtari</option>
-                  <option value="Prodhimtari">Prodhimtari</option>
-                </select>
-              </div>
+             <div>
+  <label style={labelStyle}>Kategoria</label>
+
+  <input
+    type="text"
+    name="job_category"
+    placeholder="p.sh. IT, Marketing, Shitje..."
+    value={formData.job_category || ""}
+    onChange={handleChange}
+    style={inputStyle}
+  />
+</div>
 
               <div>
                 <label style={labelStyle}>Vendi i punës</label>

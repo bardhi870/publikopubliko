@@ -1,8 +1,7 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { Link } from "react-router-dom";
 import { getPostsByCategory } from "../../api/postApi";
 import VehiclePostCard from "./VehiclePostCard";
-
+import VehiclePostCardHome from "./VehiclePostCardHome";
 
 const normalize = (value) => {
   const clean = String(value || "")
@@ -37,21 +36,17 @@ const normalize = (value) => {
 
 const softMatch = (postValue, selectedValue) => {
   if (!selectedValue) return true;
+
   const postClean = normalize(postValue);
   const selectedClean = normalize(selectedValue);
-  if (!postClean) return false;
-  return postClean === selectedClean || postClean.includes(selectedClean) || selectedClean.includes(postClean);
-};
 
-const normalizeGalleryImages = (galleryImages) => {
-  if (!galleryImages) return [];
-  if (Array.isArray(galleryImages)) return galleryImages.filter(Boolean);
-  try {
-    const parsed = JSON.parse(galleryImages);
-    return Array.isArray(parsed) ? parsed.filter(Boolean) : [];
-  } catch {
-    return [];
-  }
+  if (!postClean) return false;
+
+  return (
+    postClean === selectedClean ||
+    postClean.includes(selectedClean) ||
+    selectedClean.includes(postClean)
+  );
 };
 
 const isPostNew = (createdAt) => {
@@ -60,17 +55,20 @@ const isPostNew = (createdAt) => {
 };
 
 const stripHtml = (html = "") =>
-  String(html).replace(/<[^>]*>/g, " ").replace(/\s+/g, " ").trim();
+  String(html || "")
+    .replace(/<[^>]*>/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
 
 const SearchIcon = () => (
-  <svg viewBox="0 0 24 24" fill="none">
+  <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
     <path d="M10.8 18.2A7.4 7.4 0 1 0 10.8 3.4a7.4 7.4 0 0 0 0 14.8Z" />
     <path d="M16.5 16.5L21 21" />
   </svg>
 );
 
 const FilterIcon = () => (
-  <svg viewBox="0 0 24 24" fill="none">
+  <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
     <path d="M4 6H20" />
     <path d="M7 12H17" />
     <path d="M10 18H14" />
@@ -78,13 +76,18 @@ const FilterIcon = () => (
 );
 
 const XIcon = () => (
-  <svg viewBox="0 0 24 24" fill="none">
+  <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
     <path d="M6 6L18 18" />
     <path d="M18 6L6 18" />
   </svg>
 );
 
-export default function VehicleCategoryPosts({ title, category, variant }) {
+export default function VehicleCategoryPosts({
+  title,
+  category,
+  variant,
+  initialLimit = 4
+}) {
   const [posts, setPosts] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -95,10 +98,11 @@ export default function VehicleCategoryPosts({ title, category, variant }) {
   const [selectedYear, setSelectedYear] = useState("");
 
   const [isMobile, setIsMobile] = useState(
-    typeof window !== "undefined" ? window.matchMedia("(max-width:640px)").matches : false
+    typeof window !== "undefined"
+      ? window.matchMedia("(max-width:640px)").matches
+      : false
   );
   const [showMobileFilters, setShowMobileFilters] = useState(false);
-  const [expandedCardId, setExpandedCardId] = useState(null);
 
   const isHomeVariant = variant === "home";
 
@@ -120,12 +124,20 @@ export default function VehicleCategoryPosts({ title, category, variant }) {
       try {
         setLoading(true);
         const data = await getPostsByCategory(category);
-        if (!ignore) setPosts(Array.isArray(data) ? data : []);
+
+        if (!ignore) {
+          setPosts(Array.isArray(data) ? data : []);
+        }
       } catch (error) {
         console.error("Gabim gjatë marrjes së postimeve:", error);
-        if (!ignore) setPosts([]);
+
+        if (!ignore) {
+          setPosts([]);
+        }
       } finally {
-        if (!ignore) setLoading(false);
+        if (!ignore) {
+          setLoading(false);
+        }
       }
     }
 
@@ -162,14 +174,50 @@ export default function VehicleCategoryPosts({ title, category, variant }) {
 
     const sortNewest = (items) =>
       [...items].sort(
-        (a, b) => new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime()
+        (a, b) =>
+          new Date(b.created_at || 0).getTime() -
+          new Date(a.created_at || 0).getTime()
       );
 
     const featured = sortNewest(filtered.filter((post) => post.featured));
-    const fresh = sortNewest(filtered.filter((post) => !post.featured && isPostNew(post.created_at)));
-    const normal = sortNewest(filtered.filter((post) => !post.featured && !isPostNew(post.created_at)));
+    const fresh = sortNewest(
+      filtered.filter((post) => !post.featured && isPostNew(post.created_at))
+    );
+    let normal = sortNewest(
+  filtered.filter((post) => !post.featured && !isPostNew(post.created_at))
+);
 
-    return [...featured, ...fresh, ...normal];
+// 🔥 ROTATION (PRO LEVEL)
+if (isHomeVariant) {
+  normal = normal.sort(() => 0.5 - Math.random());
+}
+
+if (isHomeVariant) {
+  let finalPosts = [];
+
+  // 🔥 1. ROTATE FEATURED
+  let rotatedFeatured = [...featured];
+
+  if (rotatedFeatured.length > 0) {
+    rotatedFeatured = rotatedFeatured.sort(() => 0.5 - Math.random());
+  }
+
+  finalPosts.push(...rotatedFeatured);
+
+  // 🔥 2. NËSE S'KA MJAFTUESHËM → MBUSHE ME TJERA
+  if (finalPosts.length < initialLimit) {
+    finalPosts.push(...normal);
+  }
+
+  if (finalPosts.length < initialLimit) {
+    finalPosts.push(...fresh);
+  }
+
+  // 🔥 3. LIMIT FINAL
+  return finalPosts.slice(0, initialLimit);
+}
+
+return [...featured, ...fresh, ...normal];
   }, [
     posts,
     vehicleSearch,
@@ -181,7 +229,11 @@ export default function VehicleCategoryPosts({ title, category, variant }) {
   ]);
 
   const hasActiveFilters =
-    vehicleSearch || selectedVehicleCity || selectedFuel || selectedGearbox || selectedYear;
+    vehicleSearch ||
+    selectedVehicleCity ||
+    selectedFuel ||
+    selectedGearbox ||
+    selectedYear;
 
   const clearVehicleFilters = () => {
     setVehicleSearch("");
@@ -192,102 +244,17 @@ export default function VehicleCategoryPosts({ title, category, variant }) {
     setShowMobileFilters(false);
   };
 
-  if (loading) return <p className="vehicle-loading">Duke u ngarkuar...</p>;
+  if (loading) {
+    return <p className="vehicle-loading">Duke u ngarkuar...</p>;
+  }
 
   if (isHomeVariant) {
     return (
-      <>
-        <div className="home-vehicle-grid">
-          {filteredPosts.slice(0, 6).map((post, index) => {
-            const galleryImages = normalizeGalleryImages(post.gallery_images);
-            const postImage = post?.image_url || galleryImages[0] || "";
-            const isExpanded = expandedCardId === post.id;
-
-            return (
-              <div key={post.id || index} className={`home-vehicle-card ${isExpanded ? "expanded" : ""}`}>
-                <Link to={`/automjete/${post.id}`} className="home-vehicle-media">
-                  {postImage ? (
-                    <img
-                      src={postImage}
-                      alt={post.title || "Automjet"}
-                      className="home-vehicle-img"
-                      loading={index < 2 ? "eager" : "lazy"}
-                      decoding="async"
-                    />
-                  ) : (
-                    <div className="home-vehicle-noimg">Automjet</div>
-                  )}
-
-                  <div className="home-vehicle-overlay">
-                    <div className="home-vehicle-top">
-                      <span className="home-vehicle-badge">Automjet</span>
-                      {isPostNew(post.created_at) && <span className="home-vehicle-new">E RE</span>}
-                      {post.featured && <span className="home-vehicle-featured">⭐</span>}
-                    </div>
-
-                    <div className="home-vehicle-bottom">
-                      <h3>{post.title || "Automjet"}</h3>
-
-                      <button
-                        type="button"
-                        className="home-vehicle-btn"
-                        onClick={(e) => {
-                          e.preventDefault();
-                          e.stopPropagation();
-                          setExpandedCardId((prev) => (prev === post.id ? null : post.id));
-                        }}
-                      >
-                        {isExpanded ? "Mbylle" : "Shiko më shumë →"}
-                      </button>
-                    </div>
-                  </div>
-                </Link>
-
-                <div className={`home-vehicle-expand ${isExpanded ? "show" : ""}`}>
-                  <div className="home-vehicle-expand-inner">
-                    <div className="home-vehicle-expand-head">
-                      <h4>{post.title || "Automjet"}</h4>
-                      <p>{stripHtml(post.description) || "Shiko detajet e automjetit."}</p>
-                    </div>
-
-                    <div className="home-vehicle-specs">
-                      <div className="home-vehicle-spec">
-                        <span>Viti</span>
-                        <strong>{post.vehicle_year || post.year || "—"}</strong>
-                      </div>
-
-                      <div className="home-vehicle-spec">
-                        <span>Kilometra</span>
-                        <strong>{post.mileage || post.kilometers || "—"}</strong>
-                      </div>
-
-                      <div className="home-vehicle-spec">
-                        <span>Ndërruesi</span>
-                        <strong>{post.transmission || post.gearbox || "—"}</strong>
-                      </div>
-                    </div>
-
-                    <div className="home-vehicle-price-wrap">
-                      <div>
-                        <span className="home-vehicle-price-label">ÇMIMI</span>
-                        <div className="home-vehicle-price">
-                          {post.price ? `${post.price} €` : "Sipas marrëveshjes"}
-                        </div>
-                      </div>
-
-                      <Link to={`/automjete/${post.id}`} className="home-vehicle-detail-link">
-                        Shiko detajet
-                      </Link>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            );
-          })}
-        </div>
-
-        <style>{homeVehicleCss}</style>
-      </>
+      <div className="home-clean-grid">
+        {filteredPosts.slice(0, initialLimit).map((post, index) => (
+          <VehiclePostCardHome key={post.id || index} post={post} index={index} />
+        ))}
+      </div>
     );
   }
 
@@ -302,11 +269,14 @@ export default function VehicleCategoryPosts({ title, category, variant }) {
         ) : (
           <div />
         )}
+
         {isMobile && (
           <button
             type="button"
             onClick={() => setShowMobileFilters((prev) => !prev)}
-            className={`vehicle-mobile-filter-btn ${showMobileFilters ? "active" : ""}`}
+            className={`vehicle-mobile-filter-btn ${
+              showMobileFilters ? "active" : ""
+            }`}
           >
             {showMobileFilters ? <XIcon /> : <FilterIcon />}
             <span>{showMobileFilters ? "Mbyll" : "Filtrat"}</span>
@@ -385,7 +355,9 @@ export default function VehicleCategoryPosts({ title, category, variant }) {
 
           <div className="vehicle-search-footer">
             <div className="vehicle-active-text">
-              {hasActiveFilters ? "Filtrat janë aktivë" : "Shfaqen të gjitha automjetet"}
+              {hasActiveFilters
+                ? "Filtrat janë aktivë"
+                : "Shfaqen të gjitha automjetet"}
             </div>
 
             <button type="button" onClick={clearVehicleFilters}>
@@ -853,336 +825,6 @@ const categoryCss = `
     .vehicle-field input{
       height:42px;
       font-size:12.5px;
-    }
-  }
-`;
-
-const homeVehicleCss = `
-  .home-vehicle-grid{
-    display:grid;
-    grid-template-columns:repeat(3,minmax(0,1fr));
-    gap:14px;
-    width:100%;
-    align-items:start;
-  }
-
-  .home-vehicle-card{
-    border-radius:22px;
-    overflow:hidden;
-    background:#ffffff;
-    box-shadow:0 16px 34px rgba(15,23,42,0.075);
-    border:1px solid rgba(226,232,240,0.92);
-  }
-
-  .home-vehicle-media{
-    position:relative;
-    min-height:250px;
-    background:#cbd5e1;
-    display:block;
-    text-decoration:none;
-    overflow:hidden;
-  }
-
-  .home-vehicle-img,
-  .home-vehicle-noimg{
-    width:100%;
-    height:100%;
-    display:block;
-  }
-
-  .home-vehicle-img{
-    object-fit:cover;
-    transition:transform .35s ease;
-  }
-
-  .home-vehicle-card:hover .home-vehicle-img{
-    transform:scale(1.04);
-  }
-
-  .home-vehicle-noimg{
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    background:linear-gradient(135deg,#cbd5e1,#94a3b8);
-    color:#fff;
-    font-size:17px;
-    font-weight:900;
-    min-height:250px;
-  }
-
-  .home-vehicle-overlay{
-    position:absolute;
-    inset:0;
-    display:flex;
-    flex-direction:column;
-    justify-content:space-between;
-    padding:15px;
-    background:linear-gradient(to top,rgba(2,6,23,.72),rgba(2,6,23,.16) 48%,rgba(2,6,23,.02));
-    color:#fff;
-  }
-
-  .home-vehicle-top{
-    display:flex;
-    align-items:flex-start;
-    gap:7px;
-    flex-wrap:wrap;
-  }
-
-  .home-vehicle-badge,
-  .home-vehicle-new,
-  .home-vehicle-featured{
-    display:inline-flex;
-    align-items:center;
-    justify-content:center;
-    border-radius:999px;
-    font-size:10.5px;
-    font-weight:950;
-    line-height:1;
-    min-height:27px;
-    padding:6px 10px;
-    border:1px solid rgba(255,255,255,.34);
-    backdrop-filter:blur(10px);
-    -webkit-backdrop-filter:blur(10px);
-  }
-
-  .home-vehicle-badge{
-    background:rgba(255,255,255,.78);
-    color:#0f172a;
-  }
-
-  .home-vehicle-new{
-    background:rgba(6,182,212,.72);
-    color:#fff;
-  }
-
-  .home-vehicle-featured{
-    background:rgba(245,158,11,.78);
-    color:#fff;
-    min-width:28px;
-    padding:6px 9px;
-  }
-
-  .home-vehicle-bottom h3{
-    margin:0;
-    font-size:17px;
-    line-height:1.22;
-    font-weight:950;
-    letter-spacing:-.02em;
-    display:-webkit-box;
-    -webkit-line-clamp:2;
-    -webkit-box-orient:vertical;
-    overflow:hidden;
-  }
-
-  .home-vehicle-btn{
-    margin-top:11px;
-    display:inline-flex;
-    align-items:center;
-    justify-content:center;
-    padding:10px 14px;
-    border-radius:999px;
-    background:rgba(255,255,255,.15);
-    border:1px solid rgba(255,255,255,.22);
-    color:#fff;
-    font-size:12.5px;
-    font-weight:900;
-    backdrop-filter:blur(8px);
-    cursor:pointer;
-  }
-
-  .home-vehicle-expand{
-    max-height:0;
-    overflow:hidden;
-    transition:max-height .35s ease;
-    background:#ffffff;
-  }
-
-  .home-vehicle-expand.show{
-    max-height:520px;
-  }
-
-  .home-vehicle-expand-inner{
-    padding:16px;
-    border-top:1px solid #e2e8f0;
-  }
-
-  .home-vehicle-expand-head h4{
-    margin:0;
-    color:#0f172a;
-    font-size:17px;
-    font-weight:950;
-    letter-spacing:-.02em;
-  }
-
-  .home-vehicle-expand-head p{
-    margin:7px 0 0;
-    color:#64748b;
-    font-size:13px;
-    line-height:1.55;
-  }
-
-  .home-vehicle-specs{
-    display:grid;
-    grid-template-columns:repeat(3,minmax(0,1fr));
-    gap:10px;
-    margin-top:16px;
-  }
-
-  .home-vehicle-spec{
-    border:1px solid #dbe3ee;
-    border-radius:15px;
-    padding:13px 10px;
-    text-align:center;
-    background:#f8fafc;
-  }
-
-  .home-vehicle-spec span{
-    display:block;
-    font-size:11px;
-    color:#64748b;
-    font-weight:850;
-    margin-bottom:7px;
-  }
-
-  .home-vehicle-spec strong{
-    display:block;
-    font-size:15px;
-    color:#0f172a;
-    font-weight:950;
-  }
-
-  .home-vehicle-price-wrap{
-    margin-top:16px;
-    padding-top:15px;
-    border-top:1px solid #e2e8f0;
-    display:flex;
-    align-items:flex-end;
-    justify-content:space-between;
-    gap:12px;
-    flex-wrap:wrap;
-  }
-
-  .home-vehicle-price-label{
-    display:block;
-    font-size:11px;
-    color:#64748b;
-    font-weight:900;
-    margin-bottom:5px;
-  }
-
-  .home-vehicle-price{
-    font-size:22px;
-    color:#0f172a;
-    font-weight:950;
-    letter-spacing:-.03em;
-  }
-
-  .home-vehicle-detail-link{
-    display:inline-flex;
-    align-items:center;
-    justify-content:center;
-    min-height:44px;
-    padding:10px 16px;
-    border-radius:14px;
-    background:#16a34a;
-    color:#fff;
-    font-size:13px;
-    font-weight:900;
-    text-decoration:none;
-    white-space:nowrap;
-  }
-
-  @media(max-width:1024px){
-    .home-vehicle-grid{
-      grid-template-columns:repeat(2,minmax(0,1fr));
-    }
-  }
-
-  @media(max-width:640px){
-    .home-vehicle-grid{
-      grid-template-columns:repeat(2,minmax(0,1fr));
-      gap:9px;
-    }
-
-    .home-vehicle-card{
-      border-radius:17px;
-    }
-
-    .home-vehicle-media,
-    .home-vehicle-noimg{
-      min-height:158px;
-    }
-
-    .home-vehicle-overlay{
-      padding:9px;
-      background:linear-gradient(to top,rgba(2,6,23,.66),rgba(2,6,23,.12) 48%,rgba(2,6,23,.01));
-    }
-
-    .home-vehicle-top{
-      gap:5px;
-    }
-
-    .home-vehicle-badge,
-    .home-vehicle-new,
-    .home-vehicle-featured{
-      min-height:22px;
-      padding:5px 7px;
-      font-size:8.7px;
-    }
-
-    .home-vehicle-bottom h3{
-      font-size:12.5px;
-      line-height:1.18;
-    }
-
-    .home-vehicle-btn{
-      margin-top:7px;
-      padding:8px 9px;
-      font-size:9.8px;
-    }
-
-    .home-vehicle-expand-inner{
-      padding:11px;
-    }
-
-    .home-vehicle-expand-head h4{
-      font-size:13px;
-    }
-
-    .home-vehicle-expand-head p{
-      font-size:11.5px;
-      line-height:1.45;
-    }
-
-    .home-vehicle-specs{
-      grid-template-columns:1fr;
-      gap:7px;
-      margin-top:11px;
-    }
-
-    .home-vehicle-spec{
-      padding:9px 7px;
-      border-radius:12px;
-    }
-
-    .home-vehicle-spec span{
-      font-size:10px;
-      margin-bottom:5px;
-    }
-
-    .home-vehicle-spec strong{
-      font-size:12.5px;
-    }
-
-    .home-vehicle-price{
-      font-size:17px;
-    }
-
-    .home-vehicle-detail-link{
-      width:100%;
-      min-height:39px;
-      font-size:11.5px;
-      border-radius:12px;
     }
   }
 `;

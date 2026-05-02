@@ -17,16 +17,15 @@ export default function AdminTopNav() {
   const location = useLocation();
 
   const navItems = [
-    { to: "/admin", label: "Dashboard", icon: LayoutDashboard, color: "blue" },
-    { to: "/admin/clients", label: "Klientët", icon: Users, color: "emerald" },
-    { to: "/admin/ads", label: "Reklamat", icon: Megaphone, color: "violet" },
-    { to: "/admin/public-clients", label: "Klientët tanë", icon: UserSquare, color: "amber" },
-    { to: "/admin/offers", label: "Ofertat", icon: Tag, color: "rose" },
-    { to: "/admin/ad-requests", label: "Kërkesat", icon: Mail, color: "orange" },
-    { to: "/admin/payments", label: "Pagesat", icon: CreditCard, color: "cyan" },
-    { to: "/admin/stats", label: "Statistikat", icon: BarChart3, color: "slate" },
-    { to: "/admin/analytics", label: "Analytics", icon: LineChart, color: "indigo" }
-  ];
+  { to: "/admin", label: "Dashboard", icon: LayoutDashboard, color: "blue" },
+  { to: "/admin/clients", label: "Klientët", icon: Users, color: "emerald" },
+  { to: "/admin/ads", label: "Reklamat", icon: Megaphone, color: "violet" },
+  { to: "/admin/offers", label: "Ofertat", icon: Tag, color: "rose" },
+  { to: "/admin/ad-requests", label: "Kërkesat", icon: Mail, color: "orange" },
+  { to: "/admin/payments", label: "Pagesat", icon: CreditCard, color: "cyan" },
+  { to: "/admin/stats", label: "Statistikat", icon: BarChart3, color: "slate" },
+  { to: "/admin/analytics", label: "Analytics", icon: LineChart, color: "indigo" }
+];
 
   const isItemActive = (path) => {
     if (path === "/admin") return location.pathname === "/admin";

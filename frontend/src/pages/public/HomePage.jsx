@@ -2,21 +2,16 @@ import React, { useEffect } from "react";
 
 import PublicHeader from "../../components/layout/PublicHeader";
 import PublicFooter from "../../components/layout/PublicFooter";
-
-import CategoryStrip from "../../components/home/CategoryStrip";
 import HomeContent from "../../components/home/HomeContent";
 
 import { trackEvent } from "../../utils/analytics";
 import "../../styles/home.css";
 
 export default function HomePage() {
-
-  // 👉 page_view
   useEffect(() => {
     trackEvent({ event_type: "page_view" });
   }, []);
 
-  // 👉 time_on_page (SHTO KËTË)
   useEffect(() => {
     const startTime = Date.now();
 
@@ -36,7 +31,6 @@ export default function HomePage() {
       <PublicHeader />
 
       <main className="home-main">
-        <CategoryStrip />
         <HomeContent />
       </main>
 
