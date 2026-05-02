@@ -1,7 +1,8 @@
 const router = require("express").Router();
 const db = require("../../config/db");
+const requireAdminAuth = require("../../middleware/requireAdminAuth");
 
-/* GET all */
+/* GET all - PUBLIC */
 router.get("/", async (req, res) => {
   try {
     const result = await db.query(`
@@ -19,8 +20,8 @@ router.get("/", async (req, res) => {
   }
 });
 
-/* CREATE */
-router.post("/", async (req, res) => {
+/* CREATE - ADMIN */
+router.post("/", requireAdminAuth, async (req, res) => {
   try {
     const {
       title,
@@ -42,20 +43,9 @@ router.post("/", async (req, res) => {
     const result = await db.query(
       `
       INSERT INTO packages (
-        title,
-        description,
-        price,
-        offer_badge,
-        highlighted,
-        phone,
-        whatsapp,
-        messenger,
-        offer_features,
-        is_active,
-        active_until,
-        background_color,
-        text_color,
-        button_color
+        title, description, price, offer_badge, highlighted,
+        phone, whatsapp, messenger, offer_features, is_active,
+        active_until, background_color, text_color, button_color
       )
       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14)
       RETURNING *
@@ -87,8 +77,8 @@ router.post("/", async (req, res) => {
   }
 });
 
-/* UPDATE */
-router.put("/:id", async (req, res) => {
+/* UPDATE - ADMIN */
+router.put("/:id", requireAdminAuth, async (req, res) => {
   try {
     const {
       title,
@@ -156,8 +146,8 @@ router.put("/:id", async (req, res) => {
   }
 });
 
-/* DELETE */
-router.delete("/:id", async (req, res) => {
+/* DELETE - ADMIN */
+router.delete("/:id", requireAdminAuth, async (req, res) => {
   try {
     await db.query(`DELETE FROM packages WHERE id=$1`, [req.params.id]);
 
